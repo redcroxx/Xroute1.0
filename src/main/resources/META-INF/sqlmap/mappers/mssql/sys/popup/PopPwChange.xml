@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 사용자 비밀번호 변경 팝업 -->
+<mapper namespace="PopPwChangeMapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.popup.PopPwChangeMapper.getSearch */
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , A.USERCD
+			 , A.NAME AS USERNM
+			 , A.ORGCD
+			 , C.NAME AS ORGNM
+			 , A.DEPTCD
+			 , D.NAME AS DEPTNM
+		FROM S010 A
+		JOIN P001 B
+		  ON A.COMPCD = B.COMPCD
+		LEFT OUTER JOIN P002 C
+		  ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD
+		LEFT OUTER JOIN P016 D
+		  ON A.COMPCD = D.COMPCD AND A.ORGCD = D.ORGCD AND A.DEPTCD = D.DEPTCD
+		WHERE A.USERCD = #{USERCD}
+		<if test="COMPCD != null and COMPCD != ''">
+			AND A.COMPCD = #{COMPCD}
+		</if>
+	</select>
+	
+	<!-- 비밀번호 변경 처리전 검사 -->
+	<select id="getPwChangeInfo" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.popup.PopPwChangeMapper.getPwChangeInfo */
+		SELECT A.COMPCD
+			 , A.USERCD
+		FROM S010 A
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.USERCD = #{USERCD}
+		  AND A.PASS = dbo.UFX_Encryption2(#{OLDPASS}, #{ENCKEY})
+	</select>
+	
+	<!-- 비밀번호 변경 처리 -->
+	<update id="updatePwChange" parameterType="LDataMap">
+		/* sys.popup.PopPwChangeMapper.updatePwChange */
+		UPDATE S010 WITH (ROWLOCK)
+		   SET PASS = dbo.UFX_Encryption2(#{NEWPASS}, #{ENCKEY})
+		     , PWDCHGDATE = GETDATE()
+		     , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+		     , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND USERCD = #{USERCD}
+	</update>
+
+</mapper>

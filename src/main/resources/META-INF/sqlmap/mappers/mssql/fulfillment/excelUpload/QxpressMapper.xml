@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="QxpressMapper">
+	<select id="getSearch" parameterType="CommonSearchVo" resultType="xrt.fulfillment.order.qxpress.QxpressVO">
+		SELECT
+		    'LOGIFOCUS'                   AS orgCd
+		    , o.S_NATION                  AS sNation
+		    , o.E_NATION                  AS eNation
+		    , o.XRT_INVC_SNO              AS xrtInvcSno
+		    , o.ORD_CD                    AS ordCd
+		    , (SELECT REPLACE(od.GOODS_NM, ' ','')
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = o.ORD_CD
+                 AND od.ORD_NO = o.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) AS goodsNm
+            , o.ORD_CNT                   AS goodsCnt
+		    , o.TOT_PAYMENT_PRICE         AS totPaymentPrice
+		    , o.RECV_NAME                 AS recvName
+		    , CASE
+		          WHEN o.RECV_POST = '-' THEN ''
+		          WHEN o.RECV_POST = '0' THEN ''
+		          WHEN o.RECV_POST = '.' THEN ''
+		          ELSE o.RECV_POST
+		    END AS recvPost
+		    , o.RECV_ADDR1                AS recvAddr1
+		    , CASE
+		        WHEN o.RECV_ADDR2 != '' THEN o.RECV_ADDR2
+		        ELSE '.'
+		    END                           AS recvAddr2
+		    , o.RECV_TEL AS recvTel
+		    , o.RECV_MOBILE AS recvMobile
+		    , o.RECV_CURRENCY             AS recvCurrency
+		    , 'std'                       AS shippingGrade
+		    , ''                          AS recvNameFurigana
+		    , o.PCC                       AS pcc
+		    , o.PURCHASE_URL              AS purchaseUrl
+	    FROM TORDER o
+	    WHERE 1 = 1
+	    AND o.DEL_FLG = 'N'
+	    AND o.SHIP_METHOD_CD = 'PREMIUM'
+	    AND o.E_NATION IN ('HK', 'SG', 'MY', 'TW')
+		<if test="sOrgCd != null and sOrgCd != ''">
+		    AND o.ORGCD = #{sOrgCd}
+		</if>
+		<if test="sWhcd != null and sWhcd != ''">
+		    AND o.WHCD = #{sWhcd}
+		</if>
+		<choose>
+		    <when test="sPeriodType == 'uploadDate'">
+		        AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+		    </when>
+		    <when test="sPeriodType == 'stockDate'">
+		        AND o.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+		    </when>
+		</choose>
+		<choose>
+		  <when test='sEtcCd1 == "Y"'>
+		      AND o.SHIPPING_COMPANY = 'QXPRESS'
+		  </when>
+		  <when test='sEtcCd1 == "N"'>
+		      AND o.SHIPPING_COMPANY IS NULL
+		  </when>
+		</choose>
+		<if test="sStatusCd != null and sStatusCd != ''">
+		    AND o.STATUS_CD = #{sStatusCd}
+		</if>
+		<if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+            AND o.XRT_INVC_SNO = #{sXrtInvcSno}
+        </if>
+		ORDER BY xrtInvcSno ASC
+	</select>
+
+</mapper>

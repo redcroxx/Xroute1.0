@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="InterfacesMapper">
+
+	<select id="getShopeeData" parameterType="xrt.lingoframework.common.vo.LoginVO" resultType="xrt.fulfillment.interfaces.vo.InterfaceSettingVo">
+		SELECT
+			INTERFACE_SEQ       AS interfaceSeq
+			, USER_ID           AS userId
+			, INTERFACE_TYPE    AS interfaceType
+			, AUTH_ID           AS authId
+			, AUTH_KEY          AS authKey
+			, SHIP_METHOD       AS shipMethod
+			, PHONE_NUMBER      AS phoneNumber
+			, KO_ADDRESS        AS koAddress
+			, EN_ADDRESS        AS enAddress
+			, POST              AS post
+		FROM TINTERFACE
+		WHERE 1 = 1
+		AND INTERFACE_TYPE = 'SHOPEE'
+		<if test="usercd != '' and usercd != null">
+		AND USER_ID = #{usercd}
+		</if>
+	</select>
+
+	<select id="getShopeeShopList" parameterType="xrt.lingoframework.common.vo.LoginVO" resultType="xrt.fulfillment.interfaces.vo.InterfaceSettingDtlVo">
+		SELECT
+			INTERFACE_DTL_SEQ   AS interfaceDtlSeq
+			, USER_ID           AS userId
+			, INTERFACE_TYPE    AS interfaceType
+			, MAPPING_KEY       AS mappingKey
+			, ETC_KEY           AS etcKey
+		FROM TINTERFACE_DTL
+		WHERE 1 = 1
+		AND INTERFACE_TYPE = 'SHOPEE'
+		<if test="usercd != '' and usercd != null">
+		AND USER_ID = #{usercd}
+		</if>
+	</select>
+
+	<select id="getCheckedShopee" parameterType="xrt.fulfillment.interfaces.vo.ShopeeParamVo" resultType="java.lang.String">
+		SELECT
+			CASE
+				WHEN COUNT(INTERFACE_SEQ) > 0 THEN 'Y'
+				ELSE 'N'
+			END AS "YN"
+		FROM TINTERFACE
+		WHERE 1 = 1
+		AND INTERFACE_TYPE = 'SHOPEE'
+		<if test="userId != '' and userId != null">
+		AND USER_ID = #{userId}
+		</if>
+	</select>
+
+	<select id="getCheckedShopeeAuth" parameterType="xrt.fulfillment.interfaces.vo.ShopeeParamVo" resultType="java.lang.String">
+		SELECT
+			CASE
+				WHEN COUNT(INTERFACE_SEQ) > 0 THEN 'Y'
+				ELSE 'N'
+			END AS "YN"
+		FROM TINTERFACE
+		WHERE 1 = 1
+		AND INTERFACE_TYPE = 'SHOPEE'
+		<if test="userId != '' and userId != null">
+		AND USER_ID = #{userId}
+		</if>
+		<if test="partnerId != '' and partnerId != null">
+		AND AUTH_ID = #{partnerId}
+		</if>
+		<if test="partnerKey != '' and partnerKey != null">
+		AND AUTH_KEY = #{partnerKey}
+		</if>
+		<if test="shipMethod != '' and shipMethod != null">
+		AND SHIP_METHOD = #{shipMethod}
+		</if>
+		<if test="post != '' and post != null">
+		AND POST = #{post}
+		</if>
+		<if test="phoneNumber != '' and phoneNumber != null">
+		AND PHONE_NUMBER = #{phoneNumber}
+		</if>
+		<if test="koAddress != '' and koAddress != null">
+		AND KO_ADDRESS = #{koAddress}
+		</if>
+		<if test="enAddress != '' and enAddress != null">
+		AND EN_ADDRESS = #{enAddress}
+		</if>
+	</select>
+
+	<insert id="insertShopee" parameterType="xrt.fulfillment.interfaces.vo.ShopeeParamVo">
+		<selectKey resultType="java.lang.Integer" keyProperty="interfaceSeq" order="BEFORE">
+			SELECT NEXT VALUE FOR TINTERFACE_SEQ
+		</selectKey>
+		INSERT INTO TINTERFACE (
+			INTERFACE_SEQ
+			, USER_ID
+			, INTERFACE_TYPE
+			, AUTH_ID
+			, AUTH_KEY
+			, SHIP_METHOD
+			, POST
+			, PHONE_NUMBER
+			, KO_ADDRESS
+			, EN_ADDRESS
+		) VALUES (
+			#{interfaceSeq}
+			, #{userId}
+			, #{interfaceType}
+			, #{partnerId}
+			, #{partnerKey}
+			, #{shipMethod}
+			, #{post}
+			, #{phoneNumber}
+			, #{koAddress}
+			, #{enAddress}
+		)
+	</insert>
+
+	<insert id="insertTInterfaceDtl" parameterType="xrt.fulfillment.interfaces.vo.InterfaceSettingDtlVo">
+		<selectKey resultType="java.lang.Integer" keyProperty="interfaceDtlSeq" order="BEFORE">
+			SELECT NEXT VALUE FOR TINTERFACE_DTL_SEQ
+		</selectKey>
+
+		INSERT INTO TINTERFACE_DTL (
+			INTERFACE_DTL_SEQ
+			, USER_ID
+			, INTERFACE_TYPE
+			, MAPPING_KEY
+			, ETC_KEY
+		) VALUES (
+			#{interfaceDtlSeq}
+			, #{userId}
+			, #{interfaceType}
+			, #{mappingKey}
+			, #{etcKey}
+		)
+	</insert>
+
+<!--	<insert id="mergeInterface" parameterType="java.util.HashMap">-->
+<!--		<selectKey resultType="java.lang.Integer" keyProperty="interfaceDtlSeq" order="BEFORE">-->
+<!--			SELECT NEXT VALUE FOR TINTERFACE_DTL_SEQ-->
+<!--		</selectKey>-->
+
+<!--		MERGE TINTERFACE_DTL AS A-->
+<!--			USING (-->
+<!--				SELECT USER_ID, INTERFACE_TYPE, MAPPING_KEY, ETC_KEY FROM TINTERFACE_DTL-->
+<!--			) AS B-->
+<!--			ON (-->
+<!--				A.USER_ID = B.USER_ID AND A.INTERFACE_TYPE = B.INTERFACE_TYPE-->
+<!--			)-->
+<!--			WHEN MATCHED AND B.MAPPING_KEY = #{mappingKey} THEN-->
+<!--				UPDATE SET MAPPING_KEY = #{mappingKey}, ETC_KEY = #{etcKey}-->
+<!--			WHEN NOT MATCHED AND B.MAPPING_KEY = #{mappingKey} THEN-->
+<!--                INSERT (INTERFACE_DTL_SEQ, USER_ID, INTERFACE_TYPE, MAPPING_KEY, ETC_KEY)-->
+<!--                VALUES (#{interfaceDtlSeq}, #{userId}, #{interfaceType}, #{mappingKey}, #{etcKey});-->
+<!--	</insert>-->
+
+	<update id="updateShopee" parameterType="xrt.fulfillment.interfaces.vo.ShopeeParamVo">
+		UPDATE TINTERFACE
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="partnerId != null and partnerId != ''">AUTH_ID = #{partnerId},</if>
+			<if test="partnerKey != null and partnerKey != ''">AUTH_KEY = #{partnerKey},</if>
+			<if test="shipMethod != null and shipMethod != ''">SHIP_METHOD = #{shipMethod},</if>
+			<if test="post != null and post != ''">POST = #{post},</if>
+			<if test="phoneNumber != null and phoneNumber != ''">PHONE_NUMBER = #{phoneNumber},</if>
+			<if test="koAddress != null and koAddress != ''">KO_ADDRESS = #{koAddress},</if>
+			<if test="enAddress != null and enAddress != ''">EN_ADDRESS = #{enAddress},</if>
+		</trim>
+		WHERE 1 = 1
+		AND INTERFACE_TYPE = 'SHOPEE'
+		<if test="userId != '' and userId != null">
+		AND USER_ID = #{userId}
+		</if>
+	</update>
+
+	<update id="updateShopeeDtl" parameterType="xrt.fulfillment.interfaces.vo.InterfaceSettingDtlVo">
+		UPDATE TINTERFACE_DTL
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="mappingKey != null and mappingKey != ''">MAPPING_KEY = #{mappingKey},</if>
+			<if test="etcKey != null and etcKey != ''">ETC_KEY = #{etcKey},</if>
+		</trim>
+		WHERE 1 = 1
+		<if test="interfaceDtlSeq != '' and interfaceDtlSeq != null">
+			AND INTERFACE_DTL_SEQ = #{interfaceDtlSeq}
+		</if>
+	</update>
+
+	<delete id="deleteShopeeDtl" parameterType="xrt.fulfillment.interfaces.vo.InterfaceSettingDtlVo">
+		DELETE FROM TINTERFACE_DTL
+		WHERE 1 = 1
+		<if test="userId != '' and userId != null">
+		AND USER_ID = #{userId}
+		</if>
+		<if test="interfaceDtlSeq != '' and interfaceDtlSeq != null">
+		AND INTERFACE_DTL_SEQ = #{interfaceDtlSeq}
+		</if>
+	</delete>
+</mapper>

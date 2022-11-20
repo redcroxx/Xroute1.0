@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 부서 관리 -->
+<mapper namespace="P000016Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000016.getSearch */
+		WITH T1 (
+			COMPCD, ORGCD, DEPTCD, NAME, PDEPTCD
+		  , SORTNO, REMARK, LVL, LVLNAME, DEPTTREE, SORTTREE
+		) AS (
+			SELECT A.COMPCD
+				 , A.ORGCD
+				 , A.DEPTCD
+				 , A.NAME
+				 , A.PDEPTCD
+			     , A.SORTNO
+			     , A.REMARK
+			     , 1 AS LVL
+			     , CONVERT(NVARCHAR, '1') AS LVLNAME
+			     , CONVERT(NVARCHAR(200), A.DEPTCD) AS DEPTTREE
+			     , CONVERT(NVARCHAR(200), dbo.UFX_Lpad(A.SORTNO, 10, '0') + A.DEPTCD) AS SORTTREE
+			FROM P016 A WITH (NOLOCK)
+			JOIN P001 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD
+			JOIN P002 C WITH (NOLOCK)
+			  ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD
+			WHERE A.PDEPTCD = '*'
+			  AND B.ISUSING = 'Y' 
+			  AND C.ISUSING = 'Y'
+			UNION ALL
+			SELECT T2.COMPCD
+				 , T2.ORGCD
+				 , T2.DEPTCD
+				 , T2.NAME
+			     , T2.PDEPTCD
+			     , T2.SORTNO
+			     , T2.REMARK
+			     , T1.LVL + 1 AS LVL
+			     , CONVERT(NVARCHAR, T1.LVL + 1) AS LVLNAME
+			     , CONVERT(NVARCHAR(200), T1.DEPTTREE + '.' + T2.DEPTCD) AS DEPTTREE
+			     , CONVERT(NVARCHAR(200), T1.SORTTREE + '.' + CONVERT(NVARCHAR(200), dbo.UFX_Lpad(T2.SORTNO, 10, '0')) + T2.DEPTCD) AS SORTTREE
+			FROM P016 T2 WITH (NOLOCK)
+			JOIN T1
+			  ON T1.COMPCD = T2.COMPCD AND T1.ORGCD = T2.ORGCD AND T1.DEPTCD = T2.PDEPTCD
+		)
+		SELECT T1.COMPCD
+			 , C.NAME AS COMPNM
+			 , T1.ORGCD
+			 , B.NAME AS ORGNM
+			 , T1.DEPTCD
+			 , T1.NAME AS DEPTNM
+			 , T1.NAME AS DEPTINFO
+			 , T1.PDEPTCD
+			 , T1.SORTNO
+			 , T1.REMARK
+			 , T1.LVL
+			 , T1.LVLNAME
+			 , T1.ORGCD + '.' + T1.DEPTTREE AS DEPTTREE
+			 , T1.SORTTREE AS SORTTREE
+		FROM T1
+		JOIN P002 B WITH (NOLOCK)
+		  ON T1.COMPCD = B.COMPCD AND T1.ORGCD = B.ORGCD
+		JOIN P001 C WITH (NOLOCK)
+		  ON T1.COMPCD = C.COMPCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+				AND T1.COMPCD = #{S_COMPCD}
+			</if>
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+				AND T1.ORGCD = #{S_ORGCD}
+			</if>
+		</trim>
+		UNION ALL
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , A.ORGCD
+			 , A.NAME AS ORGNM
+			 , NULL AS DEPTNM
+			 , NULL AS DEPTCD
+			 , A.NAME AS DEPTINFO
+			 , NULL AS PDEPTCD
+			 , 0 AS SORTNO
+			 , NULL AS REMARK
+			 , 0 AS LVL
+			 , '사업장' AS LVLNAME
+			 , A.ORGCD + '.' AS DEPTTREE
+			 , NULL AS SORTTREE
+		FROM P002 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD
+		WHERE A.ISUSING = 'Y'
+		  AND B.ISUSING = 'Y'
+		<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND A.COMPCD = #{S_COMPCD}
+		</if>
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		ORDER BY COMPCD, ORGCD, SORTTREE, DEPTTREE
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000016.getDetail */
+		SELECT A.COMPCD
+			 , C.NAME AS COMPNM
+			 , A.ORGCD
+			 , D.NAME AS ORGNM
+			 , A.DEPTCD
+			 , A.NAME AS DEPTNM
+			 , A.PDEPTCD
+			 , B.NAME AS PDEPTNM
+			 , A.LVL
+			 , A.LVL AS LVLNAME
+			 , A.SORTNO
+			 , A.REMARK
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		FROM P016 A WITH (NOLOCK)
+		LEFT OUTER JOIN P016 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.PDEPTCD = B.DEPTCD
+		JOIN P001 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD
+		JOIN P002 D WITH (NOLOCK)
+		  ON A.COMPCD = D.COMPCD AND A.ORGCD = D.ORGCD
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.ORGCD = #{ORGCD}
+		  AND A.DEPTCD = #{DEPTCD}
+	</select>
+	
+	<!-- 부서별 사용자 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000016.getDetailList */
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , A.USERCD
+			 , A.NAME AS USERNM
+			 , A.ORGCD
+			 , C.NAME AS ORGNM
+			 , A.DEPTCD
+			 , D.NAME AS DEPTNM
+			 , A.CUSTCD
+			 , E.NAME AS CUSTNM
+			 , A.WHCD
+			 , F.NAME AS WHNM
+			 , A.POSITION
+			 , A.USERGROUP
+			 , A.PHONENO
+			 , A.FAX
+			 , A.EMAIL
+			 , A.SEX
+			 , A.BIRTHDATE
+			 , A.WORKTYPE
+			 , A.EMPLOYTYPE
+			 , A.EMPLOYDATE
+			 , A.ISUSING
+		FROM S010 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD
+		JOIN P002 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD
+		JOIN P016 D WITH (NOLOCK)
+		  ON A.COMPCD = D.COMPCD AND A.ORGCD = D.ORGCD AND A.DEPTCD = D.DEPTCD
+		LEFT OUTER JOIN P003 E WITH (NOLOCK)
+		  ON A.COMPCD = E.COMPCD AND A.CUSTCD = E.CUSTCD
+		LEFT OUTER JOIN P004 F WITH (NOLOCK)
+		  ON A.COMPCD = F.COMPCD AND A.WHCD = F.WHCD
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.ORGCD = #{ORGCD}
+		  AND A.DEPTCD = #{DEPTCD}
+		ORDER BY A.USERCD
+	</select>
+	
+	<!-- 부서 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000016.insertMst */
+		INSERT INTO P016 (
+			COMPCD, ORGCD, DEPTCD, PDEPTCD, NAME
+		  , LVL, SORTNO, REMARK
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{DEPTCD}), #{PDEPTCD}, #{DEPTNM}
+		  , #{LVL}, #{SORTNO}, #{REMARK}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 부서 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000016.updateMst */
+		UPDATE P016 WITH (ROWLOCK)
+		   SET NAME = #{DEPTNM}
+			 , SORTNO = #{SORTNO}
+			 , REMARK = #{REMARK}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+			 , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND ORGCD = #{ORGCD}
+		  AND DEPTCD = #{DEPTCD}
+	</update>
+
+	<!-- 부서 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000016.deleteMst */
+		DELETE FROM P016 WITH (ROWLOCK)
+		 WHERE COMPCD = #{COMPCD} 
+		   AND ORGCD = #{ORGCD} 
+		   AND DEPTCD = #{DEPTCD}
+	</delete>
+	
+</mapper>

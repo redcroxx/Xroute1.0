@@ -1,0 +1,1036 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyOApiOrderListMapper">
+    <select id="getSearch" parameterType="commonSearchVo" resultType="LDataMap">
+        /* AtomyOApiOrderListMapper.getSearch */
+        SELECT
+            A.SALE_DATE       AS saleDate,
+            A.ORDER_ID        AS orderId,
+            A.SALE_NUM        AS saleNum,
+            A.SEQ             AS seq,
+            A.ORDER_DATE      AS orderDate,
+            A.CUST_NO         AS custNo,
+            A.ORDER_NAME      AS orderName,
+            A.MATERIAL_CODE   AS materialCode,
+            A.MATERIAL_NAME   AS materialName,
+            A.SALE_QTY        AS saleQty,
+            A.DELI_NAME       AS deliName,
+            A.PHONE_NO        AS phoneNo,
+            A.HAND_PHONE      AS handPhone,
+            A.POST_NO         AS postNo,
+            A.PACKING_MEMO    AS packingMemo,
+            A.DELI_MEMO       AS deliMemo,
+            A.DELI_GUBUN      AS deliGubun,
+            A.BOOK_YN         AS bookYn,
+            A.REQ_NUM         AS reqNum,
+            A.TEMP            AS temp,
+            A.SUB_ORDER_NAME  AS subOrderName,
+            A.REG_DATE        AS regDate,
+            A.BIRTH_DAY       AS birthDay,
+            A.ADDRESS         AS address,
+            A.THANKS_LETTER_YN     AS thanksLetterYn,
+            A.CENTER_NAME     AS centerName,
+            A.PRICE_PRINT     AS pricePrint,
+            A.CUST_PRICE      AS custPrice,
+            A.SALE_PRICE      AS salePrice,
+            A.CUST_PV         AS custPv,
+            A.TOTAL_PV        AS totalPv,
+            A.NATION_CODE     AS nationCode,
+            A.ADDR1           AS addr1,
+            A.ADDR2           AS addr2,
+            A.ADDR3           AS addr3,
+            A.ADDR4           AS addr4,
+            A.ADDR4           AS addr4,
+            A.BOX_SIZE        AS boxSize,
+            A.ORDER_YN        AS orderYn,
+            A.INVOICE_YN      AS invoiceYn,
+            A.EXC_RATE        AS excRate,
+            A.EXC_CUR         AS excCur,
+            A.EXC_AMT         AS excAmt,
+            CASE
+                WHEN A.SHIPMENTS = '1' THEN '취소불가'
+                ELSE '취소가능'
+            END               AS shipments,
+            A.ORDER_CANCEL    AS orderCancel,
+            A.SALE_TOT_SUM    AS saleTotSum,
+            A.SALE_TAG_SUM    AS saleTagSum,
+            A.EXC_TAG_SUM     AS excTagSum,
+            A.EXC_TOT_SUM     AS excTotSum,
+            A.ADDUSERCD       AS addusercd,
+            CONVERT(CHAR(19), A.ADDDATETIME, 120) AS adddatetime,
+            A.UPDUSERCD         AS updusercd,
+            CONVERT(CHAR(19), A.UPDDATETIME, 120) AS upddatetime
+        FROM API_ATOMY_ORDER A WITH (NOLOCK)
+        WHERE 1 = 1
+        AND A.ADDDATETIME BETWEEN CONVERT(CHAR(19), #{sToDate} + ' 00:00:00') AND CONVERT(CHAR(19), #{sFromDate} + ' 23:59:59')
+        AND A.ORDER_CANCEL = 'N'
+        <if test="sOrdNo != null and sOrdNo != ''">
+            AND A.SALE_NUM = #{sOrdNo}
+        </if>
+        <choose>
+            <when test="sKeywordType == 'ORDER_YN'">
+                <if test='sKeyword =="Y"'>
+                    AND A.ORDER_YN = 'Y'
+                </if>
+                <if test='sKeyword =="N"'>
+                    AND A.ORDER_YN = 'N'
+                </if>
+            </when>
+            <when test="sKeywordType == 'INVOICE_YN'">
+                <if test='sKeyword =="Y"'>
+                    AND A.INVOICE_YN = 'Y'
+                </if>
+                <if test='sKeyword =="N"'>
+                    AND A.INVOICE_YN = 'N'
+                </if>
+            </when>
+        </choose>
+        ORDER BY A.ADDDATETIME DESC
+    </select>
+
+    <select id="getBoxInfo" parameterType="xrt.fulfillment.atomy.AtomyBoxSizeVO" resultType="xrt.fulfillment.atomy.AtomyBoxSizeVO">
+        SELECT
+            TOP 1
+            NO AS no,
+            LENGTH AS length,
+            WIDTH AS width,
+            HEIGHT AS height,
+            CBM AS cbm,
+            WEIGHT AS weight,
+            (CONVERT(FLOAT, #{weight}) * 0.8) AS limitWeight
+        FROM
+            ATOMY_BOX_SIZE
+        WHERE 1 = 1
+        AND CONVERT(FLOAT, WEIGHT) = (
+            <![CDATA[
+                CASE
+                    WHEN CONVERT(FLOAT, #{weight}) <= (2.00 * 0.7) THEN 2.00
+                    WHEN CONVERT(FLOAT, #{weight}) > (2.00 * 0.7) AND CONVERT(FLOAT, #{weight}) <= (2.50 * 0.7) THEN 2.50
+                    WHEN CONVERT(FLOAT, #{weight}) > (2.50 * 0.7) AND CONVERT(FLOAT, #{weight}) <= (3.50 * 0.7) THEN 3.50
+                    WHEN CONVERT(FLOAT, #{weight}) > (3.50 * 0.7) AND CONVERT(FLOAT, #{weight}) <= (4.50 * 0.7) THEN 4.50
+                    WHEN CONVERT(FLOAT, #{weight}) > (4.50 * 0.7) AND CONVERT(FLOAT, #{weight}) <= (6.50 * 0.7) THEN 6.50
+                END
+            ]]>
+        )
+        OR CONVERT(FLOAT, CBM) = (
+            <![CDATA[
+                CASE
+                    WHEN CONVERT(FLOAT, #{cbm}) <= (0.0055 * 0.7) THEN 0.0055
+                    WHEN CONVERT(FLOAT, #{cbm}) > (0.0055 * 0.7) AND CONVERT(FLOAT, #{cbm}) <= (0.0088 * 0.7) THEN 0.0088
+                    WHEN CONVERT(FLOAT, #{cbm}) > (0.0088 * 0.7) AND CONVERT(FLOAT, #{cbm}) <= (0.0133 * 0.7) THEN 0.0133
+                    WHEN CONVERT(FLOAT, #{cbm}) > (0.0133 * 0.7) AND CONVERT(FLOAT, #{cbm}) <= (0.0186 * 0.7) THEN 0.0186
+                    WHEN CONVERT(FLOAT, #{cbm}) > (0.0186 * 0.7) AND CONVERT(FLOAT, #{cbm}) <= (0.0288 * 0.7) THEN 0.0288
+                END
+            ]]>
+        )
+        ORDER BY WEIGHT DESC
+    </select>
+    
+    <select id="getCountry" parameterType="xrt.alexcloud.api.atomy.AtomyAPIParamVO" resultType="xrt.fulfillment.atomy.AtomyCountryZoneVO">
+        SELECT 
+		    COUNTRY_NAME AS countryName,
+		    LOCAL_SHIPPER AS localShipper
+		FROM
+		    ATOMY_COUNTRY_ZONE
+		WHERE 1 = 1
+		AND COUNTRY_CODE = #{country}
+    </select>
+    
+    <select id="getRate" parameterType="xrt.fulfillment.atomy.AtomyRateVO" resultType="xrt.fulfillment.atomy.AtomyRateVO">
+        SELECT
+		    CASE
+				WHEN #{countryName} = 'ITALY'           THEN ITALY
+		        WHEN #{countryName} = 'AUSTRALIA'       THEN AUSTRALIA
+		        WHEN #{countryName} = 'HONG KONG'       THEN HONGKONG
+		        WHEN #{countryName} = 'JAPAN'           THEN JAPAN
+		        WHEN #{countryName} = 'MALAYSIA'        THEN MALAYSIA
+		        WHEN #{countryName} = 'MONGOLIA'        THEN MONGOLIA
+		        WHEN #{countryName} = 'NEW ZEALAND'     THEN NEWZEALAND
+		        WHEN #{countryName} = 'SINGAPORE'       THEN SINGAPORE
+		        WHEN #{countryName} = 'TAIWAN'          THEN TAIWAN
+		        WHEN #{countryName} = 'UNITED STATE'    THEN USA
+		        WHEN #{countryName} = 'CANADA'          THEN CANADA
+		        WHEN #{countryName} = 'FRANCE'          THEN FRANCE
+		        WHEN #{countryName} = 'GERMANY'         THEN GERMANY
+		        WHEN #{countryName} = 'SWITZERLAND'     THEN SWITZERLAND
+		        WHEN #{countryName} = 'UNITED KINGDOM'  THEN UNITEDKINGDOM
+		        WHEN #{countryName} = 'CAMBODIA'        THEN CAMBODIA
+		        WHEN #{countryName} = 'THAILAND'        THEN THAILAND
+		        WHEN #{countryName} = 'PHILIPPINES'     THEN PHILIPPINES
+		        WHEN #{countryName} = 'SPAIN'           THEN SPAIN
+		        WHEN #{countryName} = 'PORTUGAL'        THEN PORTUGAL
+		        WHEN #{countryName} = 'RUSSIA'          THEN RUSSIA
+		    END AS price
+		FROM
+		    ATOMY_RATE
+		WHERE 1 = 1
+		AND CONVERT(DECIMAL(4,2), KG) = (
+		    <![CDATA[
+			    CASE
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) <= 0.5 THEN 0.5
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 0.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 1.0 THEN 1.0
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 1.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 1.5 THEN 1.5
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 1.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 2.0 THEN 2.0
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 2.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 2.5 THEN 2.5
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 2.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 3.0 THEN 3.0
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 3.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 3.5 THEN 3.5
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 3.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 4.0 THEN 4.0
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 4.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 4.5 THEN 4.5
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 4.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 5.0 THEN 5.0
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 5.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 5.5 THEN 5.5
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 5.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 6.0 THEN 6.0
+			        WHEN CONVERT(DECIMAL(4,2), #{kg}) > 6.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 6.5 THEN 6.5
+		            WHEN CONVERT(DECIMAL(4,2), #{kg}) > 6.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 7.0 THEN 7.0
+		            WHEN CONVERT(DECIMAL(4,2), #{kg}) > 7.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 7.5 THEN 7.5
+		            WHEN CONVERT(DECIMAL(4,2), #{kg}) > 7.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 8.0 THEN 8.0
+		            WHEN CONVERT(DECIMAL(4,2), #{kg}) > 8.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 8.5 THEN 8.5
+		            WHEN CONVERT(DECIMAL(4,2), #{kg}) > 8.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 9.0 THEN 9.0
+		            WHEN CONVERT(DECIMAL(4,2), #{kg}) > 9.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 9.5 THEN 9.5
+		            WHEN CONVERT(DECIMAL(4,2), #{kg}) > 9.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 10.0 THEN 10.0
+			    ELSE 0.1
+			    END 
+		    ]]>
+		)
+    </select>
+    
+    <select id="getAtomyOrderList" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            SALE_DATE AS saleDate,
+            ORDER_ID AS orderId,
+            SALE_NUM AS saleNum,
+            SEQ AS seq,
+            ORDER_DATE AS orderDate,
+            CUST_NO AS custNo,
+            ORDER_NAME AS orderName,
+            MATERIAL_CODE AS materialCode,
+            MATERIAL_NAME AS materialName,
+            SALE_QTY AS saleQty,
+            DELI_NAME AS deliName,
+            PHONE_NO AS phoneNo,
+            HAND_PHONE AS handPhone,
+            POST_NO AS postNo,
+            CUST_PRICE AS custPrice,
+            SALE_PRICE AS salePrice,
+            CUST_PV AS custPv,
+            TOTAL_PV AS totalPv,
+            NATION_CODE AS nationCode,
+            ADDR1 AS addr1,
+            ADDR2 AS addr2,
+            ADDR3 AS addr3,
+            ADDR4 AS addr4,
+            BOX_SIZE AS boxSize,
+            EXC_RATE AS excRate,
+            EXC_CUR AS excCur,
+            EXC_AMT AS excAmt
+        FROM
+            API_ATOMY_ORDER
+        WHERE 1 = 1
+        AND ADDDATETIME BETWEEN CONVERT(CHAR(19), #{startDate} + ' 00:00:00') AND CONVERT(CHAR(19), #{endDate} + ' 23:59:59')
+        AND ORDER_YN = 'N'
+        AND ORDER_CANCEL = 'N'
+    </select>
+    
+    <select id="getAtomyOrderDtlList" parameterType="LDataMap" resultType="LDataMap">
+            SELECT
+                A.*,
+                B.seq AS ordCnt,
+                B.totalSaleQty,
+                B.totalPrice,
+                B.totalWidth,
+                B.totalLength,
+                B.totalHeight,
+                B.totalKg,
+                B.totalCbm,
+                B.totalVolumeWeight
+            FROM(
+                SELECT
+                    A.SALE_DATE AS saleDate,
+                    A.ORDER_ID AS orderId,
+                    A.SALE_NUM AS saleNum,
+                    A.SEQ AS seq,
+                    A.ORDER_DATE AS orderDate,
+                    A.CUST_NO AS custNo,
+                    A.ORDER_NAME AS orderName,
+                    A.MATERIAL_CODE AS materialCode,
+                    A.MATERIAL_NAME AS materialName,
+                    B.EN_PRODUCT_NAME AS enProductName,
+                    CONVERT(INT, A.SALE_QTY) AS saleQty,
+                    A.DELI_NAME AS deliName,
+                    A.PHONE_NO AS phoneNo,
+                    A.HAND_PHONE AS handPhone,
+                    A.POST_NO AS postNo,
+                    A.NATION_CODE AS nationCode,
+                    A.CUST_PRICE AS custPrice,
+                    A.SALE_PRICE AS salePrice,
+                    A.CUST_PV AS custPv,
+                    A.TOTAL_PV AS totalPv,
+                    A.ADDR1 AS addr1,
+                    A.ADDR2 AS addr2,
+                    A.ADDR3 AS addr3,
+                    A.ADDR4 AS addr4,
+                    A.EXC_RATE AS excRate,
+                    A.EXC_CUR AS excCur,
+                    A.EXC_AMT AS excAmt,
+                    ISNULL(A.SALE_TAG_SUM, '') AS saleTagSum,
+                    ISNULL(A.SALE_TOT_SUM, '') AS saleTotSum,
+                    ISNULL(A.EXC_TAG_SUM, '') AS excTagSum,
+                    ISNULL(A.EXC_TOT_SUM, '') AS excTotSum
+                FROM
+                    API_ATOMY_ORDER A
+                LEFT JOIN ATOMY_PRODUCT B
+                ON A.MATERIAL_CODE = B.ODP_CODE
+                WHERE 1 = 1
+                AND A.ORDER_YN = 'N'
+                AND A.ORDER_CANCEL = 'N'
+                <if test="saleNum != null and saleNum !=''">
+                AND SALE_NUM = #{saleNum}
+                </if>
+            ) A,
+            (
+                SELECT
+                    SALE_NUM,
+                    MAX(A.SEQ) AS seq,
+                    SUM(CONVERT(INT, A.SALE_QTY)) AS totalSaleQty,
+                    SUM(CONVERT(FLOAT, A.SALE_PRICE)) AS totalPrice,
+                    SUM(CONVERT(INT, B.WIDTH)) AS totalWidth,
+                    SUM(CONVERT(INT, B.LENGTH)) AS totalLength,
+                    SUM(CONVERT(INT, B.HEIGHT)) AS totalHeight,
+                    SUM(CONVERT(float, B.KG)) AS totalKg,
+                    SUM(CONVERT(float, B.CBM)) AS totalCbm,
+                    SUM(CONVERT(float, B.VOLUME_WEIGHT)) AS totalVolumeWeight
+                FROM
+                    API_ATOMY_ORDER A
+                LEFT JOIN ATOMY_PRODUCT B
+                ON A.MATERIAL_CODE = B.ODP_CODE
+                WHERE 1 = 1
+                AND A.ORDER_YN = 'N'
+                AND A.ORDER_CANCEL = 'N'
+                <if test="saleNum != null and saleNum !=''">
+                AND SALE_NUM = #{saleNum}
+                </if>
+                GROUP BY SALE_NUM
+            ) B
+            WHERE 1 = 1
+            AND A.saleNum = B.SALE_NUM
+    </select>
+    
+    <select id="getGroupByOrderList" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            SALE_NUM AS saleNum,
+            ROW_NUMBER() OVER(ORDER BY SALE_NUM) AS rowNum
+        FROM
+            API_ATOMY_ORDER
+        WHERE 1 = 1
+        AND ADDDATETIME BETWEEN CONVERT(CHAR(19), #{sToDate} + ' 00:00:00') AND CONVERT(CHAR(19), #{sFromDate} + ' 23:59:59')
+        AND ORDER_YN = 'N'
+        AND ORDER_CANCEL = 'N'
+        GROUP BY SALE_NUM
+    </select>
+    
+    <select id="getSeller" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            A.NAME
+            , A.TEL1
+            , A.TEL2
+            , A.ENG_ADDR
+            , A.POST
+        FROM P002 A
+        WHERE 1 = 1
+        AND A.COMPCD = #{compcd}
+        AND A.ORGCD = #{orgcd}
+    </select>
+    
+    <select id="getTorderRelaySeq" parameterType="LDataMap" resultType="java.lang.Integer">
+        SELECT
+            CASE
+                WHEN a.relaySeq IS NULL THEN 0
+                ELSE a.relaySeq
+            END AS relaySeq
+        FROM (
+            SELECT
+                MAX(RELAY_SEQ) AS relaySeq
+            FROM TORDER
+            WHERE 1 = 1
+            AND COMPCD = #{compcd}
+            AND ORGCD = #{orgcd}
+            AND UPLOAD_DATE = #{fileYmd}
+        ) a
+    </select>
+    
+    <select id="getTorderFileSeq" parameterType="LDataMap" resultType="java.lang.Integer">
+        SELECT
+            MAX(a.fileCount) fileCount
+        FROM (
+            SELECT
+                ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+            FROM ORDERFILE
+            WHERE 1 = 1
+            AND COMPCD = #{compcd}
+            AND ORGCD = #{orgcd}
+            AND FILE_YMD = #{fileYmd}
+            UNION ALL
+            SELECT
+                ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+            FROM ORDER_AMAZON
+            WHERE 1 = 1
+            AND COMPCD = #{compcd}
+            AND ORGCD = #{orgcd}
+            AND FILE_YMD = #{fileYmd}
+            UNION ALL
+            SELECT
+                ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+            FROM ORDER_ETSY
+            WHERE 1 = 1
+            AND COMPCD = #{compcd}
+            AND ORGCD = #{orgcd}
+            AND FILE_YMD = #{fileYmd}
+            UNION ALL
+            SELECT
+                ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+            FROM ORDER_EBAY
+            WHERE 1 = 1
+            AND COMPCD = #{compcd}
+            AND ORGCD = #{orgcd}
+            AND FILE_YMD = #{fileYmd}
+            UNION ALL
+            SELECT
+                ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+            FROM API_ORDER_MASTER
+            WHERE 1 = 1
+            AND COMPCD = #{compcd}
+            AND ORGCD = #{orgcd}
+            AND FILE_YMD = #{fileYmd}
+        ) a
+    </select>
+    
+    <select id="getAtomyStatusList" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            T.ORD_NO AS ordNo,
+            T.XRT_INVC_SNO AS xrtInvcSno,
+            D.ORD_SEQ AS ordSeq
+        FROM TORDER T
+        LEFT JOIN TORDERDTL D
+        ON T.ORD_CD = D.ORD_CD
+        WHERE 1 = 1
+        AND T.ORGCD = #{orgCd}
+        AND T.UPLOAD_DATE = #{todayDate}
+    </select>
+    
+    <select id="getAtomySendingWaitList" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            T.ORD_NO AS ordNo,
+            T.XRT_INVC_SNO AS xrtInvcSno
+        FROM TORDER T
+        WHERE 1 = 1
+        AND T.ORGCD = #{orgCd}
+        AND T.UPLOAD_DATE = #{todayDate}
+    </select>
+    
+    <select id="getEtdCompList" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            T.ORD_NO AS ordNo,
+            D.ORD_SEQ AS ordSeq,
+            CONVERT(date,GETDATE()) AS deliDate
+        FROM TORDER T
+        LEFT JOIN TORDERDTL D
+        ON T.ORD_CD = D.ORD_CD
+        WHERE SHIPMENT_BL_NO IN (
+            SELECT
+                SHIPMENT_BL_NO
+            FROM SHIPMENT_BL
+            WHERE HOUSE_BL_NO IN (
+                SELECT
+                    HOUSE_BL_NO
+                FROM HOUSE_BL
+                WHERE MASTER_BL_NO = #{masterBlNo}
+            )
+        )
+	    AND T.ORGCD = #{orgCd}
+    </select>
+    
+    <select id="getOrderY" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            DISTINCT T.XRT_INVC_SNO AS xrtInvcSno,
+            T.ORD_NO       AS ordNo
+        FROM TORDER T
+        LEFT JOIN API_ATOMY_ORDER AP
+        ON T.ORD_NO = AP.SALE_NUM
+        WHERE 1 = 1
+        AND AP.ORDER_YN = 'Y'
+        AND AP.ORDER_CANCEL = 'N'
+        AND T.ORD_NO IN
+        <foreach collection="dataList" item="item" open="(" close=")" separator=",">
+            #{item.saleNum}
+        </foreach>
+    </select>
+    
+    <select id="orderCancelList" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            DISTINCT
+            SALE_NUM AS saleNum
+        FROM ATOMY_ORDER_CANCEL
+        WHERE 1 = 1
+        AND SHIPMENT_REF = '0'
+    </select>
+    
+    <select id="unipassRefreshList" parameterType="LDataMap" resultType="LDataMap">
+		SELECT
+            DISTINCT
+            EXP_NO AS EXP_NO
+        FROM TORDER
+        WHERE 1 = 1 
+        AND EXP_NO is not null 
+        AND ORGCD = 'M00494' 
+        AND UNIPASS_REFRESH is null
+        AND UPLOAD_DATE >= '20210701'
+    </select>
+    
+     <select id="unipassRefreshListNormalSeller" parameterType="LDataMap" resultType="LDataMap">
+		SELECT
+            DISTINCT
+            EXP_NO AS EXP_NO
+        FROM TORDER
+        WHERE 1 = 1 
+        AND EXP_NO is not null 
+        AND ORGCD != 'M00494' 
+        AND UNIPASS_REFRESH is null
+        AND UPLOAD_DATE >= '20210701'
+    </select>
+    
+    <select id="getAtomyShipmentCompList" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            T.ORD_NO AS ordNo,
+            D.ORD_SEQ AS ordSeq,
+			T.UNIPASS_TKOFDT AS deliDate
+        FROM TORDER T
+		LEFT JOIN TORDERDTL D
+        ON T.ORD_CD = D.ORD_CD
+	    WHERE 1 = 1
+	    AND EXP_NO = #{EXP_NO}
+        AND T.ORGCD = 'M00494'
+        AND UPLOAD_DATE >= '20210701'
+    </select>
+    
+    <insert id="insertApiHistory" parameterType="LDataMap">
+        <selectKey resultType="java.lang.String" keyProperty="atomyApiHistorySeq" order="BEFORE">
+            SELECT
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ATOMY_API_HISTORY), 20) AS atomyApiHistorySeq
+        </selectKey>
+        INSERT INTO ATOMY_API_HISTORY (
+            ATOMY_API_HISTORY_SEQ,
+            ADDDATETIME,
+            API_TYPE,
+            "STATUS",
+            STATUS_DETAIL_CODE,
+            DATA,
+            ERR_MSG
+        ) VALUES (
+            #{atomyApiHistorySeq},
+            GETDATE(),
+            #{apiType},
+            #{Status},
+            #{StatusDetailCode},
+            #{Data},
+            #{ErrMsg}
+        )
+    </insert>
+    
+    <update id="setOrderList" parameterType="LDataMap">
+        MERGE INTO API_ATOMY_ORDER AS A
+            USING (
+               SELECT #{OrderId} AS ORDER_ID, #{SaleNum} AS SALE_NUM
+            ) B
+            ON A.ORDER_ID = B.ORDER_ID
+            AND A.SALE_NUM = B.SALE_NUM
+            WHEN NOT MATCHED THEN
+                <selectKey resultType="java.lang.String" keyProperty="apiAtomyOrderSeq" order="BEFORE">
+                    SELECT
+                        RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_API_ATOMY_ORDER), 20) AS apiAtomyOrderSeq
+                </selectKey>
+                INSERT (
+                    API_ATOMY_ORDER_SEQ,
+                    COMPCD,
+                    ORGCD,
+                    SALE_DATE,
+                    ORDER_ID,
+                    SALE_NUM,
+                    SEQ,
+                    ORDER_DATE,
+                    CUST_NO,
+                    ORDER_NAME,
+                    MATERIAL_CODE,
+                    MATERIAL_NAME,
+                    SALE_QTY,
+                    DELI_NAME,
+                    PHONE_NO,
+                    HAND_PHONE,
+                    POST_NO,
+                    PACKING_MEMO,
+                    DELI_MEMO,
+                    DELI_GUBUN,
+                    BOOK_YN,
+                    REQ_NUM,
+                    TEMP,
+                    SUB_ORDER_NAME,
+                    REG_DATE,
+                    BIRTH_DAY,
+                    ADDRESS,
+                    THANKS_LETTER_YN,
+                    CENTER_NAME,
+                    PRICE_PRINT,
+                    CUST_PRICE,
+                    SALE_PRICE,
+                    CUST_PV,
+                    TOTAL_PV,
+                    NATION_CODE,
+                    ADDR1,
+                    ADDR2,
+                    ADDR3,
+                    ADDR4,
+                    BOX_SIZE,
+                    EXC_RATE,
+					EXC_CUR,
+					EXC_AMT,
+					SHIPMENTS,
+					EXC_TAG_SUM,
+					EXC_TOT_SUM,
+					SALE_TAG_SUM,
+					SALE_TOT_SUM,
+                    ADDUSERCD,
+                    ADDDATETIME,
+                    UPDUSERCD,
+                    UPDDATETIME,
+                    TERMINALCD
+                ) VALUES (
+                    #{apiAtomyOrderSeq},
+                    #{compcd},
+                    #{orgcd},
+                    #{SaleDate},
+                    #{OrderId},
+                    #{SaleNum},
+                    #{Seq},
+                    #{OrderDate},
+                    #{CustNo},
+                    #{OrderName},
+                    REPLACE(#{MaterialCode}, '*', ''),
+                    #{MaterialName},
+                    #{SaleQty},
+                    #{DeliName},
+                    #{PhoneNo},
+                    #{HandPhone},
+                    #{PostNo},
+                    #{PackingMemo},
+                    #{DeliMemo},
+                    #{DeliGubun},
+                    #{BookYn},
+                    #{ReqNum},
+                    #{Temp},
+                    #{SubOrderName},
+                    #{RegDate},
+                    #{BirthDay},
+                    #{Address},
+                    #{ThanksLetterYn},
+                    #{CenterName},
+                    #{PricePrint},
+                    #{CustPrice},
+                    #{SalePrice},
+                    #{CustPV},
+                    #{TotalPV},
+                    #{NationCode},
+                    #{Addr1},
+                    #{Addr2},
+                    #{Addr3},
+                    #{Addr4},
+                    #{BoxSize},
+                    #{ExcRate},
+                    #{ExcCur},
+                    #{ExcAmt},
+                    #{shipments},
+                    #{ExcTagSum},
+                    #{ExcTotSum},
+                    #{SaleTagSum},
+                    #{SaleTotSum},
+                    #{addusercd},
+                    GETDATE(),
+                    #{updusercd},
+                    GETDATE(),
+                    #{terminalCd}
+                );
+    </update>
+    
+    <update id="setLastOrderList" parameterType="LDataMap">
+        MERGE INTO API_ATOMY_ORDER AS A
+            USING (
+               SELECT #{OrderId} AS ORDER_ID, #{SaleNum} AS SALE_NUM
+            ) B
+            ON A.ORDER_ID = B.ORDER_ID
+            AND A.SALE_NUM = B.SALE_NUM
+            WHEN NOT MATCHED THEN
+                <selectKey resultType="java.lang.String" keyProperty="apiAtomyOrderSeq" order="BEFORE">
+                    SELECT
+                        RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_API_ATOMY_ORDER), 20) AS apiAtomyOrderSeq
+                </selectKey>
+                INSERT (
+                    API_ATOMY_ORDER_SEQ,
+                    COMPCD,
+                    ORGCD,
+                    SALE_DATE,
+                    ORDER_ID,
+                    SALE_NUM,
+                    SEQ,
+                    ORDER_DATE,
+                    CUST_NO,
+                    ORDER_NAME,
+                    MATERIAL_CODE,
+                    MATERIAL_NAME,
+                    SALE_QTY,
+                    DELI_NAME,
+                    PHONE_NO,
+                    HAND_PHONE,
+                    POST_NO,
+                    PACKING_MEMO,
+                    DELI_MEMO,
+                    DELI_GUBUN,
+                    BOOK_YN,
+                    REQ_NUM,
+                    TEMP,
+                    SUB_ORDER_NAME,
+                    REG_DATE,
+                    BIRTH_DAY,
+                    ADDRESS,
+                    THANKS_LETTER_YN,
+                    CENTER_NAME,
+                    PRICE_PRINT,
+                    CUST_PRICE,
+                    SALE_PRICE,
+                    CUST_PV,
+                    TOTAL_PV,
+                    NATION_CODE,
+                    ADDR1,
+                    ADDR2,
+                    ADDR3,
+                    ADDR4,
+                    BOX_SIZE,
+                    EXC_RATE,
+                    EXC_CUR,
+                    EXC_AMT,
+                    SHIPMENTS,
+                    EXC_TAG_SUM,
+                    EXC_TOT_SUM,
+                    SALE_TAG_SUM,
+                    SALE_TOT_SUM,
+                    ADDUSERCD,
+                    ADDDATETIME,
+                    UPDUSERCD,
+                    UPDDATETIME,
+                    TERMINALCD
+                ) VALUES (
+                    #{apiAtomyOrderSeq},
+                    #{compcd},
+                    #{orgcd},
+                    #{SaleDate},
+                    #{OrderId},
+                    #{SaleNum},
+                    #{Seq},
+                    #{OrderDate},
+                    #{CustNo},
+                    #{OrderName},
+                    REPLACE(#{MaterialCode}, '*', ''),
+                    #{MaterialName},
+                    #{SaleQty},
+                    #{DeliName},
+                    #{PhoneNo},
+                    #{HandPhone},
+                    #{PostNo},
+                    #{PackingMemo},
+                    #{DeliMemo},
+                    #{DeliGubun},
+                    #{BookYn},
+                    #{ReqNum},
+                    #{Temp},
+                    #{SubOrderName},
+                    #{RegDate},
+                    #{BirthDay},
+                    #{Address},
+                    #{ThanksLetterYn},
+                    #{CenterName},
+                    #{PricePrint},
+                    #{CustPrice},
+                    #{SalePrice},
+                    #{CustPV},
+                    #{TotalPV},
+                    #{NationCode},
+                    #{Addr1},
+                    #{Addr2},
+                    #{Addr3},
+                    #{Addr4},
+                    #{BoxSize},
+                    #{ExcRate},
+                    #{ExcCur},
+                    #{ExcAmt},
+                    #{shipments},
+                    #{ExcTagSum},
+                    #{ExcTotSum},
+                    #{SaleTagSum},
+                    #{SaleTotSum},
+                    #{addusercd},
+                    CONVERT(nvarchar(100), DATEADD(dd,-1,GETDATE()), 21),
+                    #{updusercd},
+                    GETDATE(),
+                    #{terminalCd}
+                );
+    </update>
+    
+    <insert id="insertOrder" parameterType="xrt.fulfillment.interfaces.vo.TOrderVo">
+        <selectKey resultType="java.util.HashMap" keyProperty="xrtInvcSno,ordCd" order="BEFORE">
+            SELECT
+                'XLF' + RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_XLF_INVC_SNOKEY), 10) AS xrtInvcSno
+                , 'W' + RIGHT('0000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDCD_KEY), 13) AS ordCd
+        </selectKey>
+        INSERT INTO TORDER (
+            ORD_CD
+            , COMPCD
+            , ORGCD
+            , WHCD
+            , UPLOAD_DATE
+            , FILE_SEQ
+            , FILE_NM
+            , FILE_NM_REAL
+            , PAYMENT_TYPE
+            , SITE_CD
+            , STATUS_CD
+            , STOCK_TYPE
+            , LOCAL_SHIPPER
+            , MALL_NM
+            , SHIP_METHOD_CD
+            , ORD_NO
+            , CART_NO
+            , ORD_CNT
+            , XRT_INVC_SNO
+            , S_NATION
+            , E_NATION
+            , C_WGT_REAL
+            , WGT
+            , BOX_WIDTH
+            , BOX_LENGTH
+            , BOX_HEIGHT
+            , BOX_VOLUME
+            , SHIP_NAME
+            , SHIP_TEL
+            , SHIP_MOBILE
+            , SHIP_ADDR
+            , SHIP_POST
+            , RECV_NAME
+            , RECV_TEL
+            , RECV_MOBILE
+            , RECV_ADDR1
+            , RECV_ADDR2
+            , RECV_CITY
+            , RECV_STATE
+            , RECV_POST
+            , RECV_NATION
+            , RECV_CURRENCY
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+            , RELAY_SEQ
+            , FILE_RELAY_SEQ
+            , TOT_PAYMENT_PRICE
+            , XRT_SHIPPING_PRICE
+            , BOX_NO
+            , DAS_NO
+            , PICKING_PAGE
+            , PICKING_SEQ
+        ) VALUES (
+            #{ordCd}
+            , #{compcd}
+            , #{orgcd}
+            , #{whcd}
+            , #{uploadDate}
+            , #{fileSeq}
+            , #{fileNm}
+            , #{fileNmReal}
+            , #{paymentType}
+            , #{siteCd}
+            , #{statusCd}
+            , #{stockType}
+            , #{localShipper}
+            , #{mallNm}
+            , #{shipMethodCd}
+            , #{ordNo}
+            , #{cartNo}
+            , #{ordCnt}
+            , #{xrtInvcSno}
+            , #{sNation}
+            , #{eNation}
+            , #{cWgtReal}
+            , #{wgt}
+            , #{boxWidth}
+            , #{boxLength}
+            , #{boxHeight}
+            , #{boxVolume}
+            , #{shipName}
+            , #{shipTel}
+            , #{shipMobile}
+            , #{shipAddr}
+            , #{shipPost}
+            , #{recvName}
+            , #{recvTel}
+            , #{recvMobile}
+            , #{recvAddr1}
+            , #{recvAddr2}
+            , #{recvCity}
+            , #{recvState}
+            , #{recvPost}
+            , #{recvNation}
+            , #{recvCurrency}
+            , #{addusercd}
+            , GETDATE()
+            , #{updusercd}
+            , GETDATE()
+            , #{terminalcd}
+            , #{relaySeq}
+            , #{fileRelaySeq}
+            , #{totPaymentPrice}
+            , #{xrtShippingPrice}
+            , #{boxNo}
+            , #{dasNo}
+            , #{pickingPage}
+            , #{pickingSeq}
+        )
+    </insert>
+    
+    <insert id="insertOrderDtl" parameterType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+        INSERT INTO TORDERDTL (
+            ORD_CD
+            , ORD_SEQ
+            , COMPCD
+            , ORGCD
+            , GOODS_CD
+            , GOODS_NM
+            , GOODS_OPTION
+            , GOODS_CNT
+            , PAYMENT_PRICE
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+            , ORD_NO
+            , GOODS_EN_NM
+            , PAYMENT_PRICE_USD
+            , EXC_TAG_SUM
+            , EXC_TOT_SUM
+            , SALE_TAG_SUM
+            , SALE_TOT_SUM
+        ) VALUES (
+            #{ordCd}
+            , #{ordSeq}
+            , #{compcd}
+            , #{orgcd}
+            , REPLACE(#{goodsCd}, '*', '')
+            , #{goodsNm}
+            , #{goodsOption}
+            , #{goodsCnt}
+            , #{paymentPrice}
+            , #{addusercd}
+            , getdate()
+            , #{updusercd}
+            , getdate()
+            , #{terminalcd}
+            , #{ordNo}
+            , #{goodsEnNm}
+            , #{paymentPriceUsd}
+            , #{excTagSum}
+            , #{excTotSum}
+            , #{saleTagSum}
+            , #{saleTotSum}
+        )
+    </insert>
+    
+    <update id="updateAtomyOrder" parameterType="LDataMap">
+        UPDATE
+            API_ATOMY_ORDER
+        SET
+            ORDER_YN = 'Y',
+            UPDUSERCD = 'SYSTEM',
+            UPDDATETIME = GETDATE()
+        WHERE 1 = 1
+        AND SALE_NUM = #{saleNum}
+    </update>
+    
+    <update id="updateTorder" parameterType="LDataMap">
+        UPDATE TORDER
+        SET
+            <if test="statusCd != null and statusCd != ''">
+                STATUS_CD = #{statusCd},
+            </if>
+            UPDUSERCD = #{usercd}, 
+            UPDDATETIME = getdate(),
+            CLGODATETIME = getdate()
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+    
+    <update id="updateInvoiceYn" parameterType="LDataMap">
+        UPDATE
+            API_ATOMY_ORDER
+        SET
+            INVOICE_YN = 'Y',
+            UPDUSERCD = 'SYSTEM',
+            UPDDATETIME = GETDATE()
+        WHERE 1 = 1
+        AND SALE_NUM = #{ordNo}
+    </update>
+    
+    <update id="torderUpsUpdate" parameterType="LDataMap">
+        UPDATE
+            TORDER
+        SET
+            INVC_SNO1 = #{invcSno1},
+            GRAPHIC_IMAGE = #{graphicImage},
+            HTML_IMAGE = #{htmlImage}
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+    
+    <update id="updateOrderCancel" parameterType="LDataMap">
+        UPDATE
+            API_ATOMY_ORDER
+        SET
+            ORDER_CANCEL = 'Y'
+        WHERE 1 = 1
+        AND SALE_NUM = #{saleNum}
+    </update>
+    
+    <update id="upsError" parameterType="LDataMap">
+        UPDATE
+            TORDER
+        SET
+            UPS_ERROR = '1'
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+    
+    <update id="unipassDoRefresh" parameterType="LDataMap">
+		UPDATE
+            TORDER
+        SET
+            UNIPASS_REFRESH = 'Y',
+            UNIPASS_TKOFDT = #{UNIPASS_TKOFDT}
+        WHERE 1 = 1
+        AND EXP_NO = #{EXP_NO} AND ORGCD = 'M00494' AND UPLOAD_DATE >= '20210701'
+    </update>
+    
+    <!-- UNIPASS 선적일 완료되면 적용  -->
+    <update id="unipassShpmCmplYn" parameterType="LDataMap">
+		UPDATE
+            TORDER
+        SET
+            SHPMCMPLYN = 'Y'
+        WHERE 1 = 1
+        AND EXP_NO = #{EXP_NO} AND ORGCD = 'M00494' AND UPLOAD_DATE >= '20210701'
+    </update>
+</mapper>

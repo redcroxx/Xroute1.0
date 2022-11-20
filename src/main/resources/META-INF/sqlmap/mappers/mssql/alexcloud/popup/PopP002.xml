@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopP002Mapper">
+
+	<!-- 셀러 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP002Mapper.getSearch */
+		SELECT COMPCD
+			 , ORGCD
+			 , NAME
+			 , SNAME
+			 , TEL1
+			 , TEL2
+			 , FAX1
+			 , FAX2
+			 , POST
+			 , ADDR
+			 , ADDR2
+			 , CEO
+			 , BIZDATE
+			 , BIZNO1
+			 , BIZNO2
+			 , BIZKIND
+			 , BIZTYPE
+			 , EMAIL
+			 , WEBADDR
+			 , NATION
+			 , REMARKS
+			 , ISUSING
+			 , ADDUSERCD
+			 , CONVERT(VARCHAR, ADDDATETIME, 20) AS ADDDATETIME 
+			 , UPDUSERCD
+			 , CONVERT(VARCHAR, UPDDATETIME, 20) AS UPDDATETIME
+			 , TERMINALCD
+		FROM P002 WITH (NOLOCK)
+		WHERE ISUSING = 'Y'
+		  AND COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND ((ORGCD LIKE #{S_ORGCD} + '%')
+				OR (NAME LIKE '%' + #{S_ORGCD} + '%'))
+		</if>
+		ORDER BY ORGCD
+	</select>
+	
+	<!-- 셀러 팝업 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP002Mapper.getCheck */
+		SELECT COMPCD
+			 , ORGCD
+			 , NAME
+			 , SNAME
+			 , TEL1
+			 , TEL2
+			 , FAX1
+			 , FAX2
+			 , POST
+			 , ADDR
+			 , ADDR2
+			 , CEO
+			 , BIZDATE
+			 , BIZNO1
+			 , BIZNO2
+			 , BIZKIND
+			 , BIZTYPE
+			 , EMAIL
+			 , WEBADDR
+			 , NATION
+			 , REMARKS
+			 , ISUSING
+			 , ADDUSERCD
+			 , CONVERT(VARCHAR, ADDDATETIME, 20) AS ADDDATETIME 
+			 , UPDUSERCD
+			 , CONVERT(VARCHAR, UPDDATETIME, 20) AS UPDDATETIME
+			 , TERMINALCD
+		FROM P002 WITH (NOLOCK)
+		WHERE ISUSING = 'Y'
+		  AND COMPCD = #{S_COMPCD}
+	      AND ORGCD = #{S_ORGCD}
+	</select>
+
+</mapper>

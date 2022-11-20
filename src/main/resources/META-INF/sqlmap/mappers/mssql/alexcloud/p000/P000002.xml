@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P000002Mapper">
+
+	<!-- 셀러(사업장) : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* P000002.getSearch */
+		SELECT 
+				A.COMPCD				/* 회사코드 */ 
+				, B.NAME	AS COMPNM	/* 회사명 */
+				, A.ORGCD				/* 셀러코드*/
+				, A.NAME				/* 셀러명 */
+				, A.SNAME				/* 셀러명(약칭) */
+				, A.COMPANY_EN		    /* 셀러명(영문) */
+				, A.TEL1				/* 전화번호1 */
+				, A.TEL2				/* 전화번호2 */
+				, A.FAX1				/* 팩스번호1 */
+				, A.FAX2				/* 팩스번호2 */
+				, A.POST				/* 우편번호 */
+				, A.ADDR				/* 주소 */
+				, A.ADDR2				/* 주소상세 */
+				, A.CEO					/* 대표자 */
+				, A.ENG_ADDR			/* 영문주소 */
+				, A.ENG_CEO				/* 영문대표자명 */
+				, A.BIZDATE				/* 창립일 */
+				, A.BIZNO1				/* 사업자번호1 */
+				, A.BIZNO2				/* 사업자번호2 */
+				, A.BIZKIND				/* 업종 */
+				, A.BIZTYPE				/* 업태 */
+				, A.EMAIL				/* 대표이메일 */
+				, A.WEBADDR				/* 홈페이지 */
+				, A.NATION				/* 국가 */
+				, A.REMARKS				/* 비고 */
+				, A.ISUSING				/* 사용여부 */
+				, A.ADDUSERCD			/* 등록자 */
+				, CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /* 등록일시 */
+				, A.UPDUSERCD			/* 수정자ID */
+				, CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /* 수정일시 */
+				, A.TERMINALCD			/* IP */
+				, A.PROD_MAP_YN			/* 코드대입후 송장발행 */
+				, A.FILENAME			/* 업로드파일명 */
+				, A.ORIGINFILENM		/* 실제저장파일명 */
+				, A.MEM_USERCD
+				, A.PAYMENT_TYPE		/* 결제타입구분 */
+                , A.PROMOTION_CODE
+                , (SELECT CONVERT(CHAR(10), DISCOUNT_START_DATE, 126) + ' ~ ' + CONVERT(CHAR(10), DISCOUNT_END_DATE, 126) FROM PROMOTION_CODE WHERE A.PROMOTION_CODE = PROMOTION_CODE) AS PROMOTION_PRERIOD
+                , (SELECT DHL FROM PROMOTION_CODE WHERE A.PROMOTION_CODE = PROMOTION_CODE) AS DHL
+                , (SELECT PREMIUM FROM PROMOTION_CODE WHERE A.PROMOTION_CODE = PROMOTION_CODE) AS PREMIUM
+		FROM P002 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		ON A.COMPCD = B.COMPCD
+		WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ITEM != null and S_ITEM != ''">
+		AND (A.ORGCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		OR A.NAME LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_ISUSING != null and S_ISUSING != ''">
+		AND A.ISUSING = #{S_ISUSING}
+		</if>					
+		ORDER BY A.COMPCD, A.ORGCD ASC
+	</select>
+	
+	<select id="orgcdChk" parameterType="LDataMap" resultType="int">
+		/* p000002.orgcdChk */
+		SELECT
+			COUNT(1) AS CNT 
+		FROM P002 WITH(NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD  = #{ORGCD}
+	</select>
+	
+	<!-- 셀러 : 마스터 신규 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* p000002.insertMst */
+		INSERT INTO P002 WITH (ROWLOCK) (
+			COMPCD
+			, ORGCD
+			, NAME
+			, SNAME
+			, COMPANY_EN
+			, TEL1
+			, TEL2
+			, FAX1
+			, FAX2
+			, POST
+			, ADDR
+			, ADDR2
+			, CEO
+			, ENG_ADDR
+			, ENG_CEO
+			, BIZDATE
+			, BIZNO1
+			, BIZNO2
+			, BIZKIND
+			, BIZTYPE
+			, EMAIL
+			, WEBADDR
+			, NATION
+			, REMARKS
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, PROD_MAP_YN
+			, PAYMENT_TYPE
+		) VALUES {
+			COMPCD}
+			, #{ORGCD}
+			, #{NAME}
+			, CASE
+				WHEN #{SNAME} IS NULL THEN #{NAME}
+				WHEN #{SNAME} = '' THEN #{NAME}
+				ELSE #{SNAME}
+			 END
+			, #{COMPANY_EN}
+			, #{TEL1}
+			, #{TEL2}
+			, #{FAX1}
+			, #{FAX2}
+			, #{POST}
+			, #{ADDR}
+			, #{ADDR2}
+			, #{CEO}
+			, #{ENG_ADDR}
+			, #{ENG_CEO}
+			, #{BIZDATE}
+			, #{BIZNO1}
+			, #{BIZNO2}
+			, #{BIZKIND}
+			, #{BIZTYPE}
+			, #{EMAIL}
+			, #{WEBADDR}
+			, #{NATION}
+			, #{REMARKS}
+			, #{ISUSING}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+			, #{PROD_MAP_YN}
+			, #{PAYMENT_TYPE}
+		)
+	</insert>
+	
+	<!-- 셀러 : 저장(마스터수정) -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* p000002.updateMst */
+		UPDATE P002 WITH (ROWLOCK)
+		SET
+			NAME = #{NAME}
+			, SNAME = #{SNAME}
+			, COMPANY_EN = #{COMPANY_EN}
+			, TEL1 = #{TEL1}
+			, TEL2 = #{TEL2}
+			, FAX1 = #{FAX1}
+			, FAX2 = #{FAX2}
+			, POST = #{POST}
+			, ADDR = #{ADDR}
+			, ADDR2 = #{ADDR2}
+			, CEO = #{CEO}
+			, ENG_ADDR = #{ENG_ADDR}
+			, ENG_CEO = #{ENG_CEO}
+			, BIZDATE = #{BIZDATE}
+			, BIZNO1 = #{BIZNO1}
+			, BIZNO2 = #{BIZNO2}
+			, BIZKIND = #{BIZKIND}
+			, BIZTYPE = #{BIZTYPE}
+			, EMAIL = #{EMAIL}
+			, WEBADDR = #{WEBADDR}
+			, NATION = #{NATION}
+			, REMARKS = #{REMARKS}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+			, PROD_MAP_YN = #{PROD_MAP_YN}
+			, PAYMENT_TYPE = #{PAYMENT_TYPE}
+			, RTN_BANK_NAME = #{RTN_BANK_NAME}
+			, RTN_BANK_ACCOUNT = #{RTN_BANK_ACCOUNT}
+			, RTN_BANK_ACCOUNT_NAME = #{RTN_BANK_ACCOUNT_NAME}
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</update>
+	
+	<!-- 셀러 : 삭제(사용여부 체크) -->
+	<select id="getIsusingChk" parameterType="LDataMap" resultType="String">
+		/* p000002.getIsusingChk */
+		SELECT
+			ISUSING 
+		FROM P002 WITH (NOLOCK) 
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</select>
+	
+	<!-- 셀러 : 삭제(미사용으로 변경) -->
+	<update id="updateMstSts" parameterType="LDataMap">
+		/* p000002.updateMstSts */
+		UPDATE P002 WITH (ROWLOCK)
+		SET
+			ISUSING = #{ISUSING}
+			, UPDUSERCD	= #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</update>		
+</mapper>

@@ -1,0 +1,64 @@
+### UbiGateway Configuration ###
+# Basic info.
+osCharset=KSC5601
+baseCharset=US7ASCII
+requestCharset=
+isDeflater=false
+isUnicode=true
+isBase64=false
+utfData=true
+colDim=^t
+rowDim=^n
+info=true
+admin=YWRtaW4=
+adminImgUri=
+
+
+# Db info.
+
+# Xroute Real Server
+connType=direct
+dbVendor=
+dbDriver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+dbUrl=jdbc:sqlserver://13.209.38.60:1433;DatabaseName=XROUTE_VALID
+dbId=xroute
+dbPw=Logi6613
+
+# Xroute Valid Server
+# connType=direct
+# dbVendor=
+# dbDriver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+# dbUrl=jdbc:sqlserver://125.129.36.58:21433;DatabaseName=XROUTE_VALID
+# dbId=xroute
+# dbPw=Logi6613
+
+# Xroute Dev Server
+# connType=direct
+# dbVendor=
+# dbDriver=com.microsoft.sqlserver.jdbc.SQLServerDriver
+# dbUrl=jdbc:sqlserver://125.129.36.58:21433;DatabaseName=XROUTE_DEV
+# dbId=xroute
+# dbPw=Logi6613
+
+# Path info.
+licensePath=
+logPath=
+xslPath=
+cachePath=
+
+# Log info.
+timeZone=GMT+9
+rowSize=0
+backupStyle=date
+backupSize=0
+backupPattern=yyyy-MM-dd
+debug=false
+
+# UbiDrm info.
+drmLoadType=nonCache
+drmConfigFilePath=
+
+# UbiDaemon info.
+ubidaemonIp=localhost
+ubidaemonPort=6996
+ubidaemonUrfType=normal

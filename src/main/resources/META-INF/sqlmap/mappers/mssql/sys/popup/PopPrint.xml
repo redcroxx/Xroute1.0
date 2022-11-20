@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 사용자 프린터 정보 변경 팝업 -->
+<mapper namespace="PopPrintMapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.popup.PopPrintMapper.getSearch */
+		SELECT A.COMPCD
+			 , A.USERCD
+			 , A.NAME AS USERNM
+			 , A.PRINT1
+			 , A.PRINT2
+			 , A.PRINT3
+			 , A.PRINT4
+		FROM S017 A
+		JOIN P001 B
+		  ON A.COMPCD = B.COMPCD
+		  
+		WHERE A.USERCD = #{USERCD}
+		<if test="COMPCD != null and COMPCD != ''">
+			AND A.COMPCD = #{COMPCD}
+		</if>
+	</select>
+	
+	<!-- 프린터  저장-->
+	<insert id="insertPrint" parameterType="LDataMap">
+		/* sys.popup.PopPrintMapper.insertPrint */
+		INSERT INTO S017
+		(
+			COMPCD
+			, USERCD
+			, NAME
+			, PRINT1
+			, PRINT2
+			, PRINT3
+			, PRINT4
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		)
+		VALUES
+		(
+			#{COMPCD}
+			, #{USERCD}
+			, #{USERNM}
+			, #{PRINT1}
+			, #{PRINT2}
+			, #{PRINT3}
+			, #{PRINT4}
+			, #{USERCD}
+			, GETDATE() 
+			, #{USERCD}
+			, GETDATE() 
+			, #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 프린터 변경 -->
+	<update id="updatePrint" parameterType="LDataMap">
+		/* sys.popup.PopPrintMapper.updatePrint */
+		UPDATE S017 WITH (ROWLOCK)
+		   SET 
+			 PRINT1   = REPLACE(#{PRINT1},'NULL','') 
+			 , PRINT2 = REPLACE(#{PRINT2},'NULL','') 
+			 , PRINT3 = REPLACE(#{PRINT3},'NULL','') 
+			 , PRINT4 = REPLACE(#{PRINT4},'NULL','') 
+		     , UPDUSERCD   = #{USERCD}
+		     , UPDDATETIME = GETDATE()
+		     , TERMINALCD  = #{LOGIN_IP}
+		WHERE COMPCD 	   = #{COMPCD}
+		  AND USERCD 	   = #{USERCD}
+	</update>
+
+</mapper>

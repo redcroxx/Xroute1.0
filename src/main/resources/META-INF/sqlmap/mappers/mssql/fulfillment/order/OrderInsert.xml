@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="OrderInsertMapper">
+
+	<!-- 주문서양식설정 : 양식명 SEELCTBOX -->
+	<select id="getSiteCd" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getSiteCd */
+		SELECT 
+			SITE_CD AS CODE
+			, SITE_NM AS VALUE
+		FROM MKTSITE WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		AND SITE_NM = #{SITE_NM}
+		ORDER BY SITE_CD
+	</select>
+
+	<!-- 체크내역  : 검색(헤더) -->
+	<select id="getSiteHeader" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getSiteHeader */
+		SELECT
+			A.COMPCD
+			, A.ORGCD
+			, A.SITE_CD
+			, A.IDX
+			, A.COL_NM AS COLUMNM
+			, A.DB_COL_NM AS COLUM
+			, A.DB_COL_NM_INVC
+			, A.ISCHECK
+			, A.CHECKTYPE
+			, A.CODEKEY
+			, A.MAXLEN
+			, A.MINDATE
+			, A.MAXDATE
+			, A.MINNUM
+			, A.MAXNUM
+		FROM MKTSITEFILECONFIG A WITH(NOLOCK)
+		WHERE SITE_CD = #{SITE_CD}
+	</select>
+
+	<!-- 주문서 접수 양식 조회 -->
+	<select id="getCheckList" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getCheckList */
+		SELECT
+			A.COMPCD
+			, A.ORGCD
+			, A.SITE_CD
+			, A.IDX
+			, A.COL_NM
+			, A.DB_COL_NM
+			, A.DB_COL_NM_INVC
+			, A.ISCHECK
+			, A.CHECKTYPE
+			, A.CODEKEY
+			, A.MAXLEN
+			, A.MINDATE
+			, A.MAXDATE
+			, A.MINNUM
+			, A.MAXNUM
+			, A.REF1
+			, A.REF2
+			, A.REF3
+			, A.REF4
+			, A.REF5
+		FROM MKTSITEFILECONFIG A WITH(NOLOCK)
+		LEFT JOIN P020 K WITH (NOLOCK)
+		ON K.COMPCD = #{COMPCD}
+		WHERE A.SITE_CD = #{SITE_CD}
+	</select>
+
+	<!-- 삭제  -->
+	<update id="delete" parameterType="LDataMap">
+		/* OrderInsertMapper.delete */
+		DELETE FROM E005 WITH (ROWLOCK)
+		WHERE PGMID = #{PGMID}
+		AND USERCD = #{LOGIN_USERCD}
+	</update>
+
+	<!-- 임시저장 프로시저 -->
+	<select id="uploadXml" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_P200200_UploadXML(
+			#{XML, jdbcType = VARCHAR, mode = IN}
+			, #{PGMID, jdbcType = VARCHAR, mode = IN}
+			, #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+			, #{COMPCD, jdbcType = VARCHAR, mode = IN}
+			, #{ORGCD, jdbcType = VARCHAR, mode = IN}
+			, #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+			, #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+			, #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		)
+	}
+	</select>
+
+	<select id="getOrderFileCheckList" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getOrderFileCheckList */
+		SELECT
+			PGMID
+			, SEQ
+			, C00, C01, C02, C03, C04
+			, C05, C06, C07, C08, C09
+			, C10, C11, C12, C13, C14
+			, C15, C16, C17, C18, C19
+			, C20, C21, C22, C23, C24
+			, C25, C26, C27, C28, C29
+			, C30, C31, C32, C33, C34
+			, C35, C36, C37, C38, C39
+			, C40, C41, C42, C43, C44
+			, C45, C46, C47, C48, C49
+			, C50, C51, C52, C53, C54
+			, C55, C56, C57, C58, C59
+			, C60, C61, C62, C63, C64
+			, C65, C66, C67, C68, C69
+			, C70, C71, C72, C73, C74
+			, C75, C76, C77, C78, C79, C80
+			, ISNULL(CHKMSG, '') + T.MSG AS CHKMSG
+		FROM E005 WITH (NOLOCK)
+		LEFT OUTER JOIN (
+			SELECT
+				CASE
+					WHEN ISNULL(K.MSG,'') != '' THEN SUBSTRING(K.MSG, 1, 10000000)
+					ELSE NULL
+				END AS MSG
+				, A.C00 AS Z_C00
+				, A.SEQ AS Z_SEQ
+				, A.PGMID AS Z_PGMID
+				, A.USERCD AS Z_USERCD
+			FROM (
+				SELECT
+					C00
+					, PGMID
+					, USERCD
+					, SEQ
+				FROM E005 WITH (NOLOCK)
+				WHERE PGMID = #{PGMID}
+				AND USERCD = #{LOGIN_USERCD}
+			) A
+			CROSS APPLY (
+				SELECT MSG + ','
+			FROM (
+				SELECT
+					NULL AS MSG
+				<foreach collection="CHECKLIST" item="CHECK" index="i" open="" close="" separator="">
+				<if test='CHECK.ISCHECK == "Y"'>
+				UNION ALL
+				SELECT
+					CASE
+						WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') = '' THEN N'${CHECK.COL_NM}' + N' 값이 없습니다'
+						ELSE NULL
+					END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				<if test='CHECK.CHECKTYPE == "CODE"'>
+				UNION ALL
+				SELECT
+					CASE
+						WHEN (SELECT COUNT(1) FROM S002 D WITH (NOLOCK) WHERE D.COMPCD = '1000' AND D.CODEKEY = #{CHECK.CODEKEY} ) = 0 OR
+							 (SELECT TOP 1 1 FROM S002 C WITH (NOLOCK) WHERE C.COMPCD = '1000' AND C.CODEKEY = #{CHECK.CODEKEY} AND C.SNAME1 = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') = '' THEN C.SNAME1
+							ELSE B.${CHECK.DB_COL_NM} END) = 1 THEN NULL
+						ELSE
+						<choose>
+							<when test='CHECK.COL_NM == "LOT1"'>N'${CHECK.LOT1_LABEL}' + </when>
+							<when test='CHECK.COL_NM == "LOT2"'>N'${CHECK.LOT2_LABEL}' + </when>
+							<when test='CHECK.COL_NM == "LOT3"'>N'${CHECK.LOT3_LABEL}' + </when>
+							<when test='CHECK.COL_NM == "LOT4"'>N'${CHECK.LOT4_LABEL}' + </when>
+							<when test='CHECK.COL_NM == "LOT5"'>N'${CHECK.LOT5_LABEL}' + </when>
+							<otherwise>N'${CHECK.COL_NM}' + </otherwise>
+						</choose>
+						N'의 공통코드값을 확인하시기 바랍니다' 
+					END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				<if test='CHECK.CHECKTYPE == "COMP"'>
+				UNION ALL
+				SELECT
+					CASE (SELECT TOP 1 1 FROM P001 C WITH (NOLOCK) WHERE C.COMPCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') = '' THEN C.COMPCD ELSE B.${CHECK.DB_COL_NM} END)
+						WHEN 1 THEN NULL
+						ELSE '존재하지 않는 회사코드입니다' END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				<if test='CHECK.CHECKTYPE == "ORG"'>
+				UNION ALL
+				SELECT
+					CASE (SELECT TOP 1 1 FROM P002 C WITH (NOLOCK) WHERE C.COMPCD = '1000' AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') = '' THEN C.ORGCDELSE B.${CHECK.DB_COL_NM} END)
+						WHEN 1 THEN NULL
+						ELSE '존재하지 않는 화주코드입니다'
+					END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				<if test='CHECK.CHECKTYPE == "WH"'>
+				UNION ALL
+				SELECT 
+					CASE (SELECT TOP 1 1 FROM P004 C WITH (NOLOCK) WHERE C.COMPCD = '1000' AND C.WHCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') = '' THEN C.WHCD ELSE B.${CHECK.DB_COL_NM} END)
+						WHEN 1 THEN NULL
+						ELSE '존재하지 않는 창고코드입니다'
+					END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				<if test='CHECK.CHECKTYPE == "USER"'>
+				UNION ALL
+				SELECT
+					CASE (SELECT TOP 1 1 FROM S010 C WITH (NOLOCK) WHERE C.COMPCD = '1000' AND C.USERCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') = '' THEN C.USERCD ELSE B.${CHECK.DB_COL_NM} END)
+						WHEN 1 THEN NULL
+						ELSE '존재하지 않는 사용자ID입니다'
+					END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				<if test='CHECK.CHECKTYPE == "DATE"'>
+				UNION ALL
+				SELECT
+					CASE
+						WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') != '' THEN
+							CASE 
+								WHEN ISDATE(ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'')) = 0 THEN '${CHECK.COL_NM}' + ' 값은 날짜 형식입니다'
+								ELSE
+								CASE 
+									WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'') != '' AND CONVERT(NVARCHAR,GETDATE() + CONVERT(INT,#{CHECK.REF1}),112) <![CDATA[ > ]]> ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') THEN '${CHECK.COL_NM}' + ' 값은 오늘+' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'')+ '이상으로 입력해야 합니다'
+									ELSE
+									CASE
+										WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'') != '' AND CONVERT(NVARCHAR,GETDATE() + CONVERT(INT,#{CHECK.REF2}),112) <![CDATA[ < ]]> ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') THEN '${CHECK.COL_NM}' + ' 값은 오늘+' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'')+ '이하로 입력해야 합니다'
+										ELSE
+										<if test="CHECK.REF3 != null and CHECK.REF3 != ''">
+										CASE
+											WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF3}),'') != '' AND CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}) <![CDATA[ > ]]> CONVERT(NVARCHAR,B.${CHECK.REF3}) THEN '${CHECK.COL_NM}' + ' 값은 '+'${CHECK.REF4}'+'보다 클수 없습니다'
+											ELSE NULL END
+										</if>
+										<if test="CHECK.REF3 == null or CHECK.REF3 == ''">
+										NULL
+										</if>
+									END
+								END
+							END
+						ELSE NULL
+					END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				<if test='CHECK.CHECKTYPE == "NUM"'>
+				UNION ALL
+				SELECT
+					CASE
+						WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'') != '' THEN
+							CASE
+								WHEN ISNUMERIC(ISNULL(CONVERT(NVARCHAR,B.${CHECK.DB_COL_NM}),'')) = 0 THEN '${CHECK.COL_NM}' + ' 값은 숫자 형식입니다'
+								ELSE
+								CASE
+									WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'') != '' AND CONVERT(DECIMAL,#{CHECK.REF1}) <![CDATA[ > ]]> ISNULL(CONVERT(DECIMAL,REPLACE(B.${CHECK.DB_COL_NM},',','')),0) THEN '${CHECK.COL_NM}' + ' 값은 ' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'')+ '이상으로 입력해야 합니다'
+									ELSE
+									CASE
+										WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'') != '' AND CONVERT(DECIMAL,#{CHECK.REF2}) <![CDATA[ < ]]> ISNULL(CONVERT(DECIMAL,REPLACE(B.${CHECK.DB_COL_NM},',','')),0) THEN '${CHECK.COL_NM}' + ' 값은 ' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'')+ '이하로 입력해야 합니다'
+										ELSE NULL
+									END
+								END
+							END
+						ELSE NULL
+					END AS MSG
+				FROM E005 B WITH (NOLOCK)
+				WHERE A.C00 = B.C00
+				AND A.PGMID = B.PGMID
+				AND A.USERCD = B.USERCD
+				</if>
+				</foreach>
+			) AS T FOR XML PATH('')
+		) K (MSG) ) T ON T.Z_C00 = C00 AND T.Z_USERCD = USERCD AND T.Z_SEQ = SEQ
+		WHERE PGMID = #{PGMID}
+		AND USERCD = #{LOGIN_USERCD}
+	</select>
+
+	<!-- 임시저장 프로시저 -->
+	<select id="upload" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USP_INS_TMPORDER(
+			#{COMPCD, jdbcType = VARCHAR, mode = IN}
+			, #{ORGCD, jdbcType = VARCHAR, mode = IN}
+			, #{WHCD, jdbcType = VARCHAR, mode = IN}
+			, #{PGMID, jdbcType = VARCHAR, mode = IN}
+			, #{SITE_CD, jdbcType = VARCHAR, mode = IN}
+			, #{FILE_YMD, jdbcType = VARCHAR, mode = IN}
+			, #{FILE_SEQ, jdbcType = VARCHAR, mode = IN}
+			, #{FILE_NM, jdbcType = VARCHAR, mode = IN}
+			, #{FILE_NM_REAL, jdbcType = VARCHAR, mode = IN}
+			, #{SEQ_TP, jdbcType = VARCHAR, mode = IN}
+			, #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+			, #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+			, #{REG_SEQ, jdbcType = INTEGER, mode = OUT, javaType=int}
+			, #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+			, #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		)
+
+	}
+	</select>
+
+	<!-- 체크내역  : 검색(병함) -->
+	<select id="getSiteColEdit1" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getSiteColEdit1 */
+		SELECT
+			COMPCD
+			, ORGCD
+			, SITE_CD
+			, CASE WHEN ISNULL(TGT_COL,'') = '' THEN '' ELSE 'C'+ DBO.UFX_LPAD(TGT_COL,2,'0') END AS TGT_COL
+			, CASE WHEN ISNULL(SRC_COLS1,'') = '' THEN '' ELSE 'C'+ DBO.UFX_LPAD(SRC_COLS1,2,'0') END AS SRC_COLS1
+			, CASE WHEN ISNULL(SRC_COLS2,'') = '' THEN '' ELSE 'C'+ DBO.UFX_LPAD(SRC_COLS2,2,'0') END AS SRC_COLS2
+			, CASE WHEN ISNULL(SRC_COLS3,'') = '' THEN '' ELSE 'C'+ DBO.UFX_LPAD(SRC_COLS3,2,'0') END AS SRC_COLS3
+			, SEPS1
+			, SEPS2
+		FROM MKTSITEFILECOLEDIT1 WITH(NOLOCK)
+		WHERE SITE_CD = #{SITE_CD}
+	</select>
+
+	<!-- 체크내역  : 검색(치환) -->
+	<select id="getSiteColEdit2" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getSiteColEdit2 */
+		SELECT
+			COMPCD
+			, ORGCD
+			, SITE_CD
+			, CASE WHEN ISNULL(TGT_COL,'') = '' THEN '' ELSE 'C'+ DBO.UFX_LPAD(TGT_COL,2,'0') END AS TGT_COL
+			, REPLACES1
+			, REPLACES2
+		FROM MKTSITEFILECOLEDIT2 WITH(NOLOCK)
+		WHERE SITE_CD = #{SITE_CD}
+	</select>
+
+	<select id="getSearchCartNo" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getSearchCartNo */
+		SELECT distinct CART_NO
+		FROM TORDER WITH(NOLOCK)
+		WHERE  COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		AND WHCD = #{WHCD}
+		<if test="CARTNOLIST != null">
+		AND CART_NO IN
+			<foreach collection="CARTNOLIST" item="type"  open="(" close=")" separator=",">
+			#{type}
+			</foreach>
+		</if>
+	</select>
+
+	<select id="getSearchOrdNo" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getSearchOrdcd */
+		SELECT
+			distinct ORD_NO
+		FROM TORDERDTL WITH(NOLOCK)
+		WHERE  COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		<if test="ORDERNOLIST != null">
+		AND ORD_NO IN
+			<foreach collection="ORDERNOLIST" item="type"  open="(" close=")" separator=",">
+			#{type}
+			</foreach>
+		</if>
+	</select>
+
+	<select id="getXrtInvcSno" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* OrderInsertMapper.getXrtInvcSno */
+		SELECT
+			b.INVC_SNO    AS "xrtInvcSno",
+			(SELECT a.ORD_CD FROM TORDER a WHERE a.XRT_INVC_SNO = b.INVC_SNO) "ordCd",
+			C24 AS "eNation"
+		FROM ORDERFILEDTL b
+		WHERE 1 = 1
+		<if test="regSeq != null and reqSeq != ''">
+		AND b.REG_SEQ = #{regSeq}
+		</if>
+		GROUP BY b.INVC_SNO, C24
+	</select>
+
+	<select id="getTorderData" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* OrderInsertMapper.getTorderData */
+		SELECT
+			ISNULL(o.ORD_CD        , '') 	as "ordCd"
+			, ISNULL(o.XRT_INVC_SNO  , '')	as "xrtInvcSno"
+			, ISNULL(o.SHIP_NAME     , '')	as "shipName"
+			, ISNULL(o.SHIP_METHOD_CD, '')	as "shipMethodCd"
+			, ISNULL(o.SHIP_TEL      , '')	as "shipTel"
+			, ISNULL(o.SHIP_MOBILE   , '')	as "shipMobile"
+			, ISNULL(o.SHIP_ADDR     , '')	as "shipAddr"
+			, ISNULL(o.SHIP_POST     , '')	as "shipPost"
+			, ISNULL(o.RECV_NAME     , '') 	as "recvName"
+			, ISNULL(o.RECV_TEL      , '')	as "recvTel"
+			, ISNULL(o.RECV_MOBILE   , '')	as "recvMobile"
+			, ISNULL(REPLACE(REPLACE(o.RECV_ADDR1, char(13), ''), char(10), '') , '')    as "recvAddr1"
+			, ISNULL(REPLACE(REPLACE(o.RECV_ADDR2, char(13), ''), char(10), '') , '')    as "recvAddr2"
+			, ISNULL(o.RECV_ADDR2    , '')	as "recvAddr2"
+			, ISNULL(o.RECV_CITY     , '')	as "recvCity"
+			, ISNULL(o.RECV_STATE    , '')	as "recvState"
+			, ISNULL(o.RECV_POST     , '')	as "recvPost"
+			, ISNULL(o.RECV_NATION   , '')	as "recvNation"
+			, ISNULL(o.RECV_CURRENCY , '')	as "recvCurrency"
+			, ISNULL(o.E_NATION      , '')	as "eNation"
+			, ISNULL(o.S_NATION      , '')	as "sNation"
+			, CASE
+				WHEN o.CART_NO IS NULL THEN REPLACE(o.XRT_INVC_SNO,'XLF','LF')
+				WHEN o.CART_NO = '' THEN REPLACE(o.XRT_INVC_SNO,'XLF','LF')
+				ELSE o.CART_NO
+			END   as "cartNo"
+			, ISNULL(o.MALL_NM      , '')    as "mallNm"
+		FROM TORDER o
+		WHERE 1 = 1
+		<if test="xrtInvcSno != null and xrtInvcSno != ''">
+		AND o.XRT_INVC_SNO = #{xrtInvcSno}
+		</if>
+	</select>
+
+	<select id="getTorderDTL" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* OrderInsertMapper.getTorderDTL */
+		SELECT
+			ISNULL(o.ORD_CD          , '')	as "ordCd"
+			, ISNULL(o.ORD_SEQ       , '')	as "ordSeq"
+			, ISNULL(o.GOODS_CD      , '')	as "goodsCd"
+			, ISNULL(o.GOODS_NM      , '')	as "goodsNm"
+			, ISNULL(o.GOODS_OPTION  , '')	as "goodsOption"
+			, ISNULL(o.GOODS_CNT     , 0)	as "goodsCnt"
+			, ISNULL(o.PAYMENT_PRICE , 0)	as "paymentPrice"
+			, ISNULL(o.ORD_NO        , '')	as "ordNo"
+		FROM TORDERDTL o
+		WHERE 1 = 1
+		<if test="ordCd != null and ordCd != ''">
+		AND o.ORD_CD = #{ordCd}
+		</if>
+	</select>
+
+	<select id="getEtomarsGoodsDTL" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* OrderInsertMapper.getEtomarsGoodsDTL */
+		SELECT
+			ISNULL(o.ORD_CD        , '')   as "ordCd"
+			, ISNULL(o.ORD_SEQ       , '')   as "ordSeq"
+			, ISNULL(o.GOODS_CD      , '')   as "goodsCd"
+			, ISNULL(o.GOODS_NM      , '')   as "goodsNm"
+			, ISNULL(o.GOODS_OPTION  , '')   as "goodsOption"
+			, ISNULL(o.GOODS_CNT     , 0)    as "goodsCnt"
+			, ISNULL(o.PAYMENT_PRICE , 0)    as "paymentPrice"
+			, ISNULL(o.ORD_NO        , '')   as "ordNo"
+		FROM TORDERDTL o
+		WHERE 1 = 1
+		<if test="ordCd != null and ordCd != ''">
+			AND o.ORD_CD = #{ordCd}
+		</if>
+	</select>
+
+	<select id="getQxpressGoodsDTL" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		/* OrderInsertMapper.getQxpressGoodsDTL */
+		SELECT
+			ISNULL(o.ORD_CD        , '')   as "ordCd"
+			, ISNULL(o.ORD_SEQ       , '')   as "ordSeq"
+			, ISNULL(o.GOODS_CD      , '')   as "goodsCd"
+			, ISNULL(o.GOODS_NM      , '')   as "goodsNm"
+			, ISNULL(o.GOODS_OPTION  , '')   as "goodsOption"
+			, ISNULL(o.GOODS_CNT     , 0)    as "goodsCnt"
+			, ISNULL(o.PAYMENT_PRICE , 0)    as "paymentPrice"
+			, ISNULL(o.ORD_NO        , '')   as "ordNo"
+		FROM TORDERDTL o
+		WHERE 1 = 1
+		<if test="ordCd != null and ordCd != ''">
+			AND o.ORD_CD = #{ordCd}
+		</if>
+	</select>
+
+	<!-- 국가코드 조회 -->
+	<select id="getCountryList" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getCountryList */
+		SELECT
+			A.COMPCD
+			, A.CODEKEY
+			, A.CODE AS COUNTRY_CD
+			, A.SNAME1 AS COUNTRY_ENG
+		FROM S002 A WITH(NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		AND A.CODEKEY = 'COUNTRY_CD_LIST'
+		AND A.STATUS = 'Y'
+	</select>
+
+	<!-- 통화코드 조회 -->
+	<select id="getShopeeAccount" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getShopeeAccount */
+		SELECT
+			A.AUTH_ID
+			, A.AUTH_KEY
+			, A.SHIP_METHOD
+			, A.PHONE_NUMBER
+			, A.POST
+			, A.KO_ADDRESS
+			, A.EN_ADDRESS
+			, B.MAPPING_KEY
+			, B.ETC_KEY
+		FROM TINTERFACE A
+		LEFT JOIN TINTERFACE_DTL B
+		ON A.USER_ID = B.USER_ID
+		WHERE 1 = 1
+		AND A.INTERFACE_TYPE = 'SHOPEE'
+		<if test="LOGIN_USERCD != '' and LOGIN_USERCD != null">
+		AND A.USER_ID = #{LOGIN_USERCD}
+		</if>
+		<if test="country != '' and country != null">
+		AND B.MAPPING_KEY = #{country}
+		</if>
+	</select>
+
+	<select id="getCurrencyList" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getCurrencyList */
+		SELECT
+			A.COMPCD
+			, A.CODEKEY
+			, A.CODE AS CURRENCY_CD
+			, A.SNAME1 AS CURRENCY_NAME1
+			, A.SNAME2 AS CURRENCY_NAME2
+		FROM S002 A WITH(NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		AND A.CODEKEY = 'CURRENCY_CODE'
+		AND A.STATUS = 'Y'
+	</select>
+
+	<update id="tolosUpdate" parameterType="java.util.HashMap">
+		/* OrderInsertMapper.tolosUpdate */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="invcSno1 != null and invcSno1 != ''">INVC_SNO1 = #{invcSno1},</if>
+			<if test="invcSno2 != null and invcSno2 != ''">INVC_SNO2 = #{invcSno2},</if>
+			<if test="xrtInvcSno != null and xrtInvcSno != ''">SHIPPING_COMPANY = 'TOLOS',</if>
+			<if test="statusCd != null and statusCd != ''">STATUS_CD = #{statusCd}</if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+
+	<update id="efsUpdate" parameterType="java.util.HashMap">
+		/* OrderInsertMapper.efsUpdate */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="invcSno1 != null and invcSno1 != ''">INVC_SNO1 = #{invcSno1},</if>
+			<if test="invcSno2 != null and invcSno2 != ''">INVC_SNO2 = #{invcSno2},</if>
+			<if test="xrtInvcSno != null and xrtInvcSno != ''">SHIPPING_COMPANY = 'EFS',</if>
+			<if test="statusCd != null and statusCd != ''">STATUS_CD = #{statusCd}</if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+
+	<update id="etomarsUpdate" parameterType="java.util.HashMap">
+		/* OrderInsertMapper.etomarsUpdate */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="invcSno1 != null and invcSno1 != ''">INVC_SNO1 = #{invcSno1},</if>
+			<if test="invcSno2 != null and invcSno2 != ''">INVC_SNO2 = #{invcSno2},</if>
+			<if test="localShipper != null and localShipper != ''">LOCAL_SHIPPER = #{localShipper},</if>
+			<if test="xrtInvcSno != null and xrtInvcSno != ''">SHIPPING_COMPANY = 'ETOMARS',</if>
+			<if test="statusCd != null and statusCd != ''">STATUS_CD = #{statusCd}</if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+
+
+	<update id="qxpressUpdate" parameterType="java.util.HashMap">
+		/* OrderInsertMapper.qxpressUpdate */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="invcSno2 != null and invcSno2 != ''">INVC_SNO2 = #{invcSno2},</if>
+			<if test="localShipper != null and localShipper != ''">LOCAL_SHIPPER = #{localShipper},</if>
+			<if test="statusCd != null and statusCd != ''">STATUS_CD = #{statusCd}</if>
+			<if test="shippingCompany != null and shippingCompany != ''">SHIPPING_COMPANY = #{shippingCompany}</if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+
+	<!-- 주(State) 조회 -->
+	<select id="getUSStateList" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderInsertMapper.getUSStateList */
+		SELECT
+			A.COMPCD
+			, A.CODEKEY
+			, A.CODE AS STATE_CD
+			, A.SNAME1 AS STATE_NAME1
+			, A.SNAME2 AS STATE_NAME2
+		FROM S002 A WITH(NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		AND A.CODEKEY IN ( 'US_STATE_EAST', 'US_STATE_WEST')
+		AND A.STATUS = 'Y'
+		ORDER BY A.COMPCD, A.CODEKEY, A.SORTNO
+	</select>
+
+	<insert id="insertTstockHistory" parameterType="java.util.HashMap">
+		/* OrderInsertMapper.insertTstockHistory */
+		INSERT INTO TSTOCK_HISTORY (
+			ORD_CD
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+			, INVC_SNO
+			, EVENT_CD
+			, STATUS_CD
+		) VALUES (
+			#{ordCd}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+			, #{xrtInvcSno}
+			, #{eventCd}
+			, #{statusCd}
+		)
+	</insert>
+
+	<update id="updTorderPaymentType" parameterType="LDataMap">
+		/* OrderInsertMapper.updTorderPaymentType */
+		UPDATE TORDER SET PAYMENT_TYPE = #{paymentType} 
+		 WHERE XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+	
+	<select id="getPayment" parameterType="java.util.HashMap" resultType="String">
+		/* OrderInsertMapper.getPayment */
+		SELECT 
+			P2.PAYMENT_TYPE AS PAYMENT_TYPE 
+		FROM P002 P2
+		WHERE p2.ORGCD = #{ORGCD}
+	</select>
+</mapper>

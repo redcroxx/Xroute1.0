@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100380Mapper">
+	<!-- 입고현황 : 젼표별 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100380.getSearch */
+		SELECT A.WIKEY
+			 , B.SEQ 
+			 , A.EAKEY
+			 , A.PREKEY
+			 
+			 , A.WITYPE
+			 , A.WISTS
+			 , A.WISCHDT
+			 , A.WIDT
+			 
+			 , A.COMPCD
+			 , A.WHCD
+			 , G.NAME AS WHNM
+			 , A.CUSTCD
+			 , F.NAME AS CUSTNM
+			 , A.ORGCD
+			 , E.NAME AS ORGNM
+			 
+			 , C.ITEMCD
+			 , C.NAME AS ITEM_NAME
+			 , B.LOT1
+			 , B.LOT2
+			 , B.LOT3
+			 , B.LOT4
+			 , B.LOT5
+			 
+			 , C.INBOXQTY
+			 , dbo.UFX_GetBoxEaQty(C.UNITTYPE,'BOX',C.INBOXQTY, B.WIQTY) as WIQTY_BOX
+			 , dbo.UFX_GetBoxEaQty(C.UNITTYPE,'EA',C.INBOXQTY, B.WIQTY) as WIQTY_EA
+			 , B.WIQTY
+			 
+			 , A.USERCD
+			 , A.VATFLG
+			 , A.CARNO
+			 , A.DRIVER
+			 , A.DRIVERTEL
+			 , A.WDKEY
+			 , A.REMARK		
+			 								
+		     , A.ADDUSERCD											/*등록자ID*/
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME	/*등록일시*/
+		     , A.UPDUSERCD											/*수정자ID*/
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME	/*수정일시*/
+		     , A.TERMINALCD											/*IP*/
+		  FROM P130 A WITH (NOLOCK)
+		  LEFT JOIN P131 B WITH(NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.WIKEY = B.WIKEY
+		  LEFT JOIN P006 C WITH(NOLOCK) ON B.COMPCD = C.COMPCD AND B.ORGCD = C.ORGCD AND B.ITEMCD = C.ITEMCD 
+		  LEFT JOIN P002 E WITH (NOLOCK) ON A.COMPCD = E.COMPCD AND A.ORGCD = E.ORGCD
+		  LEFT JOIN P003 F WITH (NOLOCK) ON A.COMPCD = F.COMPCD AND A.CUSTCD = F.CUSTCD AND A.ORGCD = F.ORGCD
+		  LEFT JOIN P004 G WITH (NOLOCK) ON A.COMPCD = G.COMPCD AND A.WHCD = G.WHCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_WISCHDT_FROM != null and S_WISCHDT_FROM != ''">
+		   AND A.WISCHDT >= REPLACE(#{S_WISCHDT_FROM},'-','')
+		</if>
+		<if test="S_WISCHDT_TO != null and S_WISCHDT_TO != ''">
+		   AND A.WISCHDT <![CDATA[ <= ]]> REPLACE(#{S_WISCHDT_TO},'-','')
+		</if>   
+		<if test="S_WIDT_FROM != null and S_WIDT_FROM != ''">
+		   AND A.WIDT >= REPLACE(#{S_WIDT_FROM},'-','')
+		</if>
+		<if test="S_WIDT_TO != null and S_WIDT_TO != ''">
+		   AND A.WIDT <![CDATA[ <= ]]> REPLACE(#{S_WIDT_TO},'-','')
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.CUSTCD = #{S_CUSTCD}
+		</if>
+		<if test="S_WISTS != null and S_WISTS != ''">
+			<if test="S_WISTS == 'NOT99' ">
+			   AND A.WISTS <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_WISTS != 'NOT99' ">
+			   AND A.WISTS = #{S_WISTS}
+			</if>   
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND A.WHCD = #{S_WHCD}
+		</if>
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+                  AND (C.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%' 
+                   OR C.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+		</if>
+		   AND EXISTS (SELECT 1
+		                 FROM P131 B WITH (NOLOCK) 
+		                 JOIN P006 C WITH (NOLOCK) 
+		                   ON C.COMPCD = B.COMPCD
+		                  AND C.ORGCD = B.ORGCD                   
+		                  AND C.ITEMCD = B.ITEMCD                   
+		                WHERE B.WIKEY = A.WIKEY
+		
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND C.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND C.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND C.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND C.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND C.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		                   )
+		<if test="S_WIKEY != null and S_WIKEY != ''">
+		   	AND A.WIKEY LIKE '%' + dbo.UFX_TRIM(#{S_WIKEY}) + '%'
+		</if>
+		 ORDER BY A.WIKEY DESC
+	</select>
+	
+	<!-- 입고현황 : 품목별 검색-->
+	<select id="getSearch2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100380.getSearch2 */
+		SELECT 
+			   A.COMPCD
+			 , A.WHCD
+			 , G.NAME AS WHNM
+			 , A.CUSTCD
+			 , F.NAME AS CUSTNM
+			 , A.ORGCD
+			 , E.NAME AS ORGNM
+			 
+			 , B.ITEMCD
+			 , C.NAME AS ITEMNM
+			 , C.UNITCD /* 단위 */
+		     , C.ITEMSIZE /* 규격 */
+
+		     , C.UNITTYPE /* 관리단위 */
+		     , C.INBOXQTY /* 박스입수량 */ 
+			 
+			 , ISNULL(SUM(B.ORIGINQTY),0) AS ORIGINQTY
+			 , ISNULL(SUM(B.WISCHQTY),0) AS WISCHQTY
+			 , ISNULL(SUM(B.WIQTY),0) AS WIQTY
+			 , dbo.UFX_GetBoxEaQty(C.UNITTYPE, 'BOX', C.INBOXQTY, ISNULL(SUM(B.WISCHQTY),0))  AS WISCHQTY_BOX /* 예정BOX */
+		     , dbo.UFX_GetBoxEaQty(C.UNITTYPE, 'EA', C.INBOXQTY, ISNULL(SUM(B.WISCHQTY),0))  AS WISCHQTY_EA /* 예정EA */
+		     , dbo.UFX_GetBoxEaQty(C.UNITTYPE, 'BOX', C.INBOXQTY, ISNULL(SUM(B.WIQTY),0))  AS WIQTY_BOX /* 입고BOX */
+		     , dbo.UFX_GetBoxEaQty(C.UNITTYPE, 'EA', C.INBOXQTY, ISNULL(SUM(B.WIQTY),0))  AS WIQTY_EA /* 입고EA */
+			 
+			 , ISNULL(SUM(B.UNITPRICE),0) AS UNITPRICE
+			 , ISNULL(SUM(B.SUPPLYAMT),0) AS SUPPLYAMT
+		    
+		  FROM P130 A WITH (NOLOCK)
+		  JOIN P131 B WITH (NOLOCK) ON A.WIKEY = B.WIKEY
+		  JOIN P006 C WITH (NOLOCK) ON B.COMPCD = C.COMPCD AND B.ITEMCD = C.ITEMCD AND B.ORGCD = C.ORGCD
+		  JOIN P001 D WITH (NOLOCK) ON A.COMPCD = D.COMPCD
+		  JOIN P002 E WITH (NOLOCK) ON A.COMPCD = E.COMPCD AND A.ORGCD = E.ORGCD
+		  JOIN P003 F WITH (NOLOCK) ON A.COMPCD = F.COMPCD AND A.CUSTCD = F.CUSTCD AND A.ORGCD = F.ORGCD
+		  JOIN P004 G WITH (NOLOCK) ON A.COMPCD = G.COMPCD AND A.WHCD = G.WHCD 
+		     
+		 WHERE A.COMPCD = #{LOGIN_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_WISCHDT_FROM != null and S_WISCHDT_FROM != ''">
+		   AND A.WISCHDT >= REPLACE(#{S_WISCHDT_FROM},'-','')
+		</if>
+		<if test="S_WISCHDT_TO != null and S_WISCHDT_TO != ''">
+		   AND A.WISCHDT <![CDATA[ <= ]]> REPLACE(#{S_WISCHDT_TO},'-','')
+		</if>   
+		<if test="S_WIDT_FROM != null and S_WIDT_FROM != ''">
+		   AND A.WIDT >= REPLACE(#{S_WIDT_FROM},'-','')
+		</if>
+		<if test="S_WIDT_TO != null and S_WIDT_TO != ''">
+		   AND A.WIDT <![CDATA[ <= ]]> REPLACE(#{S_WIDT_TO},'-','')
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.CUSTCD = #{S_CUSTCD}
+		</if>
+		<if test="S_WISTS != null and S_WISTS != ''">
+			<if test="S_WISTS == 'NOT99' ">
+			   AND A.WISTS <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_WISTS != 'NOT99' ">
+			   AND A.WISTS = #{S_WISTS}
+			</if>   
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND A.WHCD = #{S_WHCD}
+		</if>
+		   
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+                  AND (C.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%' 
+                   OR C.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+		</if>
+		AND EXISTS (SELECT 1
+		                 FROM P131 B WITH (NOLOCK) 
+		                 JOIN P006 C WITH (NOLOCK) 
+		                   ON C.COMPCD = B.COMPCD
+		                  AND C.ORGCD = B.ORGCD                   
+		                  AND C.ITEMCD = B.ITEMCD                   
+		                WHERE B.WIKEY = A.WIKEY
+		
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND C.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND C.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND C.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND C.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND C.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		                   )
+		    
+		<if test="S_WIKEY != null and S_WIKEY != ''">
+		   		AND A.WIKEY LIKE '%' + dbo.UFX_TRIM(#{S_WIKEY}) + '%'
+		</if>
+		 GROUP BY 
+			   A.COMPCD
+			 , A.WHCD
+			 , G.NAME
+			 , A.CUSTCD
+			 , F.NAME
+			 , A.ORGCD
+			 , E.NAME
+			 
+			 , B.ITEMCD
+			 , C.NAME
+			 , C.UNITCD 
+		     , C.ITEMSIZE
+		     , C.UNITTYPE
+		     , C.INBOXQTY
+		     
+		 ORDER BY B.ITEMCD
+	</select>	
+	
+</mapper>

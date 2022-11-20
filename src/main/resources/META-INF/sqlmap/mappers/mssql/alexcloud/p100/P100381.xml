@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100381Mapper">
+	<!-- 입고 인터페이스 현황 : 발주탭 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100381.getSearch */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , A.IDX
+			 
+			 , A.ORDERNO
+			 , A.ORDERSUBNO
+			 , A.ORDERSEQ
+			 , A.ORDERDATE
+			 
+			 , A.TYPE
+			 , A.MATERIALCODE
+			 , A.MATERIALNAME
+			 , A.PLANTCODE
+			 , A.PLANTNAME
+			 , A.STORAGECODE
+			 , A.STORAGENAME
+			 , A.STOCKCOUNT
+			 , A.STOCKDATE
+			 
+			 , A.COMPANYCODE
+			 , A.COMPANYNAME
+			 , A.MEINS
+			 
+			 , A.ORDERPRICE
+			 , A.TOTALPRICE
+			 , A.STATUS
+			 
+			 , A.OPERATEDATE
+			 , A.OPERATETIME
+			 , A.OPERATEID
+			 
+			 , A.LOGINO
+			 , A.LOGISUBNO
+			 , A.TYPETEXT
+			 
+			 , A.RETURNNO
+			 , A.RETURNSUBNO
+			 , A.RETURNMONTH
+			 
+			 , A.BUYNUM
+			 , A.BUYSEQ
+			 , A.QTY
+			 
+			 , A.RMK
+			 , A.VALID_DATE
+			 , A.LOT
+			 
+			 , CASE WHEN A.INTF_YN = '' THEN '0'
+			 		WHEN A.INTF_YN = 'Y' THEN '1'
+			 		WHEN A.INTF_YN = 'S' THEN '2'
+			 END AS INTF_YN
+			 , A.INTF_DATE
+			 , A.TRS_DATE
+			 , A.INTF_RETURN_YN
+			 , A.INTF_RETURN_DATE
+			 
+			 , A.IN_SNO
+			 , A.LOGIFLAG
+			 , A.LOGISEQ
+			 , A.LOGICOUNT
+			 , A.OUT_SNO	
+			 
+			 , CASE WHEN A.STORAGECODE = '1100' THEN '2000'
+			 		WHEN A.STORAGECODE = '1180' THEN '2180'
+			 		WHEN A.STORAGECODE = '1190' THEN '2190'
+			 		WHEN A.STORAGECODE = '1200' THEN '4000'
+			 		WHEN A.STORAGECODE = '1280' THEN '4280'
+			 		WHEN A.STORAGECODE = '1290' THEN '4290'
+			   END AS WHCD
+			 , CASE WHEN A.STORAGECODE = '1100' THEN (SELECT NAME FROM P004 WHERE WHCD = '2000')
+			 		WHEN A.STORAGECODE = '1180' THEN (SELECT NAME FROM P004 WHERE WHCD = '2180')
+			 		WHEN A.STORAGECODE = '1190' THEN (SELECT NAME FROM P004 WHERE WHCD = '2190')
+			 		WHEN A.STORAGECODE = '1200' THEN (SELECT NAME FROM P004 WHERE WHCD = '4000')
+			 		WHEN A.STORAGECODE = '1280' THEN (SELECT NAME FROM P004 WHERE WHCD = '4280')
+			 		WHEN A.STORAGECODE = '1290' THEN (SELECT NAME FROM P004 WHERE WHCD = '4290')
+			   END AS WHNM
+			   
+			 , A.INTF_YN
+			 , CASE WHEN SUM(A.QTY)OVER(PARTITION BY A.ORDERNO, A.ORDERSUBNO, A.ORDERSEQ)  = 0 THEN 0 																											
+					ELSE ROUND(SUM(A.STOCKCOUNT)OVER(PARTITION BY A.ORDERNO, A.ORDERSUBNO, A.ORDERSEQ) / SUM(A.QTY)OVER(PARTITION BY A.ORDERNO, A.ORDERSUBNO, A.ORDERSEQ)*100,0,1) END AS PROGRESS_QTY  /*입고현황*/
+					
+			 , 'ADMIN' AS ADDUSERCD /*등록자ID*/
+		     , CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/
+		     , A.UPDUSERCD /*수정자ID*/
+		     , CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/
+		     , A.TERMINALCD /*IP*/																							
+		  FROM INTF_ORDERSTOCK A WITH (NOLOCK)
+		 WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND CASE WHEN A.STORAGECODE = '1100' THEN '2000'
+			 		WHEN A.STORAGECODE = '1180' THEN '2180'
+			 		WHEN A.STORAGECODE = '1190' THEN '2190'
+			 		WHEN A.STORAGECODE = '1200' THEN '4000'
+			 		WHEN A.STORAGECODE = '1280' THEN '2280'
+			 		WHEN A.STORAGECODE = '1290' THEN '2290'
+			   END = #{S_WHCD}
+		</if>
+		<if test="S_ORDERDATE_FROM != null and S_ORDERDATE_FROM != ''">
+		   AND A.ORDERDATE >= REPLACE(#{S_ORDERDATE_FROM},'-','')
+		</if>
+		<if test="S_ORDERDATE_TO != null and S_ORDERDATE_TO != ''">
+		   AND A.ORDERDATE <![CDATA[ <= ]]> REPLACE(#{S_ORDERDATE_TO},'-','')
+		</if>	 
+		<if test="S_ORDERNO != null and S_ORDERNO != ''">
+			AND A.ORDERNO LIKE '%' + dbo.UFX_TRIM(#{S_ORDERNO}) + '%'
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.COMPANYCODE = #{S_CUSTCD}
+		</if>
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+                  AND (A.MATERIALCODE LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%' 
+                   OR A.MATERIALNAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+		</if>
+		<if test="S_INTF_YN != null and S_INTF_YN != ''">
+		   <if test="S_INTF_YN == 0">
+		   		AND A.INTF_YN = ''
+		   </if>
+		   <if test="S_INTF_YN == 1">
+		   		AND A.INTF_YN = 'Y'
+		   </if>
+		   <if test="S_INTF_YN == 2">
+		   		AND A.INTF_YN = 'S'
+		   </if>
+		</if>
+
+		 ORDER BY A.ORDERDATE DESC
+		<!-- SELECT A.COMPCD
+			 , A.ORGCD
+			 , A.IDX
+			 , A.ORDERNO
+			 , A.ORDERSUBNO
+			 , A.ORDERSEQ
+			 , A.ORDERDATE
+			 , A.TYPE
+			 , A.MATERIALCODE
+			 , A.MATERIALNAME
+			 , A.PLANTCODE
+			 , A.PLANTNAME
+			 , A.STORAGECODE
+			 , A.STORAGENAME
+			 , A.STOCKCOUNT
+			 , A.STOCKDATE
+			 , A.COMPANYCODE
+			 , A.COMPANYNAME
+			 , A.MEINS
+			 , A.ORDERPRICE
+			 , A.TOTALPRICE
+			 , A.STATUS
+			 , A.OPERATEDATE
+			 , A.OPERATETIME
+			 , A.OPERATEID
+			 , A.LOGINO
+			 , A.LOGISUBNO
+			 , A.TYPETEXT
+			 , A.RETURNNO
+			 , A.RETURNSUBNO
+			 , A.RETURNMONTH
+			 , A.BUYNUM
+			 , A.BUYSEQ
+			 , A.QTY
+			 , A.RMK
+			 , A.VALID_DATE
+			 , A.LOT
+			 , A.INTF_YN
+			 , A.INTF_DATE
+			 , A.TRS_DATE
+			 , A.INTF_RETURN_YN
+			 , A.INTF_RETURN_DATE
+			 , A.IN_SNO
+			 , A.LOGIFLAG
+			 , A.LOGISEQ
+			 , A.LOGICOUNT
+			 , A.OUT_SNO	
+			 , CASE WHEN A.STORAGECODE = '1100' THEN '2000'
+			 		WHEN A.STORAGECODE = '1180' THEN '2180'
+			 		WHEN A.STORAGECODE = '1190' THEN '2190'
+			 		WHEN A.STORAGECODE = '1200' THEN '4000'
+			 		WHEN A.STORAGECODE = '1280' THEN '4280'
+			 		WHEN A.STORAGECODE = '1290' THEN '4290'
+			   END AS WHCD
+			 , CASE WHEN A.STORAGECODE = '1100' THEN (SELECT NAME FROM P004 WHERE WHCD = '2000')
+			 		WHEN A.STORAGECODE = '1180' THEN (SELECT NAME FROM P004 WHERE WHCD = '2180')
+			 		WHEN A.STORAGECODE = '1190' THEN (SELECT NAME FROM P004 WHERE WHCD = '2190')
+			 		WHEN A.STORAGECODE = '1200' THEN (SELECT NAME FROM P004 WHERE WHCD = '4000')
+			 		WHEN A.STORAGECODE = '1280' THEN (SELECT NAME FROM P004 WHERE WHCD = '4280')
+			 		WHEN A.STORAGECODE = '1290' THEN (SELECT NAME FROM P004 WHERE WHCD = '4290')
+			   END AS WHNM
+			 , A.INTF_YN
+			 , B.WIKEY
+			 , B.SEQ
+			 , B.ITEMCD
+			 , C.NAME AS ITEMNM
+			 , B.ORIGINQTY
+			 , ISNULL(B.WISCHQTY, 0) AS WISCHQTY
+			 , ISNULL(B.WIQTY, 0) AS WIQTY
+			 , B.EXCHCD
+			 , B.EXCHRATE
+			 , B.UNITPRICE
+			 , B.EXCHAMT
+			 , B.SUPPLYAMT
+			 , B.LOT1
+			 , B.LOT2
+			 , B.LOT3
+			 , B.LOT4
+			 , B.LOT5
+			 , B.COMPCD
+			 , B.ORGCD
+			 , B.WHCD
+			 , E.NAME AS WHNM
+			 , B.LOCCD
+			 , B.REMARK
+			 , B.IFORDERNO
+			 , B.IFORDERSUBNO
+			 , B.IFORDERSEQ		
+			 , D.WISCHDT
+			 , D.WIDT
+			 , CASE WHEN SUM(A.QTY)OVER(PARTITION BY A.ORDERNO, A.ORDERSUBNO, A.ORDERSEQ)  = 0 THEN 0 																											
+					ELSE ROUND(SUM(B.WIQTY)OVER(PARTITION BY A.ORDERNO, A.ORDERSUBNO, A.ORDERSEQ) / SUM(A.QTY)OVER(PARTITION BY A.ORDERNO, A.ORDERSUBNO, A.ORDERSEQ)*100,0,1) END AS PROGRESS_QTY  /*입고현황*/
+			 , 'ADMIN' AS ADDUSERCD /*등록자ID*/
+		     , CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/
+		     , A.UPDUSERCD /*수정자ID*/
+		     , CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/
+		     , A.TERMINALCD /*IP*/																							
+		  FROM INTF_ORDERSTOCK A WITH (NOLOCK)
+		  JOIN P006 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD AND A.MATERIALCODE = C.ITEMCD
+		  LEFT OUTER JOIN P131 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.ORDERNO = B.IFORDERNO AND A.ORDERSUBNO = B.IFORDERSUBNO AND A.ORDERSEQ = B.IFORDERSEQ
+		  LEFT OUTER JOIN P130 D WITH (NOLOCK) ON B.WIKEY = D.WIKEY
+		  LEFT OUTER JOIN P004 E WITH (NOLOCK) ON B.COMPCD = E.COMPCD AND B.WHCD = E.WHCD		
+		 WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND CASE WHEN A.STORAGECODE = '1100' THEN '2000'
+			 		WHEN A.STORAGECODE = '1180' THEN '2180'
+			 		WHEN A.STORAGECODE = '1190' THEN '2190'
+			 		WHEN A.STORAGECODE = '1200' THEN '4000'
+			 		WHEN A.STORAGECODE = '1280' THEN '2280'
+			 		WHEN A.STORAGECODE = '1290' THEN '2290'
+			   END = #{S_WHCD}
+		</if>
+		<if test="S_ORDERDATE_FROM != null and S_ORDERDATE_FROM != ''">
+		   AND A.ORDERDATE >= REPLACE(#{S_ORDERDATE_FROM},'-','')
+		</if>
+		<if test="S_ORDERDATE_TO != null and S_ORDERDATE_TO != ''">
+		   AND A.ORDERDATE <![CDATA[ <= ]]> REPLACE(#{S_ORDERDATE_TO},'-','')
+		</if>	 
+		<if test="S_ORDERNO != null and S_ORDERNO != ''">
+			AND A.ORDERNO LIKE '%' + dbo.UFX_TRIM(#{S_ORDERNO}) + '%'
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.COMPANYCODE = #{S_CUSTCD}
+		</if>
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+                  AND (A.MATERIALCODE LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%' 
+                   OR A.MATERIALNAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+		</if>
+		<if test="S_INTF_YN != null and S_INTF_YN != ''">
+			AND A.INTF_YN = #{S_INTF_YN}
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+                  AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+                  AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+                  AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+                  AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+                  AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+                  AND C.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+                  AND C.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+                  AND C.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+                  AND C.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+                  AND C.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		 ORDER BY A.ORDERDATE DESC -->
+	</select>
+	
+	<!-- 입고 인터페이스 현황 : 미발주탭 검색-->
+	<!-- <select id="getSearch2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100381.getSearch2 */
+		SELECT A.WIKEY					
+			 , A.WITYPE				
+			 , A.WISTS				
+			 , A.WISCHDT				
+			 , A.WIDT				
+			 , A.COMPCD				
+			 , A.WHCD				
+			 , G.NAME AS WHNM				
+			 , A.CUSTCD				
+			 , F.NAME AS CUSTNM				
+			 , A.ORGCD				
+			 , E.NAME AS ORGNM				
+			 , A.WDKEY				
+			 , A.REMARK				
+			 , B.SEQ				
+			 , B.ITEMCD				
+			 , C.NAME AS ITEMNM				
+			 , B.ORIGINQTY				
+			 , B.WISCHQTY				
+			 , B.WIQTY				
+			 , B.EXCHCD				
+			 , B.EXCHRATE				
+			 , B.UNITPRICE				
+			 , B.EXCHAMT				
+			 , B.SUPPLYAMT				
+			 , B.LOT1				
+			 , B.LOT2				
+			 , B.LOT3				
+			 , B.LOT4				
+			 , B.LOT5				
+			 , B.ADDUSERCD				
+			 , CONVERT(VARCHAR, B.ADDDATETIME, 20) AS ADDDATETIME				
+			 , B.UPDUSERCD				
+			 , CONVERT(VARCHAR, B.UPDDATETIME, 20) AS UPDDATETIME				
+			 , B.TERMINALCD				
+		  FROM P130 A WITH (NOLOCK)					
+		  JOIN P131 B WITH (NOLOCK) ON A.WIKEY = B.WIKEY					
+		  JOIN P006 C WITH (NOLOCK) ON B.COMPCD = C.COMPCD AND B.ORGCD = C.ORGCD AND B.ITEMCD = C.ITEMCD 					
+		  JOIN P002 E WITH (NOLOCK) ON A.COMPCD = E.COMPCD AND A.ORGCD = E.ORGCD					
+		  JOIN P003 F WITH (NOLOCK) ON A.COMPCD = F.COMPCD AND A.ORGCD = F.ORGCD AND A.CUSTCD = F.CUSTCD 					
+		  JOIN P004 G WITH (NOLOCK) ON A.COMPCD = G.COMPCD AND A.WHCD = G.WHCD					
+		 WHERE B.IFORDERNO IS NULL		
+		   AND A.WISTS 	<![CDATA[ <> ]]> '99'						
+ 		   AND A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND A.WHCD = #{S_WHCD}
+		</if>
+		<if test="S_KEYBOX != null and S_KEYBOX != ''">
+			<if test="S_KEY == 'IF'">
+				AND B.IFORDERNO LIKE '%' + dbo.UFX_TRIM(#{S_KEYBOX}) + '%'
+			</if>
+			<if test="S_KEY == 'WI'">
+				AND B.WIKEY LIKE '%' + dbo.UFX_TRIM(#{S_KEYBOX}) + '%'
+			</if>
+		</if>
+		<if test="S_WISCHDT_FROM != null and S_WISCHDT_FROM != ''">
+		   AND A.WISCHDT >= REPLACE(#{S_WISCHDT_FROM},'-','')
+		</if>
+		<if test="S_WISCHDT_TO != null and S_WISCHDT_TO != ''">
+		   AND A.WISCHDT <![CDATA[ <= ]]> REPLACE(#{S_WISCHDT_TO},'-','')
+		</if>  
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.CUSTCD = #{S_CUSTCD}
+		</if>
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+                  AND (C.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%' 
+                   OR C.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+                  AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+                  AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+                  AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+                  AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+                  AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+                  AND C.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+                  AND C.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+                  AND C.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+                  AND C.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+                  AND C.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		 ORDER BY A.WIKEY DESC
+	</select>	 -->
+</mapper>

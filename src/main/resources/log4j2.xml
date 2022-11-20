@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration status="ERROR">
+    <properties>
+        <property name="fatal">fatal_xroute.log</property>
+        <property name="total">total_xroute.log</property>
+        <property name="pattern"> [%-23d][%-5p][%-21t][%c{1}:%L] -> %m%n
+        </property>
+        <property name="dirPath">/home/ec2-user/xroute/logs</property>
+    </properties>
+    <Appenders>
+        <Console name="console">
+            <PatternLayout pattern="${pattern}" />
+        </Console>
+        <RollingFile name="fatal">
+            <FileName>${dirPath}/${fatal}</FileName>
+            <FilePattern>${dirPath}/$${date:yyyy}/$${date:MM}/%d{yyyy-MM-dd}_${fatal}.zip
+            </FilePattern>
+            <PatternLayout>
+                <pattern>${pattern}</pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" />
+            </Policies>
+        </RollingFile>
+        <RollingFile name="total">
+            <FileName>${dirPath}/${total}</FileName>
+            <FilePattern>${dirPath}/$${date:yyyy}/$${date:MM}/%d{yyyy-MM-dd}_${total}.zip
+            </FilePattern>
+            <PatternLayout>
+                <pattern>${pattern}</pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" />
+            </Policies>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="xrt" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="total" />
+        </Logger>
+        <Logger name="lingo" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="total" />
+        </Logger>
+        <logger name="jdbc.connection" level="ERROR" additivity="false">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="total" />
+        </logger>
+        <Logger name="java.sql.PreparedStatement" level="ERROR" additivity="false">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="total" />
+        </Logger>
+        <Logger name="jdbc.sqlonly" level="INFO" additivity="false">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="total" />
+        </Logger>
+        <!-- <Logger name="jdbc.sqltiming" level="ERROR" additivity="false" /> -->
+        <!-- <logger name="jdbc.resultsettable" level="ERROR" additivity="false" /> -->
+        <!-- <Logger name="jdbc.audit" level="ERROR" additivity="false" /> -->
+        <Root level="ERROR" additivity="true">
+            <AppenderRef ref="console" />
+            <AppenderRef ref="fatal" />
+        </Root>
+    </Loggers>
+</Configuration>

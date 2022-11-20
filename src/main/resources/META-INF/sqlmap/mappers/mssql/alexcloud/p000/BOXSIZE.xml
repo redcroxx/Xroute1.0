@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 박스 관리 -->
+<mapper namespace="BOXSIZEMapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* BOXSIZEMapper.getSearch */
+		SELECT
+			A.COMPCD
+			, C.NAME AS COMPNM
+			, A.ORGCD
+			, B.NAME AS ORGNM
+			, A.BOX_ID
+			, A.BOX_NM
+			, A.BOX_SIZE_W
+			, A.BOX_SIZE_B
+			, A.BOX_SIZE_H
+			, A.BOX_VOL
+			, A.VOL_SEQ
+			, A.END_DATE
+			, A.ADDUSERCD
+			, CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			, A.UPDUSERCD
+			, CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			, A.TERMINALCD
+		FROM BOXSIZE A WITH (NOLOCK)
+		JOIN P002 B WITH (NOLOCK)
+		ON A.COMPCD = B.COMPCD
+		AND A.ORGCD = B.ORGCD
+		JOIN P001 C WITH (NOLOCK)
+		ON A.COMPCD = C.COMPCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND A.COMPCD = #{S_COMPCD}
+			</if>
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+			</if>
+			<if test="S_BOX != null and S_BOX != ''">
+			AND (A.BOX_ID LIKE '%' + dbo.UFX_Trim(#{S_BOX}) + '%' OR A.BOX_NM LIKE '%' + dbo.UFX_Trim(#{S_BOX}) + '%')
+			</if>
+		</trim>
+	</select>
+	
+	<!-- 검증 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* BOXSIZEMapper.getDetail */
+		SELECT
+			A.COMPCD
+			, A.ORGCD
+			, A.BOX_ID
+			, A.BOX_NM
+			, A.BOX_SIZE_W
+			, A.BOX_SIZE_B
+			, A.BOX_SIZE_H
+			, A.BOX_VOL
+			, A.VOL_SEQ
+			, A.END_DATE
+		FROM BOXSIZE A WITH (NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		AND A.ORGCD = #{ORGCD}
+		AND A.BOX_ID = #{BOX_ID}
+	</select>
+
+	<!-- 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* BOXSIZEMapper.insertMst */
+		INSERT INTO BOXSIZE WITH (ROWLOCK) (
+			COMPCD
+			, ORGCD
+			, BOX_ID
+			, BOX_NM
+			, BOX_SIZE_W
+			, BOX_SIZE_B
+			, BOX_SIZE_H
+			, BOX_VOL
+			, VOL_SEQ
+			, END_DATE
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			#{COMPCD}
+			, #{ORGCD}
+			, dbo.UFX_Trim(#{BOX_ID})
+			, #{BOX_NM}
+			, #{BOX_SIZE_W}
+			, #{BOX_SIZE_B}
+			, #{BOX_SIZE_H}
+			, #{BOX_VOL}
+			, #{VOL_SEQ}
+			, #{END_DATE}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* BOXSIZEMapper.updateMst */
+		UPDATE BOXSIZE WITH (ROWLOCK)
+			SET
+			BOX_NM = #{BOX_NM}
+			, BOX_SIZE_W = #{BOX_SIZE_W}
+			, BOX_SIZE_B = #{BOX_SIZE_B}
+			, BOX_SIZE_H = #{BOX_SIZE_H}
+			, BOX_VOL = #{BOX_VOL}
+			, VOL_SEQ = #{VOL_SEQ}
+			, END_DATE = #{END_DATE}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		AND BOX_ID = #{BOX_ID}
+	</update>
+
+	<!-- 삭제 (사용/미사용) -->
+	<update id="deleteMst" parameterType="LDataMap">
+		/* BOXSIZEMapper.deleteMst */
+		DELETE FROM BOXSIZE
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD  = #{ORGCD}
+		AND BOX_ID = #{BOX_ID}
+	</update>
+	
+</mapper>

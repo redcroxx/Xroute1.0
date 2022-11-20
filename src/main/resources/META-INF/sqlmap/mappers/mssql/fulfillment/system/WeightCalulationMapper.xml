@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="weightCalulationMapper">
+
+    <select id="getPremiumPrice" parameterType="LDataMap" resultType="xrt.fulfillment.system.PremiumRateVO">
+        SELECT
+            PREMIUM1 AS premium1
+        FROM
+            <choose>
+                <when test='country == "JP"'>
+                    PRICE_JP
+                </when>
+                <when test='country == "SG"'>
+                    PRICE_SG
+                </when>
+                <when test='country == "HK"'>
+                    PRICE_HK
+                </when>
+                <when test='country == "MY"'>
+                    PRICE_MY
+                </when>
+                <when test='country == "TW"'>
+                    PRICE_TW
+                </when>
+                <when test='country == "US"'>
+                    PRICE_US
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        WHERE 1 = 1
+            AND CONVERT(DECIMAL(4,2), WGT) = (
+                <choose>
+                    <when test='country == "JP"'>
+                        <![CDATA[
+                            CASE
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.1  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.2  THEN 0.2
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.2  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.3  THEN 0.3
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.3  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.4  THEN 0.4
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.4  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.5  THEN 0.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.6  THEN 0.6
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.6  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.7  THEN 0.7
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.7  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.8  THEN 0.8
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.8  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.9  THEN 0.9
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.9  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.0  THEN 1.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.5  THEN 1.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.0  THEN 2.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.5  THEN 2.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 3.0  THEN 3.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 3.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 3.5  THEN 3.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 3.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 4.0  THEN 4.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 4.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 4.5  THEN 4.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 4.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 5.0  THEN 5.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 5.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 5.5  THEN 5.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 5.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 6.0  THEN 6.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 6.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 6.5  THEN 6.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 6.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 7.0  THEN 7.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 7.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 7.5  THEN 7.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 7.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 8.0  THEN 8.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 8.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 8.5  THEN 8.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 8.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 9.0  THEN 9.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 9.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 9.5  THEN 9.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 9.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 10.0 THEN 10.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 10.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 10.5 THEN 10.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 10.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 11.0 THEN 11.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 11.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 11.5 THEN 11.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 11.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 12.0 THEN 12.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 12.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 12.5 THEN 12.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 12.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 13.0 THEN 13.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 13.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 13.5 THEN 13.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 13.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 14.0 THEN 14.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 14.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 14.5 THEN 14.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 14.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 15.0 THEN 15.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 15.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 15.5 THEN 15.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 15.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 16.0 THEN 16.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 16.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 16.5 THEN 16.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 16.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 17.0 THEN 17.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 17.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 17.5 THEN 17.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 17.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 18.0 THEN 18.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 18.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 18.5 THEN 18.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 18.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 19.0 THEN 19.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 19.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 19.5 THEN 19.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 19.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 20.0 THEN 20.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 20.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 20.5 THEN 20.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 20.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 21.0 THEN 21.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 21.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 21.5 THEN 21.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 21.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 22.0 THEN 22.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 22.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 22.5 THEN 22.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 22.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 23.0 THEN 23.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 23.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 23.5 THEN 23.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 23.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 24.0 THEN 24.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 24.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 24.5 THEN 24.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 24.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 25.0 THEN 25.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 25.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 25.5 THEN 25.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 25.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 26.0 THEN 26.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 26.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 26.5 THEN 26.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 26.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 27.0 THEN 27.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 27.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 27.5 THEN 27.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 27.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 28.0 THEN 28.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 28.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 28.5 THEN 28.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 28.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 29.0 THEN 29.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 29.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 29.5 THEN 29.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 29.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 30.0 THEN 30.0
+                            ELSE 0.1 END
+                        ]]>
+                    </when>
+                    <when test='country == "US"'>
+                        <![CDATA[
+                            CASE
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.1  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.2  THEN 0.2
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.2  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.3  THEN 0.3
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.3  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.4  THEN 0.4
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.4  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.5  THEN 0.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.6  THEN 0.6
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.6  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.7  THEN 0.7
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.7  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.8  THEN 0.8
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.8  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.9  THEN 0.9
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.9  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.0  THEN 1.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.2  THEN 1.2
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.2  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.5  THEN 1.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.7  THEN 1.7
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.7  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.0  THEN 2.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.2  THEN 2.2
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.2  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.5  THEN 2.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.7  THEN 2.7
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.7  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 3.0  THEN 3.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 3.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 3.5  THEN 3.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 3.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 4.0  THEN 4.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 4.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 4.5  THEN 4.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 4.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 5.0  THEN 5.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 5.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 5.5  THEN 5.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 5.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 6.0  THEN 6.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 6.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 6.5  THEN 6.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 6.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 7.0  THEN 7.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 7.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 7.5  THEN 7.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 7.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 8.0  THEN 8.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 8.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 8.5  THEN 8.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 8.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 9.0  THEN 9.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 9.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 9.5  THEN 9.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 9.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 10.0 THEN 10.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 10.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 10.5 THEN 10.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 10.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 11.0 THEN 11.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 11.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 11.5 THEN 11.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 11.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 12.0 THEN 12.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 12.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 12.5 THEN 12.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 12.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 13.0 THEN 13.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 13.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 13.5 THEN 13.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 13.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 14.0 THEN 14.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 14.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 14.5 THEN 14.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 14.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 15.0 THEN 15.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 15.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 15.5 THEN 15.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 15.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 16.0 THEN 16.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 16.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 16.5 THEN 16.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 16.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 17.0 THEN 17.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 17.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 17.5 THEN 17.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 17.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 18.0 THEN 18.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 18.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 18.5 THEN 18.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 18.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 19.0 THEN 19.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 19.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 19.5 THEN 19.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 19.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 20.0 THEN 20.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 20.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 20.5 THEN 20.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 20.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 21.0 THEN 21.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 21.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 21.5 THEN 21.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 21.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 22.0 THEN 22.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 22.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 22.5 THEN 22.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 22.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 23.0 THEN 23.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 23.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 23.5 THEN 23.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 23.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 24.0 THEN 24.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 24.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 24.5 THEN 24.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 24.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 25.0 THEN 25.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 25.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 25.5 THEN 25.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 25.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 26.0 THEN 26.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 26.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 26.5 THEN 26.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 26.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 27.0 THEN 27.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 27.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 27.5 THEN 27.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 27.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 28.0 THEN 28.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 28.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 28.5 THEN 28.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 28.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 29.0 THEN 29.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 29.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 29.5 THEN 29.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 29.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 30.0 THEN 30.0
+                            ELSE 0.1 END
+                        ]]>
+                    </when>
+                    <otherwise>
+                        <![CDATA[
+                            CASE
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.1  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.2  THEN 0.2 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.2  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.3  THEN 0.3 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.3  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.4  THEN 0.4 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.4  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 0.5  THEN 0.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 0.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.0  THEN 1.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 1.5  THEN 1.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 1.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.0  THEN 2.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 2.5  THEN 2.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 2.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 3.0  THEN 3.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 3.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 3.5  THEN 3.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 3.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 4.0  THEN 4.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 4.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 4.5  THEN 4.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 4.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 5.0  THEN 5.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 5.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 5.5  THEN 5.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 5.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 6.0  THEN 6.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 6.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 6.5  THEN 6.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 6.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 7.0  THEN 7.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 7.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 7.5  THEN 7.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 7.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 8.0  THEN 8.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 8.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 8.5  THEN 8.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 8.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 9.0  THEN 9.0 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 9.0  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 9.5  THEN 9.5 
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 9.5  AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 10.0 THEN 10.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 10.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 10.5 THEN 10.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 10.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 11.0 THEN 11.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 11.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 11.5 THEN 11.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 11.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 12.0 THEN 12.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 12.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 12.5 THEN 12.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 12.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 13.0 THEN 13.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 13.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 13.5 THEN 13.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 13.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 14.0 THEN 14.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 14.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 14.5 THEN 14.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 14.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 15.0 THEN 15.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 15.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 15.5 THEN 15.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 15.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 16.0 THEN 16.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 16.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 16.5 THEN 16.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 16.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 17.0 THEN 17.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 17.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 17.5 THEN 17.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 17.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 18.0 THEN 18.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 18.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 18.5 THEN 18.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 18.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 19.0 THEN 19.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 19.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 19.5 THEN 19.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 19.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 20.0 THEN 20.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 20.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 20.5 THEN 20.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 20.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 21.0 THEN 21.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 21.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 21.5 THEN 21.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 21.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 22.0 THEN 22.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 22.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 22.5 THEN 22.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 22.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 23.0 THEN 23.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 23.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 23.5 THEN 23.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 23.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 24.0 THEN 24.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 24.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 24.5 THEN 24.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 24.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 25.0 THEN 25.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 25.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 25.5 THEN 25.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 25.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 26.0 THEN 26.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 26.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 26.5 THEN 26.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 26.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 27.0 THEN 27.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 27.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 27.5 THEN 27.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 27.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 28.0 THEN 28.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 28.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 28.5 THEN 28.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 28.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 29.0 THEN 29.0
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 29.0 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 29.5 THEN 29.5
+                                WHEN CONVERT(DECIMAL(4, 2), #{wgt}) > 29.5 AND  CONVERT(DECIMAL(4, 2), #{wgt}) <= 30.0 THEN 30.0
+                            ELSE 0.1 END
+                        ]]>
+                    </otherwise>
+                </choose>
+            )
+    </select>
+    
+    <select id="getDhlZone" parameterType="LDataMap" resultType="xrt.fulfillment.system.DhlCountryZoneVO">
+        SELECT 
+            'ZONE' + ZONE AS zone
+        FROM
+            DHL_COUNTRY_ZONE
+        WHERE 1 = 1
+        AND COUNTRY_CODE = #{dhlCountry}
+    </select>
+    
+    <select id="getUpsZone" parameterType="LDataMap" resultType="xrt.fulfillment.system.UpsCountryZoneVO">
+        SELECT 
+            'ZONE' + ZONE AS zone,
+            ESS AS ess
+        FROM
+            UPS_COUNTRY_ZONE
+        WHERE 1 = 1
+        AND COUNTRY_CODE = #{upsCountry}
+    </select>
+    
+    <select id="getDhlPrice" parameterType="xrt.fulfillment.system.DhlRateVO" resultType="xrt.fulfillment.system.DhlRateVO">
+        SELECT 
+            CASE
+                WHEN #{zoneCode} = 'ZONE1' THEN ZONE1
+                WHEN #{zoneCode} = 'ZONE2' THEN ZONE2
+                WHEN #{zoneCode} = 'ZONE3' THEN ZONE3
+                WHEN #{zoneCode} = 'ZONE4' THEN ZONE4
+                WHEN #{zoneCode} = 'ZONE5' THEN ZONE5
+                WHEN #{zoneCode} = 'ZONE6' THEN ZONE6
+                WHEN #{zoneCode} = 'ZONE7' THEN ZONE7
+                WHEN #{zoneCode} = 'ZONE8' THEN ZONE8
+                WHEN #{zoneCode} = 'ZONE41' THEN ZONE41
+                ELSE 'ERROR'
+            END AS dhlPrice
+        FROM
+            DHL_RATE
+        WHERE 1 = 1
+        AND CONVERT(DECIMAL(4,2), KG) = (
+            <![CDATA[
+	            CASE
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) <= 0.5 THEN 0.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 0.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 1.0 THEN 1.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 1.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 1.5 THEN 1.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 1.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 2.0 THEN 2.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 2.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 2.5 THEN 2.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 2.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 3.0 THEN 3.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 3.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 3.5 THEN 3.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 3.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 4.0 THEN 4.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 4.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 4.5 THEN 4.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 4.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 5.0 THEN 5.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 5.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 5.5 THEN 5.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 5.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 6.0 THEN 6.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 6.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 6.5 THEN 6.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 6.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 7.0 THEN 7.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 7.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 7.5 THEN 7.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 7.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 8.0 THEN 8.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 8.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 8.5 THEN 8.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 8.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 9.0 THEN 9.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 9.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 10.0 THEN 10.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 10.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 10.5 THEN 10.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 10.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 11.0 THEN 11.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 11.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 11.5 THEN 11.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 11.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 12.0 THEN 12.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 12.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 12.5 THEN 12.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 12.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 13.0 THEN 13.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 13.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 13.5 THEN 13.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 13.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 14.0 THEN 14.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 14.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 14.5 THEN 14.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 14.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 15.0 THEN 15.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 15.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 15.5 THEN 15.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 15.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 16.0 THEN 16.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 16.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 16.5 THEN 16.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 16.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 17.0 THEN 17.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 17.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 17.5 THEN 17.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 17.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 18.0 THEN 18.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 18.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 18.5 THEN 18.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 18.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 19.0 THEN 19.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 19.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 19.5 THEN 19.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 19.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 20.0 THEN 20.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 20.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 20.5 THEN 20.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 20.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 21.0 THEN 21.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 21.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 21.5 THEN 21.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 21.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 22.0 THEN 22.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 22.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 22.5 THEN 22.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 22.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 23.0 THEN 23.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 23.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 23.5 THEN 23.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 23.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 24.0 THEN 24.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 24.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 24.5 THEN 24.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 24.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 25.0 THEN 25.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 25.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 25.5 THEN 25.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 25.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 26.0 THEN 26.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 26.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 26.5 THEN 26.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 26.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 27.0 THEN 27.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 27.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 27.5 THEN 27.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 27.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 28.0 THEN 28.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 28.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 28.5 THEN 28.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 28.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 29.0 THEN 29.0
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 29.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 29.5 THEN 29.5
+	                WHEN CONVERT(DECIMAL(4,2), #{kg}) > 29.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 30.0 THEN 30.0
+	            ELSE 0.5
+	            END 
+	        ]]>
+        )
+    </select>
+    
+    <select id="getUpsPrice" parameterType="xrt.fulfillment.system.UpsRateVO" resultType="xrt.fulfillment.system.UpsRateVO">
+        SELECT 
+            CASE
+                WHEN #{zoneCode} = 'ZONE1' THEN ZONE1
+                WHEN #{zoneCode} = 'ZONE2' THEN ZONE2
+                WHEN #{zoneCode} = 'ZONE3' THEN ZONE3
+                WHEN #{zoneCode} = 'ZONE4' THEN ZONE4
+                WHEN #{zoneCode} = 'ZONE5' THEN ZONE5
+                WHEN #{zoneCode} = 'ZONE6' THEN ZONE6
+                WHEN #{zoneCode} = 'ZONE7' THEN ZONE7
+                WHEN #{zoneCode} = 'ZONE8' THEN ZONE8
+                WHEN #{zoneCode} = 'ZONE9' THEN ZONE9
+                WHEN #{zoneCode} = 'ZONE10' THEN ZONE10
+                ELSE 'ERROR'
+            END AS upsPrice
+        FROM
+            UPS_RATE
+        WHERE 1 = 1
+        AND CONVERT(DECIMAL(4,2), KG) = (
+            <![CDATA[
+                CASE
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) <= 0.5 THEN 0.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 0.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 1.0 THEN 1.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 1.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 1.5 THEN 1.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 1.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 2.0 THEN 2.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 2.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 2.5 THEN 2.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 2.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 3.0 THEN 3.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 3.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 3.5 THEN 3.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 3.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 4.0 THEN 4.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 4.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 4.5 THEN 4.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 4.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 5.0 THEN 5.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 5.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 5.5 THEN 5.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 5.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 6.0 THEN 6.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 6.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 6.5 THEN 6.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 6.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 7.0 THEN 7.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 7.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 7.5 THEN 7.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 7.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 8.0 THEN 8.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 8.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 8.5 THEN 8.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 8.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 9.0 THEN 9.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 9.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 10.0 THEN 10.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 10.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 10.5 THEN 10.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 10.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 11.0 THEN 11.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 11.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 11.5 THEN 11.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 11.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 12.0 THEN 12.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 12.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 12.5 THEN 12.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 12.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 13.0 THEN 13.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 13.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 13.5 THEN 13.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 13.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 14.0 THEN 14.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 14.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 14.5 THEN 14.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 14.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 15.0 THEN 15.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 15.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 15.5 THEN 15.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 15.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 16.0 THEN 16.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 16.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 16.5 THEN 16.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 16.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 17.0 THEN 17.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 17.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 17.5 THEN 17.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 17.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 18.0 THEN 18.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 18.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 18.5 THEN 18.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 18.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 19.0 THEN 19.0
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 19.0 AND CONVERT(DECIMAL(4,2), #{kg}) <= 19.5 THEN 19.5
+                    WHEN CONVERT(DECIMAL(4,2), #{kg}) > 19.5 AND CONVERT(DECIMAL(4,2), #{kg}) <= 20.0 THEN 20.0
+                ELSE 0.5
+                END 
+            ]]>
+        )
+    </select>
+</mapper>

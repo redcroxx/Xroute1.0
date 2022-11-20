@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P900520Mapper">
+	
+	<!-- 로케이션 사용현황 검색  -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p900.P900520.getSearch */
+			SELECT  B.WHCD,
+				    D.NAME AS WHNM,
+					B.LOCCD, 
+					A.BUIL AS BUIL,
+			        A.FLOOR AS FLOOR,
+			        A.ZONE AS ZONE,
+			        A.LOCGROUP,
+			        A.LOCTYPE,
+			        E.CUSTCD,
+			        E.NAME AS CUSTNM,
+			        A.LINE,
+			        A.RANGE,
+			        A.STEP,
+					A.WEIGHTCAPACITY,
+					A.CAPACITY,
+					SUM(B.QTY*c.CAPACITY) AS WEIGHTCAPACITY_SHIYOUZUMI,
+					SUM(B.QTY) AS CAPACITY_SHIYOUZUMI,
+					SUM(B.QTY) AS QTY, 
+					A.COMPCD
+			  FROM P810 B WITH (NOLOCK)--로케이션
+			  JOIN P005 A WITH (NOLOCK)--현재고
+			    ON A.COMPCD =B.COMPCD
+			   AND A.WHCD = B.WHCD
+			   AND A.LOCCD = B.LOCCD
+			  JOIN P006 C WITH (NOLOCK) --품목
+			    ON B.ITEMCD = C.ITEMCD
+			   AND B.COMPCD = C.COMPCD
+			   AND B.ORGCD = C.ORGCD
+			  JOIN P004 D WITH (NOLOCK) --창고
+			    ON B.WHCD = D.WHCD
+			   AND B.COMPCD = D.COMPCD
+			  LEFT OUTER JOIN P003 E WITH (NOLOCK) --거래처
+			    ON A.COMPCD = E.COMPCD
+			   AND A.CUSTCD = E.CUSTCD
+			 WHERE B.COMPCD = #{S_COMPCD}
+			<if test="S_WHCD != null and S_WHCD != ''">
+				AND B.WHCD = #{S_WHCD}	
+			</if>
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+				AND B.ORGCD = #{S_ORGCD} 
+			</if>  
+			 <if test="S_BUIL != null and S_BUIL != ''">
+			   AND A.BUIL LIKE '%' + dbo.UFX_TRIM(#{S_BUIL}) + '%'
+			 </if>
+			 <if test="S_FLOOR != null and S_FLOOR != ''">
+			   AND A.FLOOR LIKE '%' + dbo.UFX_TRIM(#{S_FLOOR}) + '%'
+			 </if>
+			 <if test="S_ZONE != null and S_ZONE != ''">
+			   AND A.ZONE LIKE '%' + dbo.UFX_TRIM(#{S_ZONE}) + '%'
+			 </if>
+			 <if test="S_LOCCD != null and S_LOCCD != ''">
+			   AND A.LOCCD LIKE '%' + dbo.UFX_TRIM(#{S_LOCCD}) + '%'
+			 </if>
+			 <if test="S_LOCGROUP != null and S_LOCGROUP != ''">
+			   AND A.LOCGROUP LIKE '%' + dbo.UFX_TRIM(#{S_LOCGROUP}) + '%'
+			 </if>
+			 <if test="S_LOCTYPE != null and S_LOCTYPE != ''">
+			   AND A.LOCTYPE LIKE '%' + dbo.UFX_TRIM(#{S_LOCTYPE}) + '%'
+			 </if>
+			 <if test="S_LINE != null and S_LINE != ''">
+			   AND A.LINE LIKE '%' + dbo.UFX_TRIM(#{S_LINE}) + '%'
+			 </if>
+			 <if test="S_RANGE != null and S_RANGE != ''">
+			   AND A.RANGE LIKE '%' + dbo.UFX_TRIM(#{S_RANGE}) + '%'
+			 </if>
+			 <if test="S_STEP != null and S_STEP != ''">
+			   AND A.STEP LIKE '%' + dbo.UFX_TRIM(#{S_STEP}) + '%'
+			 </if>
+			  GROUP BY B.WHCD,
+					   D.NAME,
+					   B.LOCCD,
+			           A.BUIL,
+			           A.FLOOR,
+			           A.ZONE,
+			           A.LOCGROUP,
+			           A.LOCTYPE,
+			           A.LINE,
+			           A.RANGE,
+			           A.STEP,
+					   A.WEIGHTCAPACITY,
+					   A.CAPACITY,
+					   E.CUSTCD,
+					   E.NAME,
+					   A.COMPCD 
+			UNION
+			SELECT  
+					A.WHCD,
+				    B.NAME AS WHNM,
+					A.LOCCD, 
+					A.BUIL AS BUIL,
+			        A.FLOOR AS FLOOR,
+			        A.ZONE AS ZONE,
+			        A.LOCGROUP,
+			        A.LOCTYPE,
+			        C.CUSTCD,
+			        C.NAME AS CUSTNM,
+			        A.LINE,
+			        A.RANGE,
+			        A.STEP,
+					A.WEIGHTCAPACITY,
+					A.CAPACITY,
+					0 AS WEIGHTCAPACITY_SHIYOUZUMI,
+					0 AS CAPACITY_SHIYOUZUMI,
+					0 AS QTY, 
+					C.COMPCD 
+			    FROM P005 A WITH (NOLOCK)--로케이션
+				JOIN P004 B WITH (NOLOCK)--창고
+				  ON A.WHCD = B.WHCD
+				 AND A.COMPCD=B.COMPCD
+				LEFT OUTER JOIN P003 C WITH (NOLOCK)
+				  ON B.COMPCD = C.COMPCD
+			     AND B.CUSTCD = C.CUSTCD 
+				WHERE 1=1 
+				 AND NOT EXISTS(
+					SELECT * 
+					  FROM P810 D WITH (NOLOCK) --재고
+					 WHERE D.WHCD = A.WHCD
+					   AND D.LOCCD = A.LOCCD
+				 )
+				   AND A.COMPCD =#{S_COMPCD}
+				 <if test="S_WHCD != null and S_WHCD != ''">
+				   AND A.WHCD =#{S_WHCD}
+				 </if>  
+				 <if test="S_ORGCD != null and S_ORGCD != ''">
+				   AND C.ORGCD = #{S_ORGCD}  
+				 </if> 
+				 <if test="S_BUIL != null and S_BUIL != ''">
+				   AND A.BUIL LIKE '%' + dbo.UFX_TRIM(#{S_BUIL}) + '%'
+				 </if>
+				 <if test="S_FLOOR != null and S_FLOOR != ''">
+				   AND A.FLOOR LIKE '%' + dbo.UFX_TRIM(#{S_FLOOR}) + '%'
+				 </if>
+				 <if test="S_ZONE != null and S_ZONE != ''">
+				   AND A.ZONE LIKE '%' + dbo.UFX_TRIM(#{S_ZONE}) + '%'
+				 </if>
+				 <if test="S_LOCCD != null and S_LOCCD != ''">
+				   AND A.LOCCD LIKE '%' + dbo.UFX_TRIM(#{S_LOCCD}) + '%'
+				 </if>
+				 <if test="S_LOCGROUP != null and S_LOCGROUP != ''">
+				   AND A.LOCGROUP LIKE '%' + dbo.UFX_TRIM(#{S_LOCGROUP}) + '%'
+				 </if>
+				 <if test="S_LOCTYPE != null and S_LOCTYPE != ''">
+				   AND A.LOCTYPE LIKE '%' + dbo.UFX_TRIM(#{S_LOCTYPE}) + '%'
+				 </if>
+				 <if test="S_LINE != null and S_LINE != ''">
+				   AND A.LINE LIKE '%' + dbo.UFX_TRIM(#{S_LINE}) + '%'
+				 </if>
+				 <if test="S_RANGE != null and S_RANGE != ''">
+				   AND A.RANGE LIKE '%' + dbo.UFX_TRIM(#{S_RANGE}) + '%'
+				 </if>
+				 <if test="S_STEP != null and S_STEP != ''">
+				   AND A.STEP LIKE '%' + dbo.UFX_TRIM(#{S_STEP}) + '%'
+				 </if>
+			ORDER BY WHCD,BUIL,FLOOR,ZONE,LOCCD
+			
+	</select>
+	
+</mapper>

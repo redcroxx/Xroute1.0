@@ -1,0 +1,25 @@
+.gb div {
+	margin-bottom: 3px;
+    margin-top: 5px;
+}
+
+.gb span[role=gimg]{
+	margin-right : 5px
+}
+
+.gb span[role=gtxt]{
+	color : #000000;
+	font-family: 맑은 고딕;
+}
+
+.gb span[role=gtxt]:hover{
+	color : #FFFFFF;
+	font-family: 맑은 고딕;
+}
+
+.g_bg1 {
+background-color:#d5ebf8 ;
+}
+.g_bg2 {
+background-color:#d9f3ee ;
+}

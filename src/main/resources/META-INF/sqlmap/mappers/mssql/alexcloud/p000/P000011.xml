@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="P000011Mapper">
+	<!-- 판매단가 : 검색  -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/*alexcloud.p000.P000011.getSearch*/
+		SELECT A.COMPCD				/*회사코드*/
+		 	 , A.ORGCD              /*화주코드*/
+		     , G.NAME ORGNM         /*화주명*/
+		     , A.ITEMCD				/*품목코드*/
+		     , A.NAME ITEMNM		/*품목명*/
+		     , A.SNAME				/*품목명(약칭)*/
+		     , A.FNAME				/*정식명칭*/
+		     , A.ITEMTYPE			/*품목유형*/
+		     , A.UNITCD				/*단위*/
+		     , A.ITEMSIZE			/*규격*/
+		     , A.CATEGORYCD			/*분류*/
+		     , D.NAME AS ITEMCAT1NM /*소분류*/
+		     , E.NAME AS ITEMCAT2NM /*중분류*/
+		     , F.NAME AS ITEMCAT3NM /*대분류*/		     
+		     , A.SETYN				/*세트여부*/
+		     , A.INBOXQTY			/*박스입수량*/
+		     , A.LENGTH 			/*깊이*/
+		     , A.WIDTH 				/*폭*/
+		     , A.HEIGHT 			/*높이*/
+		     , A.CAPACITY			/*용량*/
+		     , A.MANUFACTURE		/*제조사*/
+		     , A.MANUCOUNTRY		/*제조국*/
+		     , A.CUSTCD				/*거래처(지정)*/
+		     , C.NAME AS CUSTNM 	/*거래처명*/
+		     , A.F_USER01			/*사용자지정(코드)*/
+		     , A.F_USER02			/*사용자지정(코드)*/
+		     , A.F_USER03			/*사용자지정(코드)*/
+		     , A.F_USER04			/*사용자지정(코드)*/
+		     , A.F_USER05			/*사용자지정(코드)*/
+		     , A.F_USER11			/*사용자지정(TEXT)*/
+		     , A.F_USER12			/*사용자지정(TEXT)*/
+		     , A.F_USER13			/*사용자지정(TEXT)*/
+		     , A.F_USER14			/*사용자지정(TEXT)*/
+		     , A.F_USER15			/*사용자지정(TEXT)*/
+		     , A.IMG1_PATH			/*이미지경로*/
+		     , A.IMG1_REAL_PATH		/*실경로*/
+		     , A.REMARK				/*비고*/
+		     , A.ISUSING			/*사용여부*/
+		     , A.ADDUSERCD			/*등록자ID*/
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME	/*등록일시*/
+		     , A.UPDUSERCD			/*수정자ID*/
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME	/*수정일시*/
+		     , A.TERMINALCD			/*IP*/	
+          FROM P006 /*품목*/ A WITH (NOLOCK)
+          JOIN P001 /*회사*/ B WITH (NOLOCK)
+            ON A.COMPCD = B.COMPCD
+          LEFT OUTER JOIN P003 /*거래처*/ C WITH (NOLOCK)
+            ON A.COMPCD = C.COMPCD AND A.CUSTCD = C.CUSTCD AND A.ORGCD = C.ORGCD
+          LEFT OUTER JOIN P017 /*품목분류*/ D WITH (NOLOCK)
+            ON A.COMPCD = D.COMPCD AND A.CATEGORYCD = D.CATEGORYCD
+          LEFT OUTER JOIN P017 E WITH (NOLOCK)
+            ON D.COMPCD = E.COMPCD AND D.PCATEGORYCD = E.CATEGORYCD
+          LEFT OUTER JOIN P017 F WITH (NOLOCK)
+            ON E.COMPCD = F.COMPCD AND E.PCATEGORYCD = F.CATEGORYCD	
+          JOIN P002 G WITH (NOLOCK) /*화주*/
+            ON G.COMPCD = A.COMPCD
+           AND G.ORGCD = A.ORGCD 
+		 WHERE A.ISUSING = 'Y' 
+		 
+		 <if test="S_COMPCD != null and S_COMPCD != ''">
+			AND A.COMPCD = #{S_COMPCD}
+		 </if>	 
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>			      
+		 <if test="S_ITEM !=null and S_ITEM !=''">
+			AND ((A.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%'
+	     		OR A.NAME LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%'))
+		 </if>
+		 <if test="S_ITEMCATCD != null and S_ITEMCATCD != ''">
+			AND ((A.CATEGORYCD = #{S_ITEMCATCD})
+			  	OR (E.CATEGORYCD = #{S_ITEMCATCD})
+				OR (F.CATEGORYCD = #{S_ITEMCATCD}))
+		 </if>
+		 ORDER BY A.COMPCD, A.ORGCD, A.ITEMCD
+	</select>
+	
+	<!-- 판매단가 : 그리드2 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap" >
+		/*alexcloud.p000.P000011.getDetailList*/
+		SELECT A.STARTDT		/*시작일자*/
+		     , A.ENDDT			/*종료일자*/
+		     , A.UNITPRICE		/*판매단가*/
+		     , A.REMARK			/*비고*/
+		     , A.COMPCD			/*회사코드*/
+		     , A.ORGCD          /*화주코드*/
+		     , A.CUSTCD			/*거래처코드*/
+		     , A.ITEMCD			/*품목코드*/
+		     , A.ADDUSERCD		/*등록자ID*/
+		     , A.ADDDATETIME	/*등록일시*/
+		     , A.UPDUSERCD		/*수정자ID*/
+		     , A.UPDDATETIME	/*수정일시*/
+		     , A.TERMINALCD		/*IP*/
+		     , CASE WHEN CONVERT(NVARCHAR,GETDATE(),112) BETWEEN A.STARTDT AND A.ENDDT THEN 'T' ELSE 'F' END AS ISTODAY /*오늘여부*/
+		  FROM P011 A WITH (NOLOCK) /*판매단가*/
+		  JOIN P006 B WITH (NOLOCK) /*품목*/
+		    ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.ITEMCD = B.ITEMCD 
+	     WHERE B.ISUSING = 'Y'
+	       AND A.COMPCD = #{COMPCD}
+	       AND A.ORGCD  = #{ORGCD} 
+		   AND A.ITEMCD = #{ITEMCD}
+		 ORDER BY A.STARTDT DESC    		
+	</select>
+	
+	<select id="updatePrice" parameterType="LDataMap" resultType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_SetUnitPrice(#{COMPCD}
+							,#{ORGCD}
+			 				,#{CUSTCD}
+			 				,#{ITEMCD}
+			 				,#{STARTDT}
+			 				,#{ENDDT}
+			 				,#{UNITPRICE}
+			 				,#{REMARK}
+			 				,#{IDU}
+			 				,#{LOGIN_USERCD}
+			 				,#{LOGIN_IP}
+			 				,#{MSGID, jdbcType = VARCHAR, mode = OUT}
+		                  	,#{MSG, jdbcType = VARCHAR, mode = OUT})
+	}	
+	</select>
+</mapper>

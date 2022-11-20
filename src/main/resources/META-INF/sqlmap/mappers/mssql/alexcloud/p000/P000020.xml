@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P000020Mapper">
+
+	<!-- 회사별 품목속성 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000020.getSearch */
+		SELECT B.COMPCD
+		     , B.NAME AS COMPNM
+			 , A.LOT1_YN
+			 , A.LOT1_LABEL
+			 , ISNULL(A.LOT1_TYPE, '1') AS LOT1_TYPE
+			 , A.LOT2_YN
+			 , A.LOT2_LABEL
+			 , ISNULL(A.LOT2_TYPE, '1') AS LOT2_TYPE
+			 , A.LOT3_YN
+			 , A.LOT3_LABEL
+			 , ISNULL(A.LOT3_TYPE, '1') AS LOT3_TYPE
+			 , A.LOT4_YN
+			 , A.LOT4_LABEL
+			 , A.LOT5_YN
+			 , A.LOT5_LABEL
+			 , A.F_USER01_YN
+			 , A.F_USER01_LABEL
+			 , A.F_USER02_YN
+			 , A.F_USER02_LABEL
+			 , A.F_USER03_YN
+			 , A.F_USER03_LABEL
+			 , A.F_USER04_YN
+			 , A.F_USER04_LABEL
+			 , A.F_USER05_YN
+			 , A.F_USER05_LABEL
+			 , A.F_USER11_YN
+			 , A.F_USER11_LABEL
+			 , A.F_USER12_YN
+			 , A.F_USER12_LABEL
+			 , A.F_USER13_YN
+			 , A.F_USER13_LABEL
+			 , A.F_USER14_YN
+			 , A.F_USER14_LABEL
+			 , A.F_USER15_YN
+			 , A.F_USER15_LABEL
+			 , A.ADDUSERCD											
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME	
+		     , A.UPDUSERCD											
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME	
+		     , A.TERMINALCD											
+		  FROM P001 B WITH (NOLOCK)
+		  LEFT OUTER JOIN P020 A WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+	     WHERE 1 = 1
+	      	<if test="S_COMP != null and S_COMP != ''">
+				 AND ((B.COMPCD LIKE '%' + dbo.UFX_TRIM(#{S_COMP}) + '%') 
+					OR (B.NAME LIKE '%' + dbo.UFX_TRIM(#{S_COMP}) + '%'))
+			</if>
+		  ORDER BY B.COMPCD
+	</select>
+	
+	<!-- 회사별 품목속성 : 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+	BEGIN
+		UPDATE P020 WITH (ROWLOCK)
+		   SET LOT1_YN        = #{LOT1_YN}
+			 , LOT1_LABEL     = #{LOT1_LABEL}
+			 , LOT1_TYPE      = #{LOT1_TYPE}
+			 , LOT2_YN        = #{LOT2_YN}
+			 , LOT2_LABEL     = #{LOT2_LABEL}
+			 , LOT2_TYPE      = #{LOT2_TYPE}
+			 , LOT3_YN        = #{LOT3_YN}
+			 , LOT3_LABEL     = #{LOT3_LABEL}
+			 , LOT3_TYPE      = #{LOT3_TYPE}
+			 , LOT4_YN        = #{LOT4_YN}
+			 , LOT4_LABEL     = #{LOT4_LABEL}
+			 , LOT5_YN        = #{LOT5_YN}
+			 , LOT5_LABEL     = #{LOT5_LABEL}
+			 , F_USER01_YN    = #{F_USER01_YN}
+			 , F_USER01_LABEL = #{F_USER01_LABEL}
+			 , F_USER02_YN    = #{F_USER02_YN}
+			 , F_USER02_LABEL = #{F_USER02_LABEL}
+			 , F_USER03_YN    = #{F_USER03_YN}
+			 , F_USER03_LABEL = #{F_USER03_LABEL}
+			 , F_USER04_YN    = #{F_USER04_YN}
+			 , F_USER04_LABEL = #{F_USER04_LABEL}
+			 , F_USER05_YN    = #{F_USER05_YN}
+			 , F_USER05_LABEL = #{F_USER05_LABEL}
+			 , F_USER11_YN    = #{F_USER11_YN}
+			 , F_USER11_LABEL = #{F_USER11_LABEL}
+			 , F_USER12_YN    = #{F_USER12_YN}
+			 , F_USER12_LABEL = #{F_USER12_LABEL}
+			 , F_USER13_YN    = #{F_USER13_YN}
+			 , F_USER13_LABEL = #{F_USER13_LABEL}
+			 , F_USER14_YN    = #{F_USER14_YN}
+			 , F_USER14_LABEL = #{F_USER14_LABEL}
+			 , F_USER15_YN    = #{F_USER15_YN}
+			 , F_USER15_LABEL = #{F_USER15_LABEL}
+		   	 , UPDUSERCD = #{LOGIN_USERCD}
+		   	 , UPDDATETIME = GETDATE()
+		   	 , TERMINALCD = #{LOGIN_IP}
+		 WHERE COMPCD = #{COMPCD}
+		IF @@ROWCOUNT = 0 
+		BEGIN
+		INSERT INTO P020 WITH (ROWLOCK)
+		           (COMPCD
+		           ,LOT1_YN
+		           ,LOT1_LABEL
+		           ,LOT1_TYPE
+		           ,LOT2_YN
+		           ,LOT2_LABEL
+		           ,LOT2_TYPE
+		           ,LOT3_YN
+		           ,LOT3_LABEL
+		           ,LOT3_TYPE
+		           ,LOT4_YN
+		           ,LOT4_LABEL
+		           ,LOT5_YN
+		           ,LOT5_LABEL
+		           ,F_USER01_YN
+		           ,F_USER01_LABEL
+		           ,F_USER02_YN
+		           ,F_USER02_LABEL
+		           ,F_USER03_YN
+		           ,F_USER03_LABEL
+		           ,F_USER04_YN
+		           ,F_USER04_LABEL
+		           ,F_USER05_YN
+		           ,F_USER05_LABEL
+		           ,F_USER11_YN
+		           ,F_USER11_LABEL
+		           ,F_USER12_YN
+		           ,F_USER12_LABEL
+		           ,F_USER13_YN
+		           ,F_USER13_LABEL
+		           ,F_USER14_YN
+		           ,F_USER14_LABEL
+		           ,F_USER15_YN
+		           ,F_USER15_LABEL
+		           ,ADDUSERCD
+		           ,ADDDATETIME
+		           ,UPDUSERCD
+		           ,UPDDATETIME
+		           ,TERMINALCD)
+		     VALUES
+		           (#{COMPCD}
+		           ,#{LOT1_YN}
+		           ,#{LOT1_LABEL}
+		           ,#{LOT1_TYPE}
+		           ,#{LOT2_YN}
+		           ,#{LOT2_LABEL}
+		           ,#{LOT2_TYPE}
+		           ,#{LOT3_YN}
+		           ,#{LOT3_LABEL}
+		           ,#{LOT3_TYPE}
+		           ,#{LOT4_YN}
+		           ,#{LOT4_LABEL}
+		           ,#{LOT5_YN}
+		           ,#{LOT5_LABEL}
+		           ,#{F_USER01_YN}
+		           ,#{F_USER01_LABEL}
+		           ,#{F_USER02_YN}
+		           ,#{F_USER02_LABEL}
+		           ,#{F_USER03_YN}
+		           ,#{F_USER03_LABEL}
+		           ,#{F_USER04_YN}
+		           ,#{F_USER04_LABEL}
+		           ,#{F_USER05_YN}
+		           ,#{F_USER05_LABEL}
+		           ,#{F_USER11_YN}
+		           ,#{F_USER11_LABEL}
+		           ,#{F_USER12_YN}
+		           ,#{F_USER12_LABEL}
+		           ,#{F_USER13_YN}
+		           ,#{F_USER13_LABEL}
+		           ,#{F_USER14_YN}
+		           ,#{F_USER14_LABEL}
+		           ,#{F_USER15_YN}
+		           ,#{F_USER15_LABEL}
+		           ,#{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP});
+       	END;    
+    END;
+	</update>
+</mapper>

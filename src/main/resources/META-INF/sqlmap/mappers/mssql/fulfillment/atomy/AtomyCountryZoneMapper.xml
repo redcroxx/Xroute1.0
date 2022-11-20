@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyZoneMapper">
+
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.atomy.AtomyCountryZoneVO">
+        SELECT
+            ATOMY_COUNTRY_ZONE_SEQ AS atomyCountryZoneSeq
+            , COMPCD AS compcd
+            , COUNTRY_NAME AS countryName
+            , COUNTRY_CODE AS countryCode
+            , LOCAL_SHIPPER AS localShipper
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            ATOMY_COUNTRY_ZONE
+        WHERE 1 = 1
+        <if test='sKeyword != null and sKeyword != ""'>
+            AND COUNTRY_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+        </if>
+        <if test='sCountryCode != null and sCountryCode != ""'>
+            AND COUNTRY_CODE = #{sCountryCode}
+        </if>
+        ORDER BY ATOMY_COUNTRY_ZONE_SEQ ASC
+    </select>
+    
+    <insert id="insertZone" parameterType="xrt.fulfillment.atomy.AtomyCountryZoneVO">
+        <selectKey resultType="java.util.HashMap" keyProperty="atomyCountryZoneSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR ATOMY_COUNTRY_ZONE_SEQ), 20) AS atomyCountryZoneSeq
+        </selectKey>
+        INSERT INTO ATOMY_COUNTRY_ZONE
+        (
+            ATOMY_COUNTRY_ZONE_SEQ
+            , COMPCD
+            , COUNTRY_NAME
+            , COUNTRY_CODE
+            , LOCAL_SHIPPER
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{atomyCountryZoneSeq}
+            , #{compcd}
+            , #{countryName}
+            , #{countryCode}
+            , #{localShipper}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updateZone" parameterType="xrt.fulfillment.atomy.AtomyCountryZoneVO">
+        UPDATE ATOMY_COUNTRY_ZONE
+        SET
+            COUNTRY_NAME = #{countryName}
+            , COUNTRY_CODE = #{countryCode}
+            , LOCAL_SHIPPER = #{localShipper}
+            , UPDUSERCD = #{updusercd}
+            , UPDDATETIME = getDate()
+            , TERMINALCD = #{terminalcd}
+         WHERE 1 = 1
+         AND ATOMY_COUNTRY_ZONE_SEQ = #{atomyCountryZoneSeq}
+    </update>
+    
+    <delete id="deleteZone" parameterType="LDataMap">
+        DELETE FROM ATOMY_COUNTRY_ZONE
+        WHERE 1 = 1
+    </delete>
+</mapper>

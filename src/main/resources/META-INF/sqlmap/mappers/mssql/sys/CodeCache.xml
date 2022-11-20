@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CodeCacheMapper">
+	<cache type="org.mybatis.caches.ehcache.EhcacheCache">
+		<property name="timeToIdleSeconds" value="1800" /><!--30 min -->
+		<property name="timeToLiveSeconds" value="1800" /><!--30 min -->
+		<property name="maxEntriesLocalHeap" value="1000" />
+		<property name="maxEntriesLocalDisk" value="10000000" />
+		<property name="overflowToDisk" value="false"/>
+		<property name="memoryStoreEvictionPolicy" value="LRU" />
+	</cache>
+
+	<!-- 공통코드 가져오기 -->
+	<select id="getCommonCode" parameterType="LDataMap" resultType="codeVO">
+		/* sys.CodeCache.getCommonCode */
+		SELECT
+			COMPCD
+			, CODEKEY
+			, CODE
+			, CODE + '[' + SNAME1 + ']' AS VALUE0
+			, SNAME1 AS VALUE
+			, SNAME2 AS VALUE2
+			, SNAME3 AS VALUE3
+			, SNAME4 AS VALUE4
+			, SNAME5 AS VALUE5
+		FROM S002 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+		AND STATUS = #{STATUS}
+		<if test="CODE != null and CODE != ''">
+		AND CODE = #{CODE}
+		</if>
+		<if test="SNAME1 != null and SNAME1 != ''">
+		AND SNAME1 = #{SNAME1}
+		</if>
+		<if test="SNAME2 != null and SNAME2 != ''">
+		AND SNAME2 = #{SNAME2}
+		</if>
+		<if test="SNAME3 != null and SNAME3 != ''">
+		AND SNAME3 = #{SNAME3}
+		</if>
+		<if test="SNAME4 != null and SNAME4 != ''">
+		AND SNAME4 = #{SNAME4}
+		</if>
+		<if test="SNAME5 != null and SNAME5 != ''">
+		AND SNAME5 = #{SNAME5}
+		</if>
+		ORDER BY SORTNO, CODE
+	</select>
+
+	<!-- 공통코드 가져오기 -->
+	<select id="getCommonCodeOnlyName" parameterType="LDataMap" resultType="codeVO">
+		/* sys.CodeCache.getCommonCodeOnlyName */
+		SELECT
+			COMPCD
+			, CODEKEY
+			, CODE
+			, SNAME1 AS VALUE
+			, SNAME2 AS VALUE2
+			, SNAME3 AS VALUE3
+			, SNAME4 AS VALUE4
+			, SNAME5 AS VALUE5
+		FROM S002 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+		AND STATUS = #{STATUS}
+		<if test="CODE != null and CODE != ''">
+		AND CODE = #{CODE}
+		</if>
+		<if test="SNAME1 != null and SNAME1 != ''">
+		AND SNAME1 = #{SNAME1}
+		</if>
+		<if test="SNAME2 != null and SNAME2 != ''">
+		AND SNAME2 = #{SNAME2}
+		</if>
+		<if test="SNAME3 != null and SNAME3 != ''">
+		AND SNAME3 = #{SNAME3}
+		</if>
+		<if test="SNAME4 != null and SNAME4 != ''">
+		AND SNAME4 = #{SNAME4}
+		</if>
+		<if test="SNAME5 != null and SNAME5 != ''">
+		AND SNAME5 = #{SNAME5}
+		</if>
+		ORDER BY SORTNO, CODE
+	</select>
+
+	<!-- 공통코드 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.CodeCache.getSearch */
+		SELECT
+			COMPCD
+			, CODEKEY
+			, NAME
+			, EDITABLE
+			, TABLENAME
+			, REMARK
+			, ADDUSERCD
+			, CONVERT(VARCHAR, ADDDATETIME, 20) AS ADDDATETIME
+			, UPDUSERCD
+			, CONVERT(VARCHAR, UPDDATETIME, 20) AS UPDDATETIME
+			, TERMINALCD
+		FROM S001 WITH (NOLOCK)
+		WHERE COMPCD = #{S_COMPCD}
+		<if test="S_CODEKEY != null and S_CODEKEY != ''">
+		AND (CODEKEY LIKE UPPER(dbo.UFX_Trim(#{S_CODEKEY})) + '%'
+		OR  NAME LIKE '%' + dbo.UFX_Trim(#{S_CODEKEY}) + '%')
+		</if>
+		<if test="S_EDITABLE != null and S_EDITABLE != ''">
+		AND EDITABLE = #{S_EDITABLE}
+		</if>
+	</select>
+
+	<!-- 공통코드 : 마스터 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.CodeCache.getDetail */
+		SELECT
+			COMPCD
+			, CODEKEY
+			, NAME
+			, EDITABLE
+			, TABLENAME
+			, REMARK
+			, ADDUSERCD
+			, CONVERT(VARCHAR, ADDDATETIME, 20) AS ADDDATETIME
+			, UPDUSERCD
+			, CONVERT(VARCHAR, UPDDATETIME, 20) AS UPDDATETIME
+			, TERMINALCD
+		FROM S001 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+	</select>
+	
+	<!-- 공통코드 : 명칭 취득 검색 -->
+	<select id="getCodeSname" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.CodeCache.getCodeSname */
+		SELECT
+			SNAME1
+		FROM S002 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+		AND CODE = #{CODE}
+	</select>
+
+	<!-- 공통코드 : 디테일리스트 검색(리스트) -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.CodeCache.getDetailList */
+		SELECT
+			COMPCD
+			, CODEKEY
+			, CODE
+			, SNAME1
+			, SNAME2
+			, SNAME3
+			, SNAME4
+			, SNAME5
+			, SORTNO
+			, REMARK
+			, STATUS
+		FROM S002 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+		ORDER BY SORTNO, CODE
+	</select>
+	
+	<!-- 공통코드 : 디테일 검색(1건) -->
+	<select id="getDetailList2" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.CodeCache.getDetailList2 */
+		SELECT
+			COMPCD
+			, CODEKEY
+			, CODE
+			, SNAME1
+			, SNAME2
+			, SNAME3
+			, SNAME4
+			, SNAME5
+			, SORTNO
+			, REMARK
+			, STATUS
+		FROM S002 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+		AND CODE = #{CODE}
+		ORDER BY SORTNO, CODE
+	</select>
+
+	<!-- 공통코드 : 마스터 추가 -->
+	<insert id="insertMst" parameterType="LDataMap" flushCache="true">
+		/* sys.CodeCache.insertMst */
+		INSERT INTO S001 WITH (ROWLOCK) (
+			COMPCD
+			, CODEKEY
+			, NAME
+			, SNAME
+			, EDITABLE
+			, TABLENAME
+			, REMARK
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			#{COMPCD}
+			, #{CODEKEY}
+			, #{NAME}
+			, #{NAME}
+			, #{EDITABLE}
+			, #{TABLENAME}
+			, #{REMARK}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 공통코드 : 마스터 수정 -->
+	<update id="updateMst" parameterType="LDataMap" flushCache="true">
+		/* sys.CodeCache.updateMst */
+		UPDATE S001 WITH (ROWLOCK)
+		SET
+			NAME = #{NAME}
+			, SNAME = #{NAME}
+			, EDITABLE = #{EDITABLE}
+			, TABLENAME = #{TABLENAME}
+			, REMARK = #{REMARK}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+	</update>
+	
+	<!-- 공통코드 : 마스터 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap" flushCache="true">
+		/* sys.CodeCache.deleteMst */
+		DELETE FROM S001 WITH (ROWLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+	</delete>
+
+	<!-- 공통코드 : 디테일 추가 -->
+	<insert id="insertDtl" parameterType="LDataMap" flushCache="true">
+		/* sys.CodeCache.insertDtl */
+		INSERT INTO S002 WITH (ROWLOCK) (
+			COMPCD
+			, CODEKEY
+			, CODE
+			, SNAME1
+			, SNAME2
+			, SNAME3
+			, SNAME4
+			, SNAME5
+			, SORTNO
+			, REMARK
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, STATUS
+		) VALUES (
+			#{COMPCD}
+			, #{CODEKEY}
+			, #{CODE}
+			, #{SNAME1}
+			, #{SNAME2}
+			, #{SNAME3}
+			, #{SNAME4}
+			, #{SNAME5}
+			, #{SORTNO}
+			, #{REMARK}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+			, #{STATUS}
+		)
+	</insert>
+
+	<!-- 공통코드 : 디테일 수정 -->
+	<update id="updateDtl" parameterType="LDataMap" flushCache="true">
+		/* sys.CodeCache.updateDtl */
+		UPDATE S002 WITH (ROWLOCK)
+		SET
+			SNAME1 = #{SNAME1}
+			, SNAME2 = #{SNAME2}
+			, SNAME3 = #{SNAME3}
+			, SNAME4 = #{SNAME4}
+			, SNAME5 = #{SNAME5}
+			, SORTNO = #{SORTNO}
+			, REMARK = #{REMARK}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+			, STATUS = #{STATUS}
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+		AND CODE = #{CODE}
+	</update>
+
+	<!-- 공통코드 : 디테일 삭제 -->
+	<delete id="deleteDtl" parameterType="LDataMap" flushCache="true">
+		/* sys.CodeCache.deleteDtl */
+		DELETE FROM S002 WITH (ROWLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND CODEKEY = #{CODEKEY}
+		AND CODE = #{CODE}
+	</delete>
+ 
+</mapper>

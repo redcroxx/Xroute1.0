@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopP004Mapper">
+
+	<!-- 창고 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP004Mapper.getSearch */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.NAME
+			 , A.WHTYPE
+			 , A.ADDR1
+			 , A.ADDR2
+			 , A.POST
+			 , A.CUSTCD
+			 , B.NAME AS CUSTNM
+			 , A.WHINLOCCD
+			 , A.WHOUTLOCCD
+			 , A.RETURNLOCCD
+			 , A.ASSYLOCCD
+			 , A.REMARK
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM P004 A WITH (NOLOCK)
+		  LEFT OUTER JOIN P003 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.CUSTCD = B.CUSTCD
+		WHERE A.ISUSING = 'Y'
+		  AND A.COMPCD = #{S_COMPCD}
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND (A.WHCD LIKE '%' + #{S_WHCD} + '%' OR A.NAME LIKE '%' + #{S_WHCD} + '%')
+		</if>
+		<!-- <if test="S_LOCCDVAL != null and S_LOCCDVAL != ''">
+			<if test="S_LOCCDKEY == 'WHINLOCCD'">
+				AND A.WHINLOCCD LIKE '%' + #{S_LOCCDVAL} + '%'
+			</if>
+			<if test="S_LOCCDKEY == 'WHOUTLOCCD'">
+				AND A.WHOUTLOCCD LIKE '%' + #{S_LOCCDVAL} + '%'
+			</if>	
+			<if test="S_LOCCDKEY == 'RETURNLOCCD'">
+				AND A.RETURNLOCCD LIKE '%' + #{S_LOCCDVAL} + '%'
+			</if>	
+			<if test="S_LOCCDKEY == 'ASSYLOCCD'">
+				AND A.ASSYLOCCD LIKE '%' + #{S_LOCCDVAL} + '%'
+			</if>	
+		</if> -->
+		ORDER BY A.COMPCD, A.WHCD
+	</select>
+
+	<!-- 창고 팝업 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP004Mapper.getCheck */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.NAME
+			 , A.WHTYPE
+			 , A.ADDR1
+			 , A.ADDR2
+			 , A.POST
+			 , A.CUSTCD
+			 , A.WHINLOCCD
+			 , A.WHOUTLOCCD
+			 , A.RETURNLOCCD
+			 , A.ASSYLOCCD
+			 , A.REMARK
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM P004 A WITH (NOLOCK)
+		 WHERE A.ISUSING = 'Y'
+		   AND A.COMPCD = #{S_COMPCD}
+		   AND A.WHCD = #{S_WHCD}
+	</select>
+</mapper>

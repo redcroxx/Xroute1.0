@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 샘플 -->
+<mapper namespace="SampleMapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.sample.getSearch */
+		SELECT A.PK1
+			 , A.VAR1
+			 , A.VAR2
+			 , A.VAR3
+			 , B.SNAME1 AS VAR3_NM
+			 , A.VAR4
+			 , A.VAR5
+			 , A.VAR6
+			 , A.VAR7
+			 , A.VAR8
+			 , A.DEC1
+			 , A.DEC2
+			 , A.DEC3
+			 , A.DEC1 + A.DEC3 AS SUM
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.ADDPGM
+			 , A.ADDIP
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.UPDPGM
+			 , A.UPDIP
+			 , A.PK1 AS LINK
+			 , 'N' AS CHK
+			 , CASE A.VAR2 WHEN '100' THEN 10 WHEN '200' THEN 40 WHEN '300' THEN 80 ELSE 100 END AS PGB
+		FROM SAMPLE_MST A
+		LEFT OUTER JOIN S002 B
+		  ON A.VAR3 = B.CODE AND B.COMPCD = '1000' AND B.CODEKEY = 'POTYPE'
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_PK1 != null and S_PK1 != ''">
+				AND A.PK1 LIKE UPPER(#{S_PK1}) + '%'
+			</if>
+			<if test="S_VAR1 != null and S_VAR1 != ''">
+				AND A.VAR1 = #{S_VAR1}
+			</if>
+			<if test="S_VAR2 != null and S_VAR2 != ''">
+				AND UPPER(A.VAR2) LIKE '%' + UPPER(#{S_VAR2}) + '%'
+			</if>
+		</trim>
+	</select>
+	
+	<!-- 검색 (대용량) -->
+	<select id="getSearchBig" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.sample.getSearchBig */
+		SELECT A.PK1
+			 , A.VAR1
+			 , A.VAR2
+			 , A.VAR3
+			 , B.SNAME1 AS VAR3_NM
+			 , A.VAR4
+			 , A.VAR5
+			 , A.VAR6
+			 , A.VAR7
+			 , A.VAR8
+			 , A.DEC1
+			 , A.DEC2
+			 , A.DEC3
+			 , A.DEC1 + A.DEC3 AS SUM
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.ADDPGM
+			 , A.ADDIP
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.UPDPGM
+			 , A.UPDIP
+			 , A.PK1 AS LINK
+			 , 'N' AS CHK
+			 , CASE A.VAR2 WHEN '100' THEN 10 WHEN '200' THEN 40 WHEN '300' THEN 80 ELSE 100 END AS PGB
+		FROM SAMPLE_MST_BIG A
+		LEFT OUTER JOIN S002 B
+		  ON A.VAR3 = B.CODE AND B.COMPCD = '1000' AND B.CODEKEY = 'POTYPE'
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_PK1 != null and S_PK1 != ''">
+				AND A.PK1 LIKE UPPER(#{S_PK1}) + '%'
+			</if>
+			<if test="S_VAR1 != null and S_VAR1 != ''">
+				AND A.VAR1 = #{S_VAR1}
+			</if>
+			<if test="S_VAR2 != null and S_VAR2 != ''">
+				AND UPPER(A.VAR2) LIKE '%' + UPPER(#{S_VAR2}) + '%'
+			</if>
+		</trim>
+	</select>
+	
+	<!-- 마스터 단일 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.sample.getDetail */
+		SELECT PK1
+			 , VAR1
+			 , VAR2
+			 , VAR3
+			 , DEC1
+			 , DEC2
+			 , DEC3
+			 , ADDUSERCD
+			 , CONVERT(VARCHAR, ADDDATETIME, 20) AS ADDDATETIME
+			 , UPDUSERCD
+			 , CONVERT(VARCHAR, UPDDATETIME, 20) AS UPDDATETIME
+		FROM SAMPLE_MST
+		WHERE PK1 = #{PK1}
+	</select>
+	
+	<!-- 디테일 리스트 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.sample.getDetailList */
+		SELECT PK1
+			 , PK2
+			 , VAR1
+			 , VAR2
+			 , VAR3
+			 , DEC1
+			 , DEC2
+			 , DEC3
+			 , ADDUSERCD
+			 , CONVERT(VARCHAR, ADDDATETIME, 20) AS ADDDATETIME
+			 , UPDUSERCD
+			 , CONVERT(VARCHAR, UPDDATETIME, 20) AS UPDDATETIME
+		FROM SAMPLE_DTL
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="PK1 != null and PK1 != ''">
+				AND PK1 = #{PK1}
+			</if>
+		</trim>
+	</select>
+	
+	<!-- 디테일 리스트2 검색 -->
+	<select id="getDetailList2" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.sample.getDetailList2 */
+		SELECT PK1
+			 , PK2
+			 , PK3
+			 , VAR1
+			 , VAR2
+			 , VAR3
+			 , DEC1
+			 , DEC2
+			 , DEC3
+			 , ADDUSERCD
+			 , CONVERT(VARCHAR, ADDDATETIME, 20) AS ADDDATETIME
+			 , UPDUSERCD
+			 , CONVERT(VARCHAR, UPDDATETIME, 20) AS UPDDATETIME
+		FROM SAMPLE_DTL2
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="PK1 != null and PK1 != ''">
+				AND PK1 = #{PK1}
+			</if>
+			<if test="PK2 != null and PK2 != ''">
+				AND PK2 = #{PK2}
+			</if>
+		</trim>
+	</select>
+	
+	<!-- 저장 : 마스터추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* sys.sample.insertMst */
+		INSERT INTO SAMPLE_MST (
+			PK1, VAR1, VAR2, VAR3, VAR4, VAR5, VAR6, VAR7, VAR8
+			, DEC1, DEC2, DEC3
+			, ADDUSERCD, ADDDATETIME, ADDPGM, ADDIP, UPDUSERCD, UPDDATETIME, UPDPGM, UPDIP
+		) VALUES (
+			UPPER(#{PK1}), #{VAR1}, #{VAR2}, #{VAR3}, #{VAR4}, #{VAR5}, #{VAR6}, #{VAR7}, #{VAR8}
+			, #{DEC1}, #{DEC2}, #{DEC3}
+			, #{LOGIN_USERCD}, GETDATE(), #{LOGIN_PGM}, #{LOGIN_IP}, #{LOGIN_USERCD}, GETDATE(), #{LOGIN_PGM}, #{LOGIN_IP})
+	</insert>
+
+	<!-- 저장 : 마스터수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* sys.sample.updateMst */
+		UPDATE SAMPLE_MST
+		   SET VAR1 = #{VAR1}
+			 , VAR2 = #{VAR2}
+			 , VAR3 = #{VAR3}
+			 , VAR4 = #{VAR4}
+			 , VAR5 = #{VAR5}
+			 , VAR6 = #{VAR6}
+			 , VAR7 = #{VAR7}
+			 , VAR8 = #{VAR8}
+			 , DEC1 = #{DEC1}
+			 , DEC2 = #{DEC2}
+			 , DEC3 = #{DEC3}
+			 , UPDDATETIME = GETDATE()
+			 , UPDUSERCD = #{LOGIN_USERCD}
+			 , UPDPGM = #{LOGIN_PGM}
+			 , UPDIP = #{LOGIN_IP}
+		WHERE PK1 = #{PK1}
+	</update>
+
+	<!-- 저장 : 디테일추가 -->
+	<insert id="insertDtl" parameterType="LDataMap">
+		/* sys.sample.insertDtl */
+		INSERT INTO SAMPLE_DTL (
+			PK1, PK2, VAR1, VAR2, VAR3
+			, DEC1, DEC2, DEC3
+			, ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME
+		) VALUES (
+			UPPER(#{PK1}), #{PK2}, #{VAR1}, #{VAR2}, #{VAR3}
+			, #{DEC1}, #{DEC2}, #{DEC3}
+			, #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE())
+	</insert>
+
+	<!-- 저장 : 디테일수정 -->
+	<update id="updateDtl" parameterType="LDataMap">
+		/* sys.sample.updateDtl */
+		UPDATE SAMPLE_DTL
+		   SET VAR1 = #{VAR1}
+			 , VAR2 = #{VAR2}
+			 , VAR3 = #{VAR3}
+			 , DEC1 = #{DEC1}
+			 , DEC2 = #{DEC2}
+			 , DEC3 = #{DEC3}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+			 , UPDDATETIME = GETDATE()
+		WHERE PK1 = #{PK1}
+		  AND PK2 = #{PK2}
+	</update>
+
+	<!-- 마스터삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/* sys.sample.deleteMst */
+		DELETE FROM SAMPLE_MST WHERE PK1 = #{PK1}
+	</delete>
+
+	<!-- 디테일삭제 -->
+	<delete id="deleteDtl" parameterType="LDataMap">
+		/* sys.sample.deleteDtl */
+		DELETE FROM SAMPLE_DTL WHERE PK1 = #{PK1}
+	</delete>
+	
+	<!-- 저장 : 마스터수정 -->
+	<select id="procMst" parameterType="LDataMap">
+		/* sys.sample.procMst */
+		EXEC TEST #{PK1}
+	</select>
+</mapper>

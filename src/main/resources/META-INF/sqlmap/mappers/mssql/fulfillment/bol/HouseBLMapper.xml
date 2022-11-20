@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="houseBlMapper">
+    <!--하우스 B/L 조회 -->
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.bol.HouseBLVO">
+        /* houseBlMapper.getSearch */
+        SELECT
+            HOUSE_BL_SEQ        AS houseBlSeq,
+            COMPCD              AS compcd,
+            SCAC_CODE           AS scacCode,
+            CUSTOMS_CLEARANCE   AS customsClearance,
+            CASE
+                WHEN CUSTOMS_CLEARANCE = 'general' THEN '일반'
+                WHEN CUSTOMS_CLEARANCE = 'list' THEN '목록'
+                ELSE ''
+            END                 AS customsClearanceNm,
+            HOUSE_BL_NO         AS houseBlNo,
+            MASTER_BL_NO        AS masterBlNo,
+            REMARK              AS remark,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            CLOSE_YN            AS closeYn,
+            ADDUSERCD           AS addusercd,
+            CONVERT(CHAR(19), ADDDATETIME, 20) AS adddatetime,
+            UPDUSERCD           AS updusercd,
+            CONVERT(CHAR(19), UPDDATETIME, 20) AS upddatetime,
+            TERMINALCD          AS terminalcd
+        FROM HOUSE_BL WITH (NOLOCK)
+        WHERE 1 = 1
+        <if test="sCompCd != null and sCompCd =! ''">
+            AND COMPCD = #{sCompCd}
+        </if>
+        <if test="sKeyword != null and sKeyword != ''">
+	        AND HOUSE_BL_NO = #{sKeyword} OR MASTER_BL_NO = #{sKeyword}
+        </if>
+        <if test="sStatusCd != null and sStatusCd != ''">
+	        AND CLOSE_YN = #{sStatusCd} 
+        </if>
+        <if test="sEtcCd1 != null and sEtcCd1 != ''">
+	        AND CUSTOMS_CLEARANCE = #{sEtcCd1}
+        </if>
+        AND ADDDATETIME BETWEEN #{sToDate} + ' 00:00:00' AND #{sFromDate} + ' 23:59:59'
+        ORDER BY ADDDATETIME ASC
+    </select>
+    
+    <select id="getHouseBL" parameterType="LDataMap" resultType="xrt.fulfillment.bol.HouseBLVO">
+        /* houseBlMapper.getHouseBL */
+        SELECT
+            HOUSE_BL_SEQ        AS houseBlSeq,
+            COMPCD              AS compcd,
+            SCAC_CODE           AS scacCode,
+            CUSTOMS_CLEARANCE   AS customsClearance,
+            CASE
+                WHEN CUSTOMS_CLEARANCE = 'general' THEN '일반'
+                WHEN CUSTOMS_CLEARANCE = 'list' THEN '목록'
+                ELSE ''
+            END                 AS customsClearanceNm,
+            HOUSE_BL_NO         AS houseBlNo,
+            MASTER_BL_NO        AS masterBlNo,
+            REMARK              AS remark,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            CLOSE_YN            AS closeYn
+        FROM HOUSE_BL WITH (NOLOCK)
+        WHERE 1 = 1
+        <if test="compcd != null and compcd =! ''">
+            AND COMPCD = #{compcd}
+        </if>
+        <if test="houseBlNo != null and houseBlNo != ''">
+            AND HOUSE_BL_NO = #{houseBlNo}
+        </if>
+    </select>
+    
+    <select id="getShipmentBLList" parameterType="LDataMap" resultType="xrt.fulfillment.bol.ShipmentBLVO">
+        /* houseBlMapper.getShipmentBLList */
+        SELECT
+            SHIPMENT_BL_SEQ     AS shipmentBlSeq,
+            COMPCD              AS compcd,
+            SHIPMENT_BL_NO      AS shipmentBlNo,
+            HOUSE_BL_NO         AS houseBlNo,
+            COUNTRY             AS country,
+            CUSTOMS_CLEARANCE   AS customsClearance,
+            CASE
+                WHEN CUSTOMS_CLEARANCE = 'G' THEN '일반'
+                WHEN CUSTOMS_CLEARANCE = 'L' THEN '목록'
+                ELSE ''
+            END                 AS customsClearanceNm,
+            CLOSE_YN            AS closeYn,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            REMARK              AS remark,
+            ADDUSERCD           AS addusercd,
+            CONVERT(CHAR(19), ADDDATETIME, 20) AS adddatetime,
+            UPDUSERCD           AS updusercd,
+            CONVERT(CHAR(19), UPDDATETIME, 20) AS upddatetime
+        FROM SHIPMENT_BL WITH (NOLOCK)
+        WHERE 1 = 1
+        AND CLOSE_YN = 'Y'
+        <if test="compcd != null and compcd =! ''">
+            AND COMPCD = #{compcd}
+        </if>
+        <if test="shipmentBlNo != null and shipmentBlNo != ''">
+            AND SHIPMENT_BL_NO = #{shipmentBlNo}
+        </if>
+        <choose>
+            <when test="houseBlNo != null and houseBlNo != ''">
+                AND HOUSE_BL_NO = #{houseBlNo}
+            </when>
+            <otherwise>
+                AND HOUSE_BL_NO IS NULL
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="getNoCount" parameterType="xrt.fulfillment.bol.HouseBLVO" resultType="java.lang.Integer">
+        /* houseBlMapper.getNoCount */
+        SELECT
+            COUNT(HOUSE_BL_NO) AS isCreated
+        FROM HOUSE_BL
+        WHERE 1 = 1
+        AND COMPCD = #{compcd}
+        AND CLOSE_YN = 'N'
+        AND HOUSE_BL_NO = #{houseBlNo}
+    </select>
+    
+    <select id="getCreateNo" parameterType="xrt.fulfillment.bol.HouseBLVO" resultType="java.lang.String">
+        /* houseBlMapper.getCreateNo */
+        SELECT
+            'HBLX' + #{date} + RIGHT('000' + CONVERT(NVARCHAR, COUNT(HOUSE_BL_NO) + 1), 3) AS scacCode
+        FROM HOUSE_BL
+        WHERE 1 = 1
+        AND COMPCD = #{compcd}
+        AND CONVERT(NVARCHAR, ADDDATETIME, 112) = #{date}
+    </select>
+    
+    <select id="getTorder" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            SHIPMENT_BL_NO AS shipmentBlNo,
+            XRT_INVC_SNO AS xrtInvcSno
+        FROM TORDER
+        WHERE 1 = 1
+        AND SHIPMENT_BL_NO IN
+			<foreach collection="dataList" item="item" open="(" close=")" separator=",">
+			    #{item.value}
+			</foreach>
+    </select>
+    
+    <insert id="insertHouseBL" parameterType="xrt.fulfillment.bol.HouseBLVO">
+        <selectKey resultType="java.lang.String" keyProperty="houseBlSeq" order="BEFORE">
+            /* houseBLMapper Create Sequence */
+            SELECT 
+                'HBL' + RIGHT('00000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_HOUSE_BL), 17) AS houseBlSeq
+        </selectKey>
+        /* houseBlMapper.insertHouseBL */
+        INSERT INTO HOUSE_BL (
+            HOUSE_BL_SEQ,
+            COMPCD,
+            SCAC_CODE,
+            CUSTOMS_CLEARANCE,
+            HOUSE_BL_NO,
+            REMARK,
+            CLOSE_YN,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{houseBlSeq},
+            #{compcd},
+            #{scacCode},
+            #{customsClearance},
+            #{houseBlNo},
+            #{remark},
+            #{closeYn},
+            #{addusercd},
+            getDate(),
+            #{updusercd},
+            getDate(),
+            #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updateHouseBL" parameterType="xrt.fulfillment.bol.HouseBLVO">
+        /* houseBlMapper.updateHouseBL */
+        UPDATE HOUSE_BL
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="remark != null and remark != ''">
+                REMARK = #{remark},
+            </if>
+            <if test="customsClearance != null and customsClearance != ''">
+                CUSTOMS_CLEARANCE = #{customsClearance},
+            </if>
+            <if test="scacCode != null and scacCode != ''">
+                SCAC_CODE = #{scacCode},
+            </if>
+            <if test="closeYn != null and closeYn != ''">
+                CLOSE_YN = #{closeYn},
+            </if>
+            <if test="masterBlNo != null and masterBlNo != ''">
+                MASTER_BL_NO = #{masterBlNo},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND HOUSE_BL_NO = #{houseBlNo}
+    </update>
+    
+    <update id="updateShipmentBL" parameterType="xrt.fulfillment.bol.ShipmentBLVO">
+        /* houseBlMapper.updateShipmentBL */
+        UPDATE SHIPMENT_BL
+        <trim prefix="SET" suffixOverrides=",">
+            <choose>
+                <when test="houseBlNo != null and houseBlNo != ''">
+                    HOUSE_BL_NO = #{houseBlNo},
+                </when>
+                <otherwise>
+                    HOUSE_BL_NO = NULL,
+                </otherwise>
+            </choose>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND SHIPMENT_BL_NO = #{shipmentBlNo}
+    </update>
+</mapper>

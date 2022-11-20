@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 사용자 프린터 정보 변경 팝업 -->
+<mapper namespace="livePackingMapper">
+	
+	<insert id="insert" parameterType="xrt.sys.popup.LivePackingVo">
+		/* livePackingMapper.insert */
+		<selectKey resultType="java.util.HashMap" keyProperty="livePackingSeq" order="BEFORE">
+			SELECT RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_LIVEPACKING), 10) AS livePackingSeq
+		</selectKey>
+		INSERT INTO LIVE_PACKING (
+			LIVE_PACKING_SEQ
+			, ORGCD
+			, XRT_INVC_SNO
+			, S3_URL
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+		) VALUES (
+			#{livePackingSeq}
+			, #{orgcd}
+			, #{xrtInvcSno}
+			, #{s3Url}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+		)
+	</insert>
+
+</mapper>

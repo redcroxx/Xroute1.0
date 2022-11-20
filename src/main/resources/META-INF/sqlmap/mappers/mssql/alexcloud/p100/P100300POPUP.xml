@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100300POPUPMapper">
+	<!-- 발주적용 : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100300_popup.getSearch 발주적용 팝업 */
+		SELECT A.POKEY /*발주번호*/,
+			   A.EAKEY /*전자결재번호*/,
+		       A.POTYPE /*발주유형(국내:DOM, 해외:IMP)*/,
+		       A.POSTS /*발주상태(100:예정, 200:확정, 99:취소)*/,
+		       A.POSCHDT /*발주일자*/,
+		       A.PODT /*확정일자*/,
+		       A.COMPCD /*회사코드*/,
+		       A.ORGCD /*사업장코드*/,
+		       A.CUSTCD /*거래처코드*/,
+		       (SELECT NAME
+		          FROM P003 WITH (NOLOCK) 
+		         WHERE COMPCD = A.COMPCD
+		           AND CUSTCD = A.CUSTCD) CUSTNM /* 거래처명 */,
+		       C.DEPTCD /*부서코드*/,
+		       (SELECT NAME
+		          FROM P016 WITH (NOLOCK) 
+		         WHERE COMPCD = C.COMPCD
+		           AND DEPTCD = C.DEPTCD
+		           AND ORGCD = C.ORGCD) DEPTNM /* 부서명 */,
+		       A.WHCD /*창고코드*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.WHCD) WHNM/* 창고명 */,
+		       A.USERCD /* 담당자코드 */,
+		       (SELECT NAME
+		          FROM S010 WITH (NOLOCK) 
+		         WHERE COMPCD = A.COMPCD
+		           AND ORGCD = A.ORGCD
+		           AND USERCD = A.USERCD) USERNM /* 담당자명 */,
+		       A.CFMUSERCD /* 확정자코드 */,
+		       (SELECT NAME
+		          FROM S010 WITH (NOLOCK) 
+		         WHERE COMPCD = A.COMPCD
+		           AND ORGCD = A.ORGCD
+		           AND USERCD = A.CFMUSERCD) CFMUSERNM /* 확정자명 */,
+		       A.VATFLG /* 과세구분 */,
+		       A.ISCLOSING /* 마감여부 */,
+		       A.REMARK /*비고 */,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD /*IP*/,
+		       (SELECT COUNT(DISTINCT ITEMCD)
+		          FROM P121 WITH (NOLOCK) 
+		         WHERE COMPCD = A.COMPCD
+		           AND POKEY = A.POKEY) TOTCNT /* 품목수 */,
+		       (SELECT SUM(B.POQTY) FROM P121 B WITH (NOLOCK) WHERE B.POKEY = A.POKEY) TOTQTY /* 총수량 */,
+		       (SELECT SUM(B.SUPPLYAMT) FROM P121 B WITH (NOLOCK) WHERE B.POKEY = A.POKEY) TOTSUPPLYAMT /* 총발주금액 */,
+		       ((SELECT SUM(B.POQTY) FROM P121 B WITH (NOLOCK) WHERE B.POKEY = A.POKEY) - ISNULL(B.WISCHQTY, 0)) TOTAVAILABLEQTY /* 총 적용 가능 수량 */
+		  FROM P120 A WITH (NOLOCK)
+		  JOIN S010 C WITH (NOLOCK)
+		    ON C.COMPCD = A.COMPCD
+		   AND C.ORGCD = A.ORGCD
+		   AND C.USERCD = A.USERCD
+		  LEFT OUTER JOIN (SELECT A1.POKEY,
+                          SUM(WISCHQTY) WISCHQTY,
+                          SUM(SUPPLYAMT) SUPPLYAMT
+                     FROM P131 A1 WITH (NOLOCK) 
+                     JOIN P130 B1 WITH (NOLOCK) 
+                       ON B1.WIKEY = A1.WIKEY
+                    WHERE B1.WISTS <![CDATA[ <> ]]> '99'
+                      AND A1.POKEY IS NOT NULL
+                    GROUP BY A1.POKEY) B
+    		ON B.POKEY = A.POKEY
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.POSTS = '200'
+		   AND A.ISCLOSING = 'N'
+		   AND (SELECT SUM(B.POQTY) FROM P121 B WITH (NOLOCK) WHERE B.POKEY = A.POKEY) > ISNULL(B.WISCHQTY, 0)
+		   AND A.CUSTCD = #{S_CUSTCD}
+		   AND A.WHCD = #{S_WHCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>   
+		<if test="S_POSCHDT_FROM != null and S_POSCHDT_FROM != ''">
+		   AND A.POSCHDT >= REPLACE(#{S_POSCHDT_FROM},'-','')
+		</if>
+		<if test="S_POSCHDT_TO != null and S_POSCHDT_TO != ''">
+		   AND A.POSCHDT <![CDATA[ <= ]]> REPLACE(#{S_POSCHDT_TO},'-','')
+		</if>
+		   AND EXISTS (SELECT 1
+		                 FROM P121 B WITH (NOLOCK) 
+		                 JOIN P006 C WITH (NOLOCK) 
+		                   ON B.COMPCD = C.COMPCD
+		                  AND B.ITEMCD = C.ITEMCD                   
+		                WHERE A.POKEY = B.POKEY
+		<if test="S_ITEM != null and S_ITEM != ''">
+		                  AND (C.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		                   OR C.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		   AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		   AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		   AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		   AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		   AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		   AND C.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		   AND C.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		   AND C.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		   AND C.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		   AND C.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		                   )
+		<if test="S_SEARCH1 != null and S_SEARCH1 != ''">
+		    <if test="S_SERACHCOMBO1 == 'POKEY' ">
+		   		AND A.POKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH1}) + '%'
+			</if>
+			<if test="S_SERACHCOMBO1 == 'COKEY' ">
+		   		AND EXISTS (SELECT 1
+		                 	  FROM P121 B WITH (NOLOCK) 
+		                 	 WHERE B.POKEY = A.POKEY
+		                 	   AND B.COKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH1}) + '%')
+			</if>
+		</if>
+		<if test="S_USERCD != null and S_USERCD != ''">
+		    <if test="S_SERACHCOMBO2 == 'USERCD' ">
+		   		AND A.USERCD = #{S_USERCD}
+			</if>
+			<if test="S_SERACHCOMBO2 == 'CFMUSERCD' ">
+		   		AND A.CFMUSERCD = #{S_USERCD}
+			</if>
+		</if>
+		 ORDER BY A.POKEY DESC
+	</select>
+	
+	<!-- 발주적용 : 디테일 그리드 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100300_popup.getDetail 발주적용 팝업 */
+		SELECT A.POKEY /*발주번호*/,
+		       A.SEQ /*순번*/,
+		       A.COMPCD /*회사코드*/,
+		       A.ITEMCD /*품목코드*/,
+		       D.NAME ITEMNM /* 품명 */,
+		       D.UNITCD /* 단위 */,
+		       D.ITEMSIZE /* 규격 */,
+		       A.DELIVDT /*납기일*/,
+		       A.WISCHDT /*입고예정일*/,
+		       A.POQTY /*발주수량*/,
+		       A.EXCHCD /*화폐단위*/,
+		       A.EXCHRATE /*환율*/,
+		       A.UNITPRICE /*화폐단위단가*/,
+		       A.EXCHAMT /*발주금액(화폐단위)*/,
+		       A.SUPPLYAMT /*발주금액(원화환산)*/,
+		       A.COKEY /*구매번호*/,
+		       A.COSEQ /*구매SEQ*/,
+		       A.REMARK /*비고 */,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD /*IP*/,
+		       (A.POQTY - ISNULL(C.WISCHQTY, 0)) AVAILABLEQTY /* 발주적용가능수량 */, 
+		       (A.POQTY - ISNULL(C.WISCHQTY, 0)) * A.UNITPRICE AVAILABLESUPPLYAMT /* 발주적용가능공급가액 */,
+		       D.F_USER01,
+		       D.F_USER02,
+		       D.F_USER03,
+		       D.F_USER04,
+		       D.F_USER05,
+		       D.F_USER11,
+		       D.F_USER12,
+		       D.F_USER13,
+		       D.F_USER14,
+		       D.F_USER15
+		  FROM P121 A WITH (NOLOCK)
+		  JOIN P120 B WITH (NOLOCK) 
+		    ON B.POKEY = A.POKEY
+		   AND B.POSTS = '200'
+		   AND B.ISCLOSING = 'N'
+		  LEFT OUTER JOIN (SELECT A1.POKEY, A1.POSEQ, SUM(WISCHQTY) WISCHQTY, SUM(SUPPLYAMT) SUPPLYAMT
+		                     FROM P131 A1 WITH (NOLOCK) 
+		                     JOIN P130 B1 WITH (NOLOCK) 
+		                       ON B1.WIKEY = A1.WIKEY
+		                    WHERE B1.WISTS <![CDATA[ <> ]]> '99'
+		                      AND A1.POKEY IS NOT NULL
+		                    GROUP BY A1.POKEY, A1.POSEQ) C
+		    ON C.POKEY = A.POKEY
+		   AND C.POSEQ = A.SEQ
+		  JOIN P006 D WITH (NOLOCK) 
+		    ON D.COMPCD = A.COMPCD
+		   AND D.ITEMCD = A.ITEMCD
+		 WHERE A.POQTY > ISNULL(C.WISCHQTY, 0)
+		   AND B.POKEY = #{POKEY}
+	</select>
+	
+	<!-- 발주적용 : 품목별 그리드 검색 -->
+	<select id="getDetailList2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100300_popup.getDetailList2 발주적용 팝업 */
+		SELECT A.POKEY /*발주번호*/,
+		       A.SEQ /*순번*/,
+		       A.COMPCD /*회사코드*/,
+		       A.ITEMCD /*품목코드*/,
+		       D.NAME ITEMNM /* 품목명 */,
+		       D.UNITCD /* 단위 */,
+		       D.ITEMSIZE /* 규격 */,
+		       B.POSCHDT /* 발주일자 */,
+		       A.DELIVDT /*납기일*/,
+		       A.WISCHDT /*입고예정일*/,
+		       A.POQTY /*발주수량*/,
+		       A.EXCHCD /*화폐단위*/,
+		       A.EXCHRATE /*환율*/,
+		       A.UNITPRICE /*화폐단위단가*/,
+		       A.EXCHAMT /*발주금액(화폐단위)*/,
+		       A.SUPPLYAMT /*발주금액(원화환산)*/,
+		       A.COKEY /*구매번호*/,
+		       A.COSEQ /*구매SEQ*/,
+		       A.REMARK /*비고 */,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD /*IP*/,
+		       (A.POQTY - ISNULL(C.WISCHQTY, 0)) AVAILABLEQTY /* 발주적용가능수량 */, 
+		       (A.POQTY - ISNULL(C.WISCHQTY, 0)) * A.UNITPRICE AVAILABLESUPPLYAMT /* 발주적용가능공급가액 */,
+		       D.F_USER01,
+		       D.F_USER02,
+		       D.F_USER03,
+		       D.F_USER04,
+		       D.F_USER05,
+		       D.F_USER11,
+		       D.F_USER12,
+		       D.F_USER13,
+		       D.F_USER14,
+		       D.F_USER15
+		  FROM P121 A WITH (NOLOCK)
+		  JOIN P120 B WITH (NOLOCK) 
+		    ON B.POKEY = A.POKEY
+		   AND B.POSTS = '200'
+		   AND B.ISCLOSING = 'N'
+		  LEFT OUTER JOIN (SELECT A1.POKEY, A1.POSEQ, SUM(WISCHQTY) WISCHQTY, SUM(SUPPLYAMT) SUPPLYAMT
+		                     FROM P131 A1 WITH (NOLOCK) 
+		                     JOIN P130 B1 WITH (NOLOCK) 
+		                       ON B1.WIKEY = A1.WIKEY
+		                    WHERE B1.WISTS <![CDATA[ <> ]]> '99'
+		                      AND A1.POKEY IS NOT NULL
+		                    GROUP BY A1.POKEY, A1.POSEQ) C
+		    ON C.POKEY = A.POKEY
+		   AND C.POSEQ = A.SEQ
+		  JOIN P006 D WITH (NOLOCK)
+		    ON D.COMPCD = A.COMPCD
+		   AND D.ITEMCD = A.ITEMCD 
+		 WHERE A.POQTY > ISNULL(C.WISCHQTY, 0)
+		   AND B.CUSTCD = #{S_CUSTCD}
+		   AND B.WHCD = #{S_WHCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND B.ORGCD = #{S_ORGCD}
+		</if>   
+		<if test="S_POSCHDT_FROM != null and S_POSCHDT_FROM != ''">
+		   AND B.POSCHDT >= REPLACE(#{S_POSCHDT_FROM},'-','')
+		</if>
+		<if test="S_POSCHDT_TO != null and S_POSCHDT_TO != ''">
+		   AND B.POSCHDT <![CDATA[ <= ]]> REPLACE(#{S_POSCHDT_TO},'-','')
+		</if>   
+		<if test="S_PODT_FROM != null and S_PODT_FROM != ''">
+		   AND B.PODT >= REPLACE(#{S_PODT_FROM},'-','')
+		</if>
+		<if test="S_PODT_TO != null and S_PODT_TO != ''">
+		   AND B.PODT <![CDATA[ <= ]]> REPLACE(#{S_PODT_TO},'-','')
+		</if>
+		<if test="S_DEPTCD != null and S_DEPTCD != ''">
+		   AND B.DEPTCD = #{S_DEPTCD}
+		</if>  
+		<if test="S_ITEM != null and S_ITEM != ''">
+		   AND (A.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		   		OR	D.NAME LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		   AND D.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		   AND D.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		   AND D.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		   AND D.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		   AND D.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		   AND D.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		   AND D.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		   AND D.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		   AND D.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		   AND D.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		<if test="S_SEARCH1 != null and S_SEARCH1 != ''">
+		    <if test="S_SERACHCOMBO1 == 'POKEY' ">
+		   		AND B.POKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH1}) + '%'
+			</if>
+			<if test="S_SERACHCOMBO1 == 'COKEY' ">
+		   		AND A.COKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH1}) + '%'
+			</if>
+		</if>
+		<if test="S_USERCD != null and S_USERCD != ''">
+		    <if test="S_SERACHCOMBO2 == 'USERCD' ">
+		   		AND B.USERCD = #{S_USERCD}
+			</if>
+			<if test="S_SERACHCOMBO2 == 'CFMUSERCD' ">
+		   		AND B.CFMUSERCD = #{S_USERCD}
+			</if>
+		</if>
+	</select>
+</mapper>

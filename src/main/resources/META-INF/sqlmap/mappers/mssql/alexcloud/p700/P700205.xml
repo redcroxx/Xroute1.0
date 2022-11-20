@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P700205Mapper">
+	
+	<!-- 이동지시서 발행 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p700.p700205.getSearch */
+		SELECT A.IMKEY,
+		       A.IMSTS,
+		       A.IMTYPE,
+		       A.MVTYPE,
+		       A.IMDT,
+		       A.IMCFMDT,
+		       A.BEFOREWHCD WHCD,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.BEFOREWHCD) WHNM /*이동전 창고명 */,
+		       (SELECT COUNT(DISTINCT ITEMCD) FROM P711 WITH (NOLOCK) WHERE IMKEY = A.IMKEY) ITEMCNT /* 품목수 */,
+		       (SELECT CASE
+		                 WHEN A.IMSTS = '100' THEN
+		                  SUM(IMSCHQTY)
+		                 ELSE
+		                  SUM(IMQTY)
+		               END
+		          FROM P711 WITH(NOLOCK)
+		         WHERE IMKEY = A.IMKEY) TOTQTY,
+		       A.IMWHCD,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.IMWHCD) IMWHNM,
+		       A.COMPCD,
+		       (SELECT NAME FROM P001 WITH (NOLOCK) WHERE COMPCD = A.COMPCD) COMPNM,
+		       A.ORGCD,
+		       (SELECT NAME FROM P002 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM,
+		       A.CFMUSERCD,
+		       D.NAME CFMUSERNM,
+		       A.REMARK,
+		       A.ADDUSERCD,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME,
+		       A.UPDUSERCD,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME,
+		       A.TERMINALCD
+		  FROM P710 A WITH (NOLOCK) 
+		  LEFT OUTER JOIN S010 D WITH (NOLOCK)
+		    ON D.COMPCD = A.COMPCD
+		   AND D.ORGCD = A.ORGCD 
+		   AND D.USERCD = A.CFMUSERCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.IMTYPE IN('LOC1', 'LOC2')		   
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_IMDT_FROM != null and S_IMDT_FROM != ''">
+			AND A.IMDT >= REPLACE(#{S_IMDT_FROM},'-','')
+		</if>
+		<if test="S_IMDT_TO != null and S_IMDT_TO != ''">
+			AND A.IMDT <![CDATA[ <= ]]> REPLACE(#{S_IMDT_TO},'-','')
+		</if>      
+		<if test="S_IMSTS != null and S_IMSTS != ''">
+			<if test="S_IMSTS == 'NOT99' ">
+			   AND A.IMSTS <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_IMSTS != 'NOT99' ">
+			   AND A.IMSTS = #{S_IMSTS}
+			</if>   
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.BEFOREWHCD = #{S_WHCD}
+		</if>
+		<if test="S_MVTYPE != null and S_MVTYPE != ''">
+			AND A.MVTYPE = #{S_MVTYPE}
+		</if>      
+		AND EXISTS (SELECT 1
+		                 FROM P711 F WITH (NOLOCK) 
+		                 JOIN P006 G WITH (NOLOCK) 
+		                   ON G.COMPCD = F.COMPCD
+		                  AND G.ORGCD = F.ORGCD 
+		                  AND G.ITEMCD = F.ITEMCD                   
+		                WHERE F.IMKEY = A.IMKEY
+		<if test="S_BEFORELOCCD != null and S_BEFORELOCCD != ''">
+						  AND F.BEFORELOCCD LIKE '%' + dbo.UFX_TRIM(#{S_BEFORELOCCD}) + '%'
+		</if>
+		<if test="S_AFTERLOCCD != null and S_AFTERLOCCD != ''">
+						   AND F.AFTERLOCCD LIKE '%' + dbo.UFX_TRIM(#{S_AFTERLOCCD}) + '%'
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+		                  AND (G.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		                   OR G.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND G.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND G.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND G.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND G.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND G.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND G.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND G.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND G.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND G.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND G.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		                   )
+		<if test="S_SEARCH != null and S_SEARCH != ''">
+		   	AND A.IMKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH}) + '%'
+		</if>
+			ORDER BY A.IMKEY DESC
+	</select>
+	
+	<!-- 로케이션이동확정 : 디테일 그리드 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p700.p700205.getDetailList */
+		SELECT A.IMKEY /*재고이동번호*/,
+		       A.SEQ /*SEQ*/,
+		       A.ITEMCD /*이동할 품목코드*/,
+		       B.NAME ITEMNM /* 품명 */,
+		       B.UNITCD /* 단위 */,
+		       B.ITEMSIZE /* 규격 */,
+		       B.UNITTYPE /*관리단위*/,
+		       A.LOTKEY /*이동할 품목의 로트키*/,
+		       A.IMSCHQTY /*이동예정 수량*/,
+		       ISNULL(A.IMQTY, A.IMSCHQTY) IMQTY /*이동확정 수량*/,
+		       A.BEFOREWHCD WHCD /*이동전 창고코드 (마스터와 동일)*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.BEFOREWHCD) BEFOREWHNM /*이동전 창고명*/,
+		       A.AFTERWHCD /*이동후 창고코드 (마스터와 동일)*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.AFTERWHCD) AFTERWHNM /*이동후 창고명*/,
+		       A.BEFORELOCCD /*이동전 로케이션코드*/,
+		       A.AFTERLOCCD /*이동후 로케이션코드*/,
+		       A.IMWHCD /*이동중 창고코드*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.IMWHCD) IMWHNM /*이동중 창고명*/,
+		       A.IMLOCCD /*이동중 로케이션*/,
+		       A.COMPCD /*회사코드*/,
+		       (SELECT NAME FROM P001 WITH (NOLOCK) WHERE COMPCD = A.COMPCD) COMPNM /*회사명 */,
+		       A.ORGCD /*셀러 코드*/,
+		       (SELECT NAME FROM P002 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM /*셀러명 */,
+		       A.REMARK /*품목 비고*/,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD /*IP*/,
+		       B.F_USER01,
+		       B.F_USER02,
+		       B.F_USER03,
+		       B.F_USER04,
+		       B.F_USER05,
+		       B.F_USER11,
+		       B.F_USER12,
+		       B.F_USER13,
+		       B.F_USER14,
+		       B.F_USER15,
+		       C.LOT1,
+		       C.LOT2,
+		       C.LOT3,
+		       C.LOT4,
+		       C.LOT5,
+		       ISNULL(E.QTY, 0) - ISNULL(ALLOCQTY, 0) BEFAVAILQTY /* 이동전가용수량 */
+		  FROM P711 A WITH (NOLOCK) 
+		  JOIN P006 B WITH (NOLOCK) 
+		    ON B.COMPCD = A.COMPCD
+		   AND B.ORGCD = A.ORGCD 
+		   AND B.ITEMCD = A.ITEMCD
+		  JOIN P007 C WITH (NOLOCK) 
+		    ON A.LOTKEY = C.LOTKEY
+		  LEFT OUTER JOIN P810 E WITH (NOLOCK) 
+		    ON E.COMPCD = A.COMPCD
+		   AND E.ORGCD = A.ORGCD
+		   AND E.WHCD = A.BEFOREWHCD
+		   AND E.LOCCD = A.BEFORELOCCD
+		   AND E.LOTKEY = A.LOTKEY
+		   AND E.ITEMCD = A.ITEMCD
+		 WHERE A.IMKEY = #{IMKEY}
+	</select>
+
+</mapper>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 사업자등록등 변경 팝업 -->
+<mapper namespace="PopP000002Mapper">
+
+	<!-- 셀러 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP000002Mapper.getSearch */
+		SELECT 	A.COMPCD /*회사코드*/, 
+				B.NAME /*회사명*/ AS COMPNM, 
+				A.ORGCD /*셀러코드*/, 
+				A.NAME /*셀러명*/, 
+				A.SNAME /*셀러명(약칭)*/, 
+				A.TEL1 /*전화번호1*/, 
+				A.TEL2 /*전화번호2*/, 
+				A.FAX1 /*팩스번호1*/, 
+				A.FAX2 /*팩스번호2*/, 
+				A.POST /*우편번호*/, 
+				A.ADDR /*주소*/, 
+				A.ADDR2 /*주소상세*/, 
+				A.CEO /*대표자*/, 
+				A.BIZDATE /*창립일*/, 
+				A.BIZNO1 /*사업자번호2*/, 
+				A.BIZNO2 /*사업자번호2*/, 
+				A.BIZKIND /*업종*/, 
+				A.BIZTYPE /*업태*/, 
+				A.EMAIL /*대표이메일*/, 
+				A.WEBADDR /*홈페이지*/, 
+				A.NATION /*국가*/, 
+				A.REMARKS /*비고*/, 
+				A.ISUSING /*사용여부*/, 
+				A.ADDUSERCD /*등록자*/, 
+				CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+				A.UPDUSERCD /*수정자ID*/, 
+				CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+				A.TERMINALCD /*IP*/,
+				A.PROD_MAP_YN /*코드대입후 송장발행*/,
+				A.FILENAME /*업로드파일명*/,
+				A.ORIGINFILENM /*실제저장파일명*/
+		FROM P002 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD
+	   WHERE A.COMPCD = #{COMPCD}		
+	     AND A.ORGCD = #{ORGCD}
+	</select>
+	
+	<!-- 사업자등록증 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.popup.PopP000002Mapper.updateMst */
+		UPDATE P002 WITH (ROWLOCK)
+		   SET FILENAME      = #{FILENM}
+		     , ORIGINFILENM  = #{ORIGINFILENM} 
+		     , UPDUSERCD     = #{LOGIN_USERCD}
+		     , UPDDATETIME   = GETDATE()
+		     , TERMINALCD    = #{LOGIN_IP}		   
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}		
+	</update>
+
+</mapper>

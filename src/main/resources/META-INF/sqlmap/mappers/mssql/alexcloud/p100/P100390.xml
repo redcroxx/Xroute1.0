@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100390Mapper">
+	<!-- 입고적치실적 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100390.getSearch */
+		SELECT A.IMKEY							/*적치번호*/																					
+			   , A.IMSTS						/*상태(99:취소, 100:예정, 150: 실적중,  200:확정)*/																					
+			   , A.IMTYPE						/*타입(WH:창고간, LOC1:로케이션)*/																					
+			   , A.MVTYPE						/*구분(STD:일반,INS:적치,SUP:보충)*/																					
+			   , A.IMDT							/*적치일자*/																					
+			   , A.AFTERWHCD					/*창고코드*/																					
+			   , MAX(C.NAME) AS WHNM			/*창고명*/																					
+			   , A.COMPCD						/*회사코드*/																					
+			   , A.ORGCD						/*셀러코드*/																					
+			   , MAX(B.NAME) AS ORGNM			/*셀러명*/																					
+			   , A.IMCFMDT						/*확정일자*/																					
+			   , A.CFMUSERCD					/*확정자*/																					
+			   , A.REMARK						/*비고*/																					
+			   , MAX(A.ADDUSERCD) AS ADDUSERCD																											
+			   , CONVERT(VARCHAR, MAX(A.ADDDATETIME), 20) ADDDATETIME																											
+			   , MAX(A.UPDUSERCD) AS UPDUSERCD																											
+			   , CONVERT(VARCHAR, MAX(A.UPDDATETIME), 20) UPDDATETIME																											
+			   , MAX(A.TERMINALCD) AS TERMINALCD 																											
+			   , COUNT(DISTINCT D.ITEMCD) AS ITEMCNT                  /*품목수*/																											
+			   , ISNULL(SUM(D.IMSCHQTY),0) AS IMSSCHQTY               /* 총 지시수량*/ 																											
+			   , ISNULL(SUM(D.IMQTY),0) AS IMQTY					  /* 총 실적수량*/ 														
+			   , CASE WHEN SUM(ISNULL(D.IMSCHQTY,0))  = 0 THEN 0 																											
+					  ELSE ROUND(SUM(ISNULL(D.IMQTY,0)) / SUM(ISNULL(D.IMSCHQTY,0))*100,0,1) END AS PROGRESS_QTY /*실적현황*/  																									
+		  FROM P710 A WITH (NOLOCK)																												
+		  JOIN P002 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD																												
+		  JOIN P004 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.AFTERWHCD = C.WHCD																												
+		  JOIN P711 D WITH (NOLOCK) ON A.IMKEY = D.IMKEY 																								
+		  WHERE A.MVTYPE = 'INS' 																												
+		  AND A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_IMDT_FROM != null and S_IMDT_FROM != ''">
+			AND A.IMDT >= REPLACE(#{S_IMDT_FROM},'-','')
+		</if>
+		<if test="S_IMDT_TO != null and S_IMDT_TO != ''">
+			AND A.IMDT <![CDATA[ <= ]]> REPLACE(#{S_IMDT_TO},'-','')
+		</if>      
+		<if test="S_IMSTS != null and S_IMSTS != ''">
+			<if test="S_IMSTS == 'NOT99' ">
+			   AND A.IMSTS <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_IMSTS != 'NOT99' ">
+			
+			<if test="S_IMSTS == '100' ">
+			   AND A.IMSTS IN ('100', '150')
+			</if> 
+			<if test="S_IMSTS != '100' ">
+			   AND A.IMSTS = #{S_IMSTS}
+			</if> 
+			</if>   
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.AFTERWHCD = #{S_WHCD}
+		</if>
+		<if test="S_IMKEY != null and S_IMKEY != ''">
+		   	AND A.IMKEY LIKE '%' + dbo.UFX_TRIM(#{S_IMKEY}) + '%'
+		</if>
+		AND EXISTS (SELECT 1
+		                 FROM P711 F WITH (NOLOCK) 
+		                 JOIN P006 G WITH (NOLOCK) 
+		                   ON G.COMPCD = F.COMPCD
+		                  AND G.ORGCD = F.ORGCD 
+		                  AND G.ITEMCD = F.ITEMCD                   
+		                WHERE F.IMKEY = A.IMKEY
+		<if test="S_ITEM != null and S_ITEM != ''">
+		                  AND (G.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		                   OR G.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND G.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND G.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND G.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND G.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND G.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND G.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND G.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND G.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND G.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND G.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		                   )
+		
+			GROUP BY A.IMKEY, A.IMSTS, A.IMTYPE, A.MVTYPE, A.IMDT, A.AFTERWHCD																												
+		  		   , A.COMPCD, A.ORGCD, A.IMCFMDT, A.CFMUSERCD, A.REMARK																										
+ 		    ORDER BY A.IMKEY DESC
+	</select>
+	
+	<!-- 입고적치실적 : 디테일 그리드 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100390.getDetailList */
+		SELECT A.IMKEY					/*적치키*/																										
+			   , A.SEQ					/*순번*/																										
+			   , A.ITEMCD				/*품목코드*/																										
+			   , B.NAME AS ITEMNM		/*품목명*/																										
+			   , A.LOTKEY				/*로트키*/																										
+			   , A.IMSCHQTY				/*적치지시수량*/																										
+			   , A.IMQTY				/*실적수량*/																										
+			   , A.AFTERLOCCD			/*실적로케이션(현재그리드명은 지시로케이션)*/																										
+			   , A.COMPCD				/*회사코드*/																										
+			   , A.ORGCD				/*셀러코드*/																										
+			   , A.REMARK				/*비고*/																										
+			   , A.PDA_CK				/*PDA확인여부(보충확인용도)*/
+			   , A.IMDSTS				/*상태(디테일상태)*/																						
+			   , C.LOT1					/*유효기간*/																										
+			   , C.LOT2					/*입고일자*/																										
+			   , C.LOT3					/*LOT*/																										
+			   , C.LOT4																															
+			   , C.LOT5																															
+			   , A.ADDUSERCD																															
+			   , CONVERT(VARCHAR, A.ADDDATETIME, 20) ADDDATETIME																															
+			   , A.UPDUSERCD 																															
+			   , CONVERT(VARCHAR, A.UPDDATETIME, 20) UPDDATETIME																															
+			   , A.TERMINALCD																															
+		  FROM P711 A WITH (NOLOCK)																																
+		  JOIN P006 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.ITEMCD = B.ITEMCD																																
+		  JOIN P007 C WITH (NOLOCK) ON C.COMPCD = A.COMPCD AND C.ORGCD = A.ORGCD AND C.ITEMCD = A.ITEMCD AND C.LOTKEY = A.LOTKEY			
+		 WHERE A.IMKEY = #{IMKEY}
+		   AND A.IMDSTS <![CDATA[ <> ]]> '99'
+      ORDER BY A.SEQ
+	</select>
+	
+	<!-- 입고적치실적 : 디테일 상태값 가져오기 -->
+	<select id="getImdSts" parameterType="LDataMap" resultType="String">
+		/* alexcloud.p100.P100390.getImdSts */
+		SELECT IMDSTS
+		  FROM P711
+		 WHERE IMKEY = #{IMKEY}
+		   AND SEQ = #{SEQ}
+	</select>
+	
+	<!-- 입고적치실적 : 일괄확정  -->
+	<select id="setExecute" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_WhLocHeapMove(
+						   #{IMKEY, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+    </select>
+
+	<!-- 입고적치실적 : 부분실적  -->
+	<select id="setExecuteDiv" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_WhLocHeapMoveDiv(
+						    #{XML, jdbcType = VARCHAR, mode = IN}
+		                  , #{IMKEY, jdbcType = VARCHAR, mode = IN}
+		                  , #{SEQ, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+    </select>
+    
+    <!-- 입고적치실적 : 취소  UPDATE -->
+	<update id="updateImCancel" parameterType="LDataMap">
+		/* alexcloud.p100.P100390.updateImCancel */
+		UPDATE P710 WITH (ROWLOCK)
+		   SET IMSTS = '99'
+		   	 , UPDUSERCD = #{LOGIN_USERCD}
+		   	 , UPDDATETIME = GETDATE()
+		   	 , TERMINALCD = #{LOGIN_IP}
+		 WHERE IMKEY = #{IMKEY}
+	</update>
+</mapper>

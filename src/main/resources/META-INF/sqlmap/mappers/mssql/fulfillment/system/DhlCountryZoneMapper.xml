@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="DhlCountryZoneMapper">
+
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.system.DhlCountryZoneVO">
+        SELECT
+            DHL_COUNTRY_ZONE_SEQ AS dhlCountryZoneSeq
+            , COMPCD AS compcd
+            , COUNTRY_NAME AS countryName
+            , COUNTRY_CODE AS countryCode
+            , ZONE AS zone
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            DHL_COUNTRY_ZONE
+        WHERE 1 = 1
+        <if test='sKeyword != null and sKeyword != ""'>
+            AND COUNTRY_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+        </if>
+        <if test='sCountryCode != null and sCountryCode != ""'>
+            AND COUNTRY_CODE = #{sCountryCode}
+        </if>
+        <if test='sZone != null and sZone != ""'>
+            AND ZONE = #{sZone}
+        </if>
+        ORDER BY DHL_COUNTRY_ZONE_SEQ ASC
+    </select>
+    
+    <insert id="insertCountryZone" parameterType="xrt.fulfillment.system.DhlCountryZoneVO">
+        <selectKey resultType="java.util.HashMap" keyProperty="dhlCountryZoneSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR DHL_COUNTRY_ZONE_SEQ), 20) AS dhlCountryZoneSeq
+        </selectKey>
+        INSERT INTO DHL_COUNTRY_ZONE
+        (
+            DHL_COUNTRY_ZONE_SEQ
+            , COMPCD
+            , COUNTRY_NAME
+            , COUNTRY_CODE
+            , ZONE
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{dhlCountryZoneSeq}
+            , #{compcd}
+            , #{countryName}
+            , #{countryCode}
+            , #{zone}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updateCountryZone" parameterType="xrt.fulfillment.system.DhlCountryZoneVO">
+        UPDATE DHL_COUNTRY_ZONE
+        SET
+            COUNTRY_NAME = #{countryName}
+            , COUNTRY_CODE = #{countryCode}
+            , ZONE = #{zone}
+            , UPDUSERCD = #{updusercd}
+            , UPDDATETIME = getDate()
+            , TERMINALCD = #{terminalcd}
+         WHERE 1 = 1
+         AND DHL_COUNTRY_ZONE_SEQ = #{dhlCountryZoneSeq}
+    </update>
+    
+    <delete id="deleteCountryZone" parameterType="LDataMap">
+        DELETE FROM DHL_COUNTRY_ZONE
+        WHERE 1 = 1
+    </delete>
+    
+    <select id="getDhlCountryCode" parameterType="LDataMap" resultType="codeVO">
+        SELECT
+            COUNTRY_CODE AS code
+            , COUNTRY_NAME AS value
+        FROM DHL_COUNTRY_ZONE
+        WHERE COMPCD = #{COMPCD}
+        ORDER BY DHL_COUNTRY_ZONE_SEQ ASC
+    </select>
+    
+    <delete id="deleteCountryInfo" parameterType="LDataMap">
+        DELETE FROM DHL_COUNTRY_ZONE
+        WHERE COUNTRY_NAME = #{countryName}
+        AND COUNTRY_CODE = #{countryCode}
+    </delete>
+    
+</mapper>

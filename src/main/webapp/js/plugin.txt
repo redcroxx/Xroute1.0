@@ -1,0 +1,25 @@
+* LFW2 �뿉�꽌 �궗�슜�릺�뒗 UI �씪�씠釉뚮윭由�
+
+1. RealGrid : 洹몃━�뱶
+	http://www.realgrid.com/
+	
+2. HighCharts : 李⑦듃
+	https://www.highcharts.com/
+	
+3. UbiReport : 由ы룷�듃
+	https://www.ubireport.com/
+	
+4. JQuery UI : 而댄룷�꼳�듃
+	http://jqueryui.com/
+	
+5. DateTimePicker : �떖�젰 而댄룷�꼳�듃
+	http://www.malot.fr/bootstrap-datetimepicker/
+	
+6. Shortcuts : �궎蹂대뱶 �떒異뺥궎
+	http://www.openjs.com/scripts/events/keyboard_shortcuts/
+	
+7. Lodash : Javascript Array, Object ���엯 �벑 蹂��솚 �옉�뾽 �쑀�떥
+	https://lodash.com/
+	
+8. fullcalendar
+	https://fullcalendar.io/

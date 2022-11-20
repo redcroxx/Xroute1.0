@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="RealgridMapper">
+
+	<!-- 그리드 컬럼 정보 가져오기 -->
+	<select id="getColumns" parameterType="LDataMap" resultType="LDataMap">
+		SELECT COMPCD, USERCD, APPKEY, GRIDID, COLKEY, COLNAME, COLHIDDEN, COLWIDTH, COLINX
+		FROM S011 WITH (NOLOCK)
+		WHERE COMPCD = #{LOGIN_COMPCD} AND USERCD = #{LOGIN_USERCD} AND APPKEY = #{APPKEY} AND GRIDID = #{GRIDID}
+		ORDER BY COLINX
+	</select>
+
+	<!-- 그리드 컬럼 정보 추가 -->
+	<insert id="insertColumns" parameterType="LDataMap">
+		INSERT INTO S011 (
+			COMPCD, USERCD, APPKEY, GRIDID, COLKEY, COLNAME, COLHIDDEN, COLWIDTH, COLINX, COLJSON
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{LOGIN_COMPCD}, #{LOGIN_USERCD}, #{APPKEY}, #{GRIDID}, #{COLKEY}, #{COLNAME}, #{COLHIDDEN}, #{COLWIDTH}, #{COLINX}, #{COLJSON}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 그리드 컬럼 정보 삭제 -->
+	<delete id="deleteColumns" parameterType="LDataMap">
+		DELETE FROM S011 WITH (ROWLOCK) 
+		 WHERE COMPCD = #{LOGIN_COMPCD} 
+		   AND USERCD = #{LOGIN_USERCD} 
+		   AND APPKEY = #{APPKEY} 
+		   AND GRIDID = #{GRIDID}
+	</delete>
+
+</mapper>

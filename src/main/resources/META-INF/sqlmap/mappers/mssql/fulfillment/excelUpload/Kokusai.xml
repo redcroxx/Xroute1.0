@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="KokusaiMapper">
+	<select id="getSearch" parameterType="CommonSearchVo" resultType="xrt.fulfillment.order.kokusai.KokusaiVO">
+		SELECT
+		    k.orderNo1 AS orderNo1,
+		    k.orderNo2 AS orderNo2,
+		    k.shippingType AS shippingType,
+		    k.senderName AS senderName,
+		    k.senderAddress AS senderAddress,
+		    k.senderPhoneno AS senderPhoneno,
+		    k.consigneeName AS consigneeName,
+		    k.yomigana AS yomigana,
+		    k.consigneeAddress AS consigneeAddress,
+		    k.consigneePostalcode AS consigneePostalcode,
+		    k.consigneePhoneno AS consigneePhoneno,
+		    k.consigneeEmailId AS consigneeEmailId,
+		    k.deliveryDate AS deliveryDate,
+		    k.deliveryTime AS deliveryTime,
+		    k.boxCount AS boxCount,
+		    k.weight AS weight,
+		    k.width AS width,
+		    k.length AS length,
+		    k.height AS height,
+		    k.uploadDate AS uploadDate,
+		    k.userData AS userData,
+		    k.currencyUnit AS currencyUnit,
+		    k.itemCode AS itemCode,
+		    k.itemName AS itemName,
+		    k.material AS material,
+		    k.itemAmount AS itemAmount,
+		    ROUND(CONVERT(int, (k.unitPrice / k.itemAmount)), 0) AS unitPrice,
+		    k.itemOrigin AS itemOrigin,
+		    k.purchaseUrl AS purchaseUrl,
+		    k.salesSite AS salesSite,
+		    k.productOrderNo AS productOrderNo
+		FROM (
+		    SELECT
+		            o.XRT_INVC_SNO AS orderNo1
+		            , '' AS orderNo2
+		            , 'A' AS shippingType
+		            , 'logifocus' AS senderName
+		            , '' AS senderAddress
+		            , '' AS senderPhoneno
+		            , o.RECV_NAME AS consigneeName
+		            , o.RECV_NAME AS yomigana
+		            , CASE
+		                WHEN o.RECV_ADDR2 != '.' THEN o.RECV_ADDR1+' '+ o.RECV_ADDR2
+		                ELSE o.RECV_ADDR1
+		            END AS consigneeAddress
+		            , o.RECV_POST AS consigneePostalcode
+		            , CASE
+		                WHEN o.RECV_TEL != '' THEN o.RECV_TEL
+		                ELSE o.RECV_MOBILE
+		            END AS consigneePhoneno
+		            , '' AS consigneeEmailId
+		            , '' AS deliveryDate
+		            , '' AS deliveryTime
+		            , '1' AS boxCount
+		            , o.C_WGT_REAL AS weight
+		            , '' AS codAmount
+		            , o.C_BOX_WIDTH AS width
+		            , o.C_BOX_LENGTH AS length
+		            , o.C_BOX_HEIGHT AS height
+		            , CONVERT(CHAR(10), GETDATE(), 23) AS uploadDate
+		            , '' AS userData
+		            , o.RECV_CURRENCY AS currencyUnit
+		            , (SELECT TOP 1 GOODS_CD 
+		                FROM TORDERDTL d
+		                WHERE 1 = 1
+		                AND d.ORD_CD = o.ORD_CD
+		            ) AS itemCode
+		            , (SELECT TOP 1 GOODS_NM 
+		                FROM TORDERDTL d
+		                WHERE 1 = 1
+		                AND d.ORD_CD = o.ORD_CD
+		            ) AS itemName
+		            , o.SELLER_REF_NO1 AS material
+		            , (SELECT SUM(A.GOODS_COUNT) FROM (SELECT
+		                    CASE
+		                        WHEN ISNUMERIC(D.GOODS_CNT) = 1 THEN  CONVERT(INT, D.GOODS_CNT)
+		                        ELSE 1
+		                    END AS GOODS_COUNT
+		                FROM TORDERDTL d
+		                WHERE 1 = 1
+		                AND d.ORD_CD = o.ORD_CD) A
+		            )AS itemAmount
+		            , CASE
+					    WHEN ISNUMERIC(o.TOT_PAYMENT_PRICE) = 1 THEN CONVERT(FLOAT, REPLACE(o.TOT_PAYMENT_PRICE, ',', ''))
+					    ELSE '0'
+					END AS unitPrice
+		            , 'KR' AS itemOrigin
+		            , o.PURCHASE_URL AS purchaseUrl
+		            , '' AS salesSite
+		            , '' AS productOrderNo
+		        FROM TORDER o
+		        WHERE 1 = 1
+		        AND o.RECV_NATION = 'JP'
+		        AND o.SHIP_METHOD_CD != 'DHL'
+		        <if test="sOrgCd != null and sOrgCd != ''">
+		            AND o.ORGCD = #{sOrgCd}
+		        </if>
+		        <if test="sWhcd != null and sWhcd != ''">
+		            AND o.WHCD = #{sWhcd}
+		        </if>
+		        <choose>
+		            <when test="sPeriodType == 'uploadDate'">
+		                AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+		            </when>
+		            <when test="sPeriodType == 'stockDate'">
+		                AND o.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+		            </when>
+		        </choose>
+		        <if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+		            AND o.XRT_INVC_SNO = #{sXrtInvcSno}
+		        </if>
+		        <if test="sPaymentType != null and sPaymentType != ''">
+		            AND o.PAYMENT_TYPE = #{sPaymentType}
+		        </if>
+		        <if test="sStatusCd != null and sStatusCd != ''">
+		            AND o.STATUS_CD = #{sStatusCd}
+		        </if>
+		    ) AS k
+		WHERE 1 = 1
+		ORDER BY k.orderNo1 ASC
+	</select>
+	
+	<update id="updateKokusai" parameterType="xrt.fulfillment.order.kokusai.KokusaiVO">
+	   UPDATE
+            TORDER
+         <trim prefix="SET" suffixOverrides=",">
+            <if test="purchaseUrl != null and purchaseUrl !=''">
+                PURCHASE_URL = #{purchaseUrl},
+            </if>
+         </trim>
+         WHERE 1 = 1
+         AND XRT_INVC_SNO = #{orderNo1}
+	</update>
+
+</mapper>

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 품목별로케이션 관리 -->
+<mapper namespace="P000009Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000009.getSearch */
+		SELECT A.COMPCD
+			 , C.NAME AS COMPNM
+			 , B.ORGCD
+			 , I.NAME ORGNM
+			 , A.WHCD
+			 , A.NAME AS WHNM
+			 , B.ITEMCD
+			 , B.NAME AS ITEMNM
+			 , D.SLOTLOCCD
+			 , D.PICKLOCCD
+			 , D.CUSTCD
+			 , H.NAME AS CUSTNM
+			 , B.ITEMTYPE
+			 , B.UNITCD
+			 , B.ITEMSIZE
+			 , B.CATEGORYCD AS ITEMCAT3CD
+			 , E.NAME AS ITEMCAT3NM
+			 , F.NAME AS ITEMCAT2NM
+			 , G.NAME AS ITEMCAT1NM
+			 , B.SETYN
+			 , B.INBOXQTY
+			 , B.LENGTH
+			 , B.WIDTH
+			 , B.HEIGHT
+			 , B.CAPACITY
+			 , B.MANUFACTURE
+			 , B.MANUCOUNTRY
+			 , B.F_USER01
+			 , B.F_USER02
+			 , B.F_USER03
+			 , B.F_USER04
+			 , B.F_USER05
+			 , B.F_USER11
+			 , B.F_USER12
+			 , B.F_USER13
+			 , B.F_USER14
+			 , B.F_USER15
+			 , D.ADDUSERCD
+			 , CONVERT(VARCHAR, D.ADDDATETIME, 120) AS ADDDATETIME
+			 , D.UPDUSERCD
+			 , CONVERT(VARCHAR, D.UPDDATETIME, 120) AS UPDDATETIME
+			 , D.TERMINALCD
+			 , CASE WHEN D.ITEMCD IS NOT NULL THEN 'Y' ELSE 'N' END AS REGFLG
+		FROM P004 A WITH (NOLOCK)
+		JOIN P006 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD  
+		JOIN P001 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD 
+		JOIN P002 I WITH (NOLOCK)
+		  ON I.COMPCD = B.COMPCD
+		 AND I.ORGCD = B.ORGCD
+		LEFT OUTER JOIN P009 D WITH (NOLOCK)
+		  ON D.COMPCD = A.COMPCD AND D.WHCD = A.WHCD AND D.ITEMCD = B.ITEMCD
+		LEFT OUTER JOIN P017 E WITH (NOLOCK)
+		  ON B.COMPCD = E.COMPCD AND B.CATEGORYCD = E.CATEGORYCD
+		LEFT OUTER JOIN P017 F WITH (NOLOCK)
+		  ON E.COMPCD = F.COMPCD AND E.PCATEGORYCD = F.CATEGORYCD
+		LEFT OUTER JOIN P017 G WITH (NOLOCK)
+		  ON F.COMPCD = G.COMPCD AND F.PCATEGORYCD = G.CATEGORYCD
+		LEFT OUTER JOIN P003 H WITH (NOLOCK)
+		  ON D.COMPCD = H.COMPCD AND D.CUSTCD = H.CUSTCD
+		WHERE A.COMPCD = #{S_COMPCD}
+		  AND I.ORGCD = #{S_ORGCD}
+		  AND A.WHCD = #{S_WHCD}
+		  AND A.ISUSING = 'Y' 
+		  AND B.ISUSING = 'Y'
+		  AND C.ISUSING = 'Y'
+		<if test="S_REGFLG != null and S_REGFLG != ''">
+			<if test='S_REGFLG == "Y"'>
+				AND D.ITEMCD IS NOT NULL
+			</if>
+			<if test='S_REGFLG == "N"'>
+				AND D.ITEMCD IS NULL
+			</if>
+		</if> 
+		<if test="S_ITEMCATCD != null and S_ITEMCATCD != ''">
+			AND (B.CATEGORYCD = #{S_ITEMCATCD}
+				OR F.CATEGORYCD = #{S_ITEMCATCD}
+				OR G.CATEGORYCD = #{S_ITEMCATCD})
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND (B.ITEMCD LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%' 
+				OR B.NAME LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%')
+		</if>
+		<if test='S_P009LOCTYPE == "SLOT" and S_LOCCD != null and S_LOCCD != ""'>
+			AND D.SLOTLOCCD LIKE '%' + dbo.UFX_Trim(#{S_LOCCD}) + '%'
+		</if>
+		<if test='S_P009LOCTYPE == "PICK" and S_LOCCD != null and S_LOCCD != ""'>
+			AND D.PICKLOCCD LIKE '%' + dbo.UFX_Trim(#{S_LOCCD}) + '%'
+		</if>
+		<if test="S_CUST != null and S_CUST != ''">
+			AND (H.CUSTCD LIKE '%' + dbo.UFX_Trim(#{S_CUST}) + '%' 
+				OR H.NAME LIKE '%' + dbo.UFX_Trim(#{S_CUST}) + '%')
+		</if>
+		ORDER BY A.COMPCD, I.ORGCD, A.WHCD, B.ITEMCD
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000009.getDetail */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.ITEMCD
+			 , A.SLOTLOCCD
+			 , A.PICKLOCCD
+			 , A.CUSTCD
+		FROM P009 A WITH (NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.ORGCD = #{ORGCD}
+		  AND A.WHCD = #{WHCD}
+		  AND A.ITEMCD = #{ITEMCD}
+	</select>
+
+	<!-- 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000009.insertMst */
+		INSERT INTO P009 WITH (ROWLOCK)(
+			COMPCD, ORGCD, WHCD, ITEMCD, SLOTLOCCD, PICKLOCCD, CUSTCD
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, #{WHCD}, #{ITEMCD}, #{SLOTLOCCD}, #{PICKLOCCD}, #{CUSTCD}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000009.updateMst */
+		UPDATE P009 WITH (ROWLOCK)
+		   SET COMPCD = #{COMPCD}
+		     , WHCD = #{WHCD}
+		     , ITEMCD = #{ITEMCD}
+		     , SLOTLOCCD = #{SLOTLOCCD}
+		     , PICKLOCCD = #{PICKLOCCD}
+		     , CUSTCD = #{CUSTCD}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND ORGCD = #{ORGCD}
+		  AND WHCD = #{WHCD}
+		  AND ITEMCD = #{ITEMCD}
+	</update>
+
+	<!-- 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000009.deleteMst */
+		DELETE FROM P009 WITH (ROWLOCK)
+		 WHERE COMPCD = #{COMPCD} 
+		   AND WHCD = #{WHCD} 
+		   AND ITEMCD = #{ITEMCD}
+		   AND ORGCD = #{ORGCD}
+	</delete>
+	
+</mapper>

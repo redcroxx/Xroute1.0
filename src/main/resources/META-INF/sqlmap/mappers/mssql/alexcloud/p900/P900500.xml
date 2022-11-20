@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P900500Mapper">
+	<!-- 로케이션별재고현황 : 로케이션 검색  -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p900.P900500.getSearch */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.LOCNAME
+			 , A.LOCGROUP
+			 , A.ISVIRTUAL
+			 , A.LOCTYPE
+			 , A.SLOTTYPE
+			 , A.PICKTYPE
+			 , A.ALLOCATETYPE
+			 , A.NOTALLOCFLG
+			 , A.WHINSEQ
+			 , A.WHOUTSEQ
+			 , A.BUIL
+			 , A.FLOOR
+			 , A.ZONE
+			 , A.LINE
+			 , A.RANGE
+			 , A.STEP
+			 , A.LANE
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.WEIGHTCAPACITY
+			 , A.CAPACITY
+			 , A.CUSTCD
+			 , A.ISUSING
+		FROM P005 A WITH (NOLOCK)
+	   WHERE A.COMPCD = #{S_COMPCD}
+		 AND A.WHCD = #{S_WHCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND EXISTS(SELECT 1 FROM P810 WITH (NOLOCK)
+						WHERE COMPCD = A.COMPCD
+						  AND WHCD = A.WHCD
+						  AND LOCCD = A.LOCCD
+						  AND ORGCD = #{S_ORGCD})
+		</if>  		 
+		<if test="S_LOCCD != null and S_LOCCD != ''">
+			AND A.LOCCD LIKE '%' + dbo.UFX_Trim(#{S_LOCCD}) + '%' 
+		</if>
+		<if test="S_LOTKEY != null and S_LOTKEY != ''">
+			AND EXISTS(SELECT 1 FROM P810 WITH (NOLOCK)
+						WHERE COMPCD = A.COMPCD
+						  AND WHCD = A.WHCD
+						  AND LOCCD = A.LOCCD
+						  AND LOTKEY LIKE '%' + dbo.UFX_Trim(#{S_LOTKEY}) + '%')
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+						  AND (B.ITEMCD LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%' OR
+						  	   C.NAME LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%'))
+		</if>
+		<if test="S_GUBUN != null and S_GUBUN != ''">
+	   		<if test="S_GUBUN == 1 ">
+	   			AND EXISTS(SELECT 1 FROM P810 WITH (NOLOCK)
+						WHERE COMPCD = A.COMPCD
+						  AND WHCD = A.WHCD
+						  AND LOCCD = A.LOCCD
+						 AND (ISNULL(QTY, 0) - ISNULL(ALLOCQTY, 0)) > 0)
+	   		</if>
+	   		<if test="S_GUBUN == 2 ">
+	   			AND EXISTS(SELECT 1 FROM P810 WITH (NOLOCK)
+						WHERE COMPCD = A.COMPCD
+						  AND WHCD = A.WHCD
+						  AND LOCCD = A.LOCCD
+						 AND (ISNULL(QTY, 0) - ISNULL(ALLOCQTY, 0)) = 0)
+	   		</if> 
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER01 = #{S_F_USER01})
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER01 = #{S_F_USER01})
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER02 = #{S_F_USER02})
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER03 = #{S_F_USER03})
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER04 = #{S_F_USER04})
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER05 = #{S_F_USER05})
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER11 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER11}) + '%')
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER12 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER12}) + '%')
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER13 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER13}) + '%')
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER14 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER14}) + '%')
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+			AND EXISTS(SELECT 1 
+			 			 FROM P810 B WITH (NOLOCK)
+			             JOIN P006 C WITH (NOLOCK)
+			               ON C.COMPCD = B.COMPCD
+			              AND C.ORGCD = B.ORGCD
+			              AND C.ITEMCD = B.ITEMCD
+						WHERE B.COMPCD = A.COMPCD
+						  AND B.WHCD = A.WHCD
+						  AND B.LOCCD = A.LOCCD
+		                  AND C.F_USER15 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER15}) + '%')
+		</if>
+		
+		ORDER BY A.LOCCD ASC
+	</select>
+	
+	<!-- 로케이션별재고현황 : 로케이션별 재고조회 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p900.P900500.getDetailList */
+		SELECT A.COMPCD 
+			 , A.ORGCD
+			 , B.NAME AS ORGNM
+			 , A.WHCD
+			 , A.LOTKEY
+			 , A.LOCCD
+			 , A.ITEMCD 
+			 , C.NAME AS ITEMNM
+			 , C.UNITCD   /* 단위 */
+		     , C.ITEMSIZE /* 규격 */
+		     , C.UNITTYPE /*관리단위*/
+			 , A.QTY AS QTY
+			 , A.ALLOCQTY AS ALLOCQTY
+			 , (A.QTY-A.ALLOCQTY) AS AVAILABLEQTY
+			 , D.LOT1 AS LOT1
+			 , D.LOT2 AS LOT2
+			 , D.LOT3 AS LOT3
+			 , D.LOT4 AS LOT4
+			 , D.LOT5 AS LOT5
+			 , C.F_USER01 
+			 , C.F_USER02 
+			 , C.F_USER03 
+			 , C.F_USER04 
+			 , C.F_USER05 
+			 , C.F_USER11 
+			 , C.F_USER12 
+			 , C.F_USER13 
+			 , C.F_USER14 
+			 , C.F_USER15 
+		  FROM P810 A WITH (NOLOCK)
+		  JOIN P002 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		   AND A.ORGCD = B.ORGCD
+		  JOIN P006 C WITH (NOLOCK)
+		    ON A.COMPCD = C.COMPCD
+		   AND A.ORGCD = C.ORGCD
+		   AND A.ITEMCD = C.ITEMCD
+		  JOIN P007 D WITH (NOLOCK)
+		    ON A.LOTKEY = D.LOTKEY
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.WHCD = #{WHCD}
+		   AND A.LOCCD = #{LOCCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>      
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND (C.ITEMCD LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%' 
+			  OR C.NAME LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%')
+		</if>
+	    <if test="S_LOTKEY != null and S_LOTKEY != ''">
+	   		AND A.LOTKEY LIKE '%' + dbo.UFX_Trim(#{S_LOTKEY}) + '%'
+		</if>
+		<if test="S_GUBUN != null and S_GUBUN != ''">
+	   		<if test="S_GUBUN == 1 ">
+	   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) > 0
+	   		</if>
+	   		<if test="S_GUBUN == 2 ">
+	   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) = 0
+	   		</if> 
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND C.F_USER11 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER11}) + '%'
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND C.F_USER12 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER12}) + '%'
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND C.F_USER13 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER13}) + '%'
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND C.F_USER14 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER14}) + '%'
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND C.F_USER15 LIKE '%' + dbo.UFX_TRIM(#{S_F_USER15}) + '%'
+		</if>
+		
+		 ORDER BY  A.ORGCD, A.ITEMCD ASC, A.LOTKEY ASC
+		 
+	</select>
+	
+</mapper>

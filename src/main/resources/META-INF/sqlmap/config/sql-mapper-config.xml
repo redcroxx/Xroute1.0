@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+        <setting name="jdbcTypeForNull" value="NULL" />
+        <setting name="callSettersOnNulls" value="true" />
+        <setting name="mapUnderscoreToCamelCase" value="false" />
+    </settings>
+    <typeAliases>
+        <typeAlias type="java.util.Map" alias="map" />
+        <typeAlias alias="searchVO" type="xrt.lingoframework.common.vo.SearchVO" />
+        <typeAlias alias="loginVO" type="xrt.lingoframework.common.vo.LoginVO" />
+        <typeAlias alias="codeVO" type="xrt.lingoframework.common.vo.CodeVO" />
+        <typeAlias alias="LDataMap" type="xrt.lingoframework.utils.LDataMap" />
+        <typeAlias alias="LDataLinkedMap" type="xrt.lingoframework.utils.LDataLinkedMap" />
+        <typeAlias alias="printVO" type="xrt.lingoframework.common.vo.PrintVO" />
+        <typeAlias alias="commonSearchVo" type="xrt.alexcloud.common.vo.CommonSearchVo" />
+        <typeAlias alias="shipPriceSearchVo" type="xrt.alexcloud.common.vo.ShipPriceSearchVo" />
+        <typeAlias alias="settlementListVo" type="xrt.fulfillment.order.settlement.SettlementListVo" />
+        <typeAlias alias="shippingPriceVo" type="xrt.fulfillment.order.settlement.ShippingPriceVo" />
+        <typeAlias alias="shippingListVo" type="xrt.fulfillment.order.shippinglist.ShippingListVO" />
+        <typeAlias alias="stockListVo" type="xrt.fulfillment.stock.stocklist.StockListVo" />
+        <typeAlias alias="orderVo" type="xrt.fulfillment.order.shippinglist.OrderVo" />
+        <typeAlias alias="cartNoVo" type="xrt.fulfillment.order.orderinsert.CartNoVo" />
+        <typeAlias alias="trackingInfoVo" type="xrt.alexcloud.api.efs.vo.EfsTrackingStatusVo" />
+    </typeAliases>
+</configuration>

@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SellerTallyMapper">
+
+	<!-- grid1 검색 -->
+	<select id="getOrder" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerTallyMapper.getOrder */
+		SELECT
+			O.ORD_CD		AS ORD_CD
+			, ,O.ORGCD		AS LBORGCDCASE
+			, CASE
+				WHEN PM.PROD_TYPE_CD = '00001' THEN '단품'
+				WHEN PM.PROD_TYPE_CD = '00002' THEN '복합'
+				WHEN PM.PROD_TYPE_CD = '00003' THEN '대입'
+				ELSE '-'
+			  END AS TYPE
+			, OD.GOODS_CNT AS ORD_CNT
+			, OD.GOODS_CD
+			, OD.GOODS_NM
+			,OD.GOODS_OPTION
+		FROM TORDER O WITH (NOLOCK)
+		LEFT JOIN TORDERDTL OD
+		ON O.ORD_CD = OD.ORD_CD
+		LEFT JOIN PRODUCTMAP PM
+		ON PM.MAP_PROD_CD = OD.GOODS_CD
+		WHERE  1 = 1
+		AND O.XRT_INVC_SNO = #{XRT_INVC_NO}
+		AND O.ORGCD = PM.ORGCD
+		ORDER  BY O.ORD_CD ASC
+	</select>
+	
+	<!-- 주문 마스터 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerTallyMapper.getSearch */
+		SELECT
+			COMPCD
+			, ORD_CD
+			, ORGCD
+			, WHCD
+			, ORD_CNT
+			, UPLOAD_DATE
+			, SHIP_NAME
+			, SHIP_TEL
+			, SHIP_ADDR
+			, RECV_NAME
+			, RECV_TEL
+			, RECV_ADDR1
+			, RECV_ADDR2
+			, dbo.UFX_Trim(E_NATION) AS E_NATION
+			, XRT_INVC_SNO
+			, INVC_SNO1
+			, SHIP_METHOD_CD
+			, WGT
+			, BOX_WIDTH
+			, BOX_LENGTH
+			, BOX_HEIGHT
+			, BOX_VOLUME
+			, STOCK_DATE
+			, STATUS_CD
+			, DEL_FLG
+			, TALLY_DATETIME
+		FROM TORDER
+		WHERE XRT_INVC_SNO = dbo.UFX_Trim(#{XRT_INVC_NO})
+		AND COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</select>
+
+	<!-- grid2 검색 -->
+	<select id="getTmpOrderDtl" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerTallyMapper.getTmpOrderDtl */
+		SELECT
+			COMPCD
+			, ORGCD
+			, ORD_CD
+			, ORD_SEQ
+			, WHCD
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_CNT
+			, SCAN_CNT
+			, LACK_CNT
+		FROM
+		TMP_TORDERDTL
+		WHERE ORD_CD = #{ORD_CD}
+		ORDER BY ORD_SEQ
+	</select>
+	
+	<!-- 검수 완료 그리드2 검색(TALLY_GOODS) -->
+	<select id="getTallyGoodsDtl" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerTallyMapper.getTallyGoodsDtl */
+		SELECT
+			COMPCD
+			, ORGCD
+			, ORD_CD
+			, ORD_SEQ
+			, WHCD
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_CNT
+			, SCAN_CNT
+			, LACK_CNT
+		FROM
+		TALLY_GOODS
+		WHERE ORD_CD = #{ORD_CD}
+		ORDER BY ORD_SEQ
+	</select>
+
+	<!-- 사용하지않음 -->
+	<select id="getOrderDtl" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerTallyMapper.getOrderDtl */
+		SELECT
+			o.COMPCD			AS COMPCD
+			, o.ORGCD			AS ORGCD
+			, o.ORD_CD			AS ORD_CD
+			, o.WHCD			AS WHCD
+			, od.GOODS_CD		AS GOODS_CD
+			, od.GOODS_NM		AS GOODS_NM
+			, od.GOODS_OPTION	AS GOODS_OPTION
+			, od.GOODS_CNT		AS GOODS_CNT
+			, od.GOODS_CNT 		AS SCAN_CNT
+			, 0 				AS LACK_CNT
+		FROM TORDER o WITH (NOLOCK)
+		LEFT JOIN TORDERDTL od
+		ON o.COMPCD = od.COMPCD
+		and o.ORGCD = od.ORGCD
+		and o.ORD_CD = od.ORD_CD
+		WHERE o.ORD_CD = #{ORD_CD}
+		ORDER BY od.ORD_SEQ
+	</select>
+
+	<select id="getTallySearch" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerTallyMapper.getTallySearch */
+		SELECT
+			COMPCD
+			, ORD_CD
+			, TALLY_DATETIME
+			, TALLY_USER_CD
+		FROM TORDER
+		WHERE ORD_CD = #{ORD_CD}
+		AND DEL_FLG = 'N'
+	</select>
+
+	<!-- 바코드 스캔시 상품검색 -->
+	<select id="getGoodsSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerTallyMapper.getGoodsSearch */
+		SELECT
+			gd.ITEMCD as ITEMCD
+			, gd.NAME as GOODSNAME
+			, bar.BARCODE as BARCODE
+			, tmp.ORD_CD as ORD_CD
+			, tmp.GOODS_CD as GOODS_CD
+			, tmp.GOODS_CNT
+			, tmp.SCAN_CNT
+		FROM P006 gd
+		LEFT JOIN SPRODBARCODE bar
+		ON gd.COMPCD = bar.COMPCD
+		AND gd.ORGCD = bar.ORGCD
+		AND gd.ITEMCD = bar.ITEMCD
+		LEFT JOIN TMP_TORDERDTL tmp
+		ON gd.COMPCD = tmp.COMPCD
+		AND gd.ORGCD = tmp.ORGCD
+		AND gd.ITEMCD = tmp.GOODS_CD
+		WHERE tmp.ORD_CD = #{ORD_CD}
+		AND bar.BARCODE  = #{GOODS_BARCODE}
+	</select>
+
+	<!-- 품목재고 조회 -->
+	<select id="getInventoryQty" parameterType="LDataMap" resultType="String">
+		/* SellerTallyMapper.getInventoryQty */
+		SELECT QTY
+		FROM TINVENTORY
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		AND ITEMCD = #{GOODS_CD}
+	</select>
+
+	<!-- 스캔수량 저장 -->
+	<update id="setScanCnt" parameterType="LDataMap">
+		/* SellerTallyMapper.setScanCnt */
+		UPDATE TMP_TORDERDTL WITH (ROWLOCK)
+		SET
+			SCAN_CNT  = SCAN_CNT + 1
+			, LACK_CNT  = LACK_CNT - 1
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+		WHERE 1 = 1
+		AND ORGCD = #{ORGCD}
+		AND ORD_CD = #{ORD_CD}
+		AND GOODS_CD = (
+			SELECT
+				gd.ITEMCD
+			FROM P006 gd
+			LEFT JOIN SPRODBARCODE bar
+			ON gd.COMPCD = bar.COMPCD
+			AND gd.ORGCD = bar.ORGCD
+			AND gd.ITEMCD = bar.ITEMCD
+			WHERE bar.BARCODE  = #{GOODS_BARCODE}
+		)
+	</update>
+
+	<!-- 재고수량 갱신 -->
+	<update id="updInventoryQty" parameterType="LDataMap">
+		/* SellerTallyMapper.updInventoryQty */
+		UPDATE TINVENTORY WITH (ROWLOCK)
+		SET
+			QTY  = QTY - #{UPD_QTY}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		AND ITEMCD = #{GOODS_CD}
+	</update>
+
+	<!-- 검수완료 -->
+	<update id="setTallyComp" parameterType="LDataMap">
+		/* SellerTallyMapper.setTallyComp */
+		UPDATE TORDER WITH (ROWLOCK)
+		SET
+			TALLY_USER_CD = #{LOGIN_USERCD}
+			, TALLY_DATETIME = GETDATE()
+		WHERE COMPCD = #{COMPCD}
+		AND ORD_CD = #{ORD_CD}
+	</update>
+
+	<!-- 삭제  setTmpDelete -->
+	<delete id="setTmpDelete" parameterType="LDataMap">
+		/* SellerTallyMapper.setTmpDelete */
+		DELETE FROM TMP_TORDERDTL
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</delete>
+
+	<!-- 임시테이블 INSERT -->
+	<insert id="setTmpOrderDtl" parameterType="LDataMap">
+		/* SellerTallyMapper.setTmpOrderDtl */
+		INSERT INTO TMP_TORDERDTL (
+			ORD_CD
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, ORD_SEQ
+			, XRT_INVC_SNO
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_CNT
+			, SCAN_CNT
+			, LACK_CNT
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+		)		
+		SELECT
+			FINAL.ORD_CD
+			, FINAL.COMPCD
+			, FINAL.ORGCD
+			, FINAL.WHCD
+			, ROW_NUMBER() OVER(ORDER BY (SELECT 1))
+			, FINAL.XRT_INVC_SNO
+			, FINAL.GOODS_CD
+			, FINAL.GOODS_NM
+			, FINAL.GOODS_CNT
+			, 0
+			, FINAL.GOODS_CNT2
+			, #{LOGIN_USERCD}
+			, GETDATE() AS ADDDATETIME
+			, #{LOGIN_USERCD}
+			, GETDATE() AS UPDDATETIME
+		FROM (
+			SELECT
+				A2.ORD_CD
+				, A2.COMPCD
+				, A2.ORGCD
+				, A2.WHCD
+				, A2.XRT_INVC_SNO
+				, A2.GOODS_CD
+				, A2.GOODS_NM
+				, SUM(A2.GOODS_CNT2) AS GOODS_CNT
+				, SUM(A2.GOODS_CNT2) AS GOODS_CNT2
+			FROM (
+				SELECT
+					A.ORD_CD
+					, A.COMPCD
+					, A.ORGCD
+					, A.WHCD
+					, A.XRT_INVC_SNO
+					, B2.ITEMCD		AS GOODS_CD
+					, (SELECT NAME FROM P006 WHERE  ITEMCD = B2.ITEMCD AND COMPCD = A.COMPCD AND ORGCD = A.ORGCD) AS GOODS_NM
+					, CASE
+						WHEN A.PROD_TYPE_CD = '00001' THEN A.GOODS_CNT
+						WHEN A.PROD_TYPE_CD = '00002' THEN ( B2.SPROD_QTY * B2.SET_QTY ) * CONVERT(INT, A.GOODS_CNT)
+						WHEN A.PROD_TYPE_CD = '00003' THEN ( B2.SPROD_QTY * B2.SET_QTY ) * CONVERT(INT, A.GOODS_CNT)
+						ELSE A.GOODS_CNT
+					  END			AS GOODS_CNT2
+					, 0			AS SCAN_CNT
+					, CASE
+						WHEN A.PROD_TYPE_CD = '00001' THEN A.GOODS_CNT
+						WHEN A.PROD_TYPE_CD = '00002' THEN ( B2.SPROD_QTY * B2.SET_QTY ) * CONVERT(INT, A.GOODS_CNT)
+						WHEN A.PROD_TYPE_CD = '00003' THEN ( B2.SPROD_QTY * B2.SET_QTY ) * CONVERT(INT, A.GOODS_CNT)
+						ELSE A.GOODS_CNT
+					  END		AS SHORTAGE_GOODS_CNT
+				FROM (
+					SELECT
+						A.PROD_CD
+						, A.PROD_TYPE_CD
+						, B.*
+					FROM PRODUCTMAP A,
+					(SELECT
+						OD.ORD_CD
+						, OD.COMPCD
+						, OD.ORGCD
+						, O.WHCD
+						, O.XRT_INVC_SNO
+						, OD.GOODS_CNT
+						, OD.GOODS_CD AS GOODS_CD
+						, OD.GOODS_NM AS GOODS_NM
+					FROM TORDER O WITH (NOLOCK)
+					LEFT JOIN TORDERDTL OD
+					ON O.ORD_CD = OD.ORD_CD
+					WHERE  O.ORD_CD = #{ORD_CD}) B
+				WHERE A.COMPCD = B.COMPCD
+				AND A.ORGCD = B.ORGCD
+				AND MAP_PROD_CD IN ( B.GOODS_CD )) A
+			LEFT JOIN PRODSPROD B2
+			ON A.PROD_CD = B2.PROD_CD
+			AND A.COMPCD = B2.COMPCD
+			AND A.ORGCD = B2.ORGCD) A2
+			GROUP BY A2.ORD_CD, A2.COMPCD, A2.ORGCD, A2.WHCD, A2.XRT_INVC_SNO, A2.GOODS_CD, A2.GOODS_NM
+			UNION ALL
+			SELECT
+				OD.ORD_CD
+				, OD.COMPCD
+				, OD.ORGCD
+				, O.WHCD
+				, O.XRT_INVC_SNO
+				, OD.GOODS_CD
+				, OD.GOODS_NM
+				, OD.GOODS_CNT
+				, OD.GOODS_CNT AS GOODS_CNT2
+			FROM TORDERDTL OD WITH (NOLOCK)
+			LEFT JOIN TORDER O
+			ON O.ORD_CD = OD.ORD_CD
+			LEFT JOIN PRODUCTMAP PM
+			ON PM.MAP_PROD_CD = OD.GOODS_CD
+			WHERE O.ORD_CD = #{ORD_CD}
+			AND PM.MAP_PROD_CD IS NULL
+		) FINAL 
+	</insert>
+
+	<!-- 미스캔 품목 수량 맞음 : 상품코드가 없는 경우 -->
+	<update id="setMatchCnt" parameterType="LDataMap">
+		/* SellerTallyMapper.setMatchCnt */
+		UPDATE TMP_TORDERDTL WITH (ROWLOCK)
+		SET 
+			SCAN_CNT  = #{SCAN_CNT}
+			, LACK_CNT  = #{LACK_CNT}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+		WHERE 1 = 1
+		AND ORGCD = #{ORGCD}
+		AND ORD_CD = #{ORD_CD}
+		AND ORD_SEQ = #{ORD_SEQ}
+	</update>
+
+	<!-- 검수완료시 TALLY_GOODS테이블 insert -->
+	<insert id="setTallyGoodsInsert" parameterType="LDataMap">
+		/* SellerTallyMapper.setTallyGoodsInsert */
+		INSERT INTO TALLY_GOODS (
+			ORD_CD
+			, ORD_SEQ
+			, COMPCD
+			, ORGCD
+			, XRT_INVC_SNO
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_OPTION
+			, GOODS_CNT
+			, SCAN_CNT
+			, LACK_CNT
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, DEL_FLG
+			, ORD_NO
+			, WHCD
+		)
+		SELECT
+			ORD_CD 
+			, ORD_SEQ
+			, COMPCD
+			, ORGCD
+			, XRT_INVC_SNO
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_OPTION
+			, GOODS_CNT
+			, SCAN_CNT
+			, LACK_CNT
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, TERMINALCD
+			, DEL_FLG
+			, ORD_NO
+			, WHCD
+		FROM TMP_TORDERDTL
+		WHERE COMPCD = #{COMPCD}
+		AND ORD_CD = #{ORD_CD}
+	</insert>
+	
+	<!-- 재고차감 이력 INSERT -->
+	<insert id="insInventoryHistory" parameterType="LDataMap" statementType="CALLABLE">
+		/* SellerTallyMapper.insInventoryHistory */
+		INSERT INTO TINVENTORY_HISTORY WITH (ROWLOCK) (
+			TYPE
+			, WIKEY
+			, COMPCD
+			, ORGCD
+			, ORD_CD
+			, CUSTCD
+			, WHCD
+			, LOCCD
+			, ITEMCD
+			, LOTKEY
+			, QTY
+			, BEFOREQTY
+			, AFTERQTY
+			, REMARK
+			, ADDDATETIME
+			, ADDUSERCD
+			, UPDDATETIME
+			, UPDUSERCD
+			, TERMINALCD
+		) VALUES(
+			'WO'
+			, #{WIKEY}
+			, #{COMPCD}
+			, #{ORGCD}
+			, #{ORD_CD}
+			, '0100001001'
+			, #{WHCD}
+			, ''
+			, #{GOODS_CD}
+			, ''
+			, #{UPD_QTY}
+			, #{BEFOREQTY}
+			, #{AFTERQTY}
+			, '[SELLERTALLY] 상품검수(감소)'
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 출고번호 채번 -->
+	<select id="getSeq" parameterType="LDataMap" statementType="CALLABLE"  >
+		{
+			CALL USX_GetSeq (
+				WAREHOUSE_OUT
+				, #{DATE}
+				, NULL
+				, NULL
+				, NULL
+				, NULL
+				, #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+				, #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+				, #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+			)
+		}
+	</select>
+</mapper>

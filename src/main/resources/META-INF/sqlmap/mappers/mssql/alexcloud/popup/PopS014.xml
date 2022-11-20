@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopS014Mapper">
+
+	<!-- 공지사항 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopS014Mapper.getSearch */
+		SELECT A.NTKEY
+			 , A.STARTDT
+			 , A.ENDDT
+			 , A.NTTYPE
+			 , A.TITLE
+			 , A.CONTENTS
+			 , A.HITS
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 120) ADDDATETIME
+		<!-- , B.ORIGINFILENM -->
+		  FROM S014 A WITH (NOLOCK)
+		  <!-- JOIN S016 B
+		    ON A.NTKEY = B.NTKEY -->
+		 WHERE A.NTKEY = #{NTKEY}
+	     ORDER BY A.NTKEY
+	</select>
+	
+	<!-- 공지사항 팝업 : 파일 검색 -->
+	<select id="getFile" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopS014Mapper.getFile */
+		SELECT A.NTKEY
+			 , A.SEQ
+			 , A.FILENM
+			 , A.ORIGINFILENM
+		  FROM S016 A WITH (NOLOCK)
+		 WHERE A.NTKEY = #{NTKEY}
+	</select>
+</mapper>

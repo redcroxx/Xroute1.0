@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 공지사항 -->
+<mapper namespace="S000015Mapper">
+	<!-- 검색 -->
+	<!-- <select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000015.getSearch */
+		<![CDATA[
+		SELECT Z.NTKEY 
+			 , Z.STARTDT
+			 , Z.ENDDT
+			 , Z.NTTYPE
+			 , Z.TITLE
+			 , Z.HITS
+			 , Z.TARGET
+			 , Z.POPFLG
+			 , Z.ISUSING
+			 , Z.FILEEXIST
+			 , Z.ADDUSERCD
+			 , Z.ADDUSERNM
+			 , CONVERT(VARCHAR, Z.ADDDATETIME, 120) AS ADDDATETIME
+			 , Z.UPDUSERCD
+          	 , CONVERT(VARCHAR, Z.UPDDATETIME, 120) AS UPDDATETIME
+          	 , Z.TERMINALCD 
+		FROM (
+			SELECT A.NTKEY
+				 , A.STARTDT
+				 , A.ENDDT
+				 , A.NTTYPE
+				 , A.TITLE
+				 , A.HITS
+				 , A.TARGET
+				 , A.POPFLG
+				 , A.ISUSING
+				 , CASE WHEN EXISTS(SELECT 1 FROM S016 WITH (NOLOCK) WHERE NTKEY = A.NTKEY) THEN '1' ELSE NULL END AS FILEEXIST
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.UPDUSERCD
+	          	 , A.UPDDATETIME
+	          	 , A.TERMINALCD
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND A.TARGET = 'COMP'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY
+			   				 OR A.ADDUSERCD = #{LOGIN_USERCD})
+			UNION ALL
+			SELECT A.NTKEY
+				 , A.STARTDT
+				 , A.ENDDT
+				 , A.NTTYPE
+				 , A.TITLE
+				 , A.HITS
+				 , A.TARGET
+				 , A.POPFLG
+				 , A.ISUSING
+				 , CASE WHEN EXISTS(SELECT 1 FROM S016 WITH (NOLOCK) WHERE NTKEY = A.NTKEY) THEN '1' ELSE NULL END AS FILEEXIST
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.UPDUSERCD
+	          	 , A.UPDDATETIME
+	          	 , A.TERMINALCD
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND A.TARGET = 'ORG'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A1.ORGCD = A2.ORGCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY
+			   				 OR A.ADDUSERCD = #{LOGIN_USERCD})
+			UNION ALL
+			SELECT A.NTKEY
+				 , A.STARTDT
+				 , A.ENDDT
+				 , A.NTTYPE
+				 , A.TITLE
+				 , A.HITS
+				 , A.TARGET
+				 , A.POPFLG
+				 , A.ISUSING
+				 , CASE WHEN EXISTS(SELECT 1 FROM S016 WITH (NOLOCK) WHERE NTKEY = A.NTKEY) THEN '1' ELSE NULL END AS FILEEXIST
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.UPDUSERCD
+	          	 , A.UPDDATETIME
+	          	 , A.TERMINALCD
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND A.TARGET = 'DEPT'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A1.ORGCD = A2.ORGCD AND A1.DEPTCD = A2.DEPTCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY
+			   				 OR A.ADDUSERCD = #{LOGIN_USERCD})
+			UNION ALL
+			SELECT A.NTKEY
+				 , A.STARTDT
+				 , A.ENDDT
+				 , A.NTTYPE
+				 , A.TITLE
+				 , A.HITS
+				 , A.TARGET
+				 , A.POPFLG
+				 , A.ISUSING
+				 , CASE WHEN EXISTS(SELECT 1 FROM S016 WITH (NOLOCK) WHERE NTKEY = A.NTKEY) THEN '1' ELSE NULL END AS FILEEXIST
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.UPDUSERCD
+	          	 , A.UPDDATETIME
+	          	 , A.TERMINALCD
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND A.TARGET = 'CUST'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A1.CUSTCD = A2.CUSTCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY
+			   				 OR A.ADDUSERCD = #{LOGIN_USERCD})
+		) Z
+		]]>
+		 WHERE 1=1
+		<if test="S_ADDDATETIME_FROM != null and S_ADDDATETIME_FROM != ''">
+			AND Z.ADDDATETIME <![CDATA[>=]]> REPLACE(#{S_ADDDATETIME_FROM}, '-', '')
+		</if>
+		<if test="S_ADDDATETIME_TO != null and S_ADDDATETIME_TO != ''">
+			AND Z.ADDDATETIME <![CDATA[<]]> DATEADD(DAY, 1, REPLACE(#{S_ADDDATETIME_TO}, '-', ''))
+		</if>
+		<if test="S_NTTYPE != null and S_NTTYPE != ''">
+			<if test="S_NTTYPE == 'ALL' ">
+			   AND Z.NTTYPE <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_NTTYPE != 'ALL' ">
+			   AND Z.NTTYPE = #{S_NTTYPE}
+			</if>   
+		</if>
+		<if test="S_NTTARGET != null and S_NTTARGET != ''">
+			<if test="S_NTTARGET == 'ALL' ">
+			   AND Z.TARGET <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_NTTARGET != 'ALL' ">
+			   AND Z.TARGET = #{S_NTTARGET}
+			</if>   
+		</if>
+		<if test="S_NTKEY != null and S_NTKEY != ''">
+			AND Z.NTKEY LIKE '%' + dbo.UFX_TRIM(#{S_NTKEY}) + '%'
+		</if>
+		<if test="S_USERCD != null and S_USERCD != ''">
+		    AND Z.ADDUSERCD = #{S_USERCD}
+		</if>
+		<if test="S_ISUSING != null and S_ISUSING != ''">
+			<if test="S_ISUSING == 'ALL' ">
+			   AND Z.ISUSING <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_ISUSING != 'ALL' ">
+			   AND Z.ISUSING = #{S_ISUSING}
+			</if>   
+		</if>
+		<if test="S_NTTITLE != null and S_NTTITLE != ''">
+			AND Z.TITLE LIKE '%' + dbo.UFX_TRIM(#{S_NTTITLE}) + '%'
+		</if>
+		<if test="S_ISACTIVE != null and S_ISACTIVE != ''">
+			<if test="S_ISACTIVE == 'ALL' ">
+			   AND Z.STARTDT <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_ISACTIVE == 'ACTIVE' ">
+			   AND REPLACE(CONVERT(VARCHAR,GETDATE(),111), '/', '') BETWEEN Z.STARTDT AND Z.ENDDT
+			</if>   
+		</if>
+		 ORDER BY CASE WHEN Z.NTTYPE = 'IMP' THEN 0 ELSE 1 END, Z.ADDDATETIME DESC
+		 
+	</select> -->
+
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000015.getSearch */
+		SELECT  A.NTKEY
+		      , A.COMPCD
+		      , A.STARTDT
+		      , A.ENDDT
+		      , A.NTTYPE
+		      , A.TITLE
+		      , A.CONTENTS
+		      , A.HITS
+		      , A.TARGET
+		      , A.POPFLG
+		      , A.ISUSING
+			  , A.ADDUSERCD
+			  , B.NAME AS ADDUSERNM
+			  , CONVERT(VARCHAR, A.ADDDATETIME, 120) AS ADDDATETIME
+			  , A.UPDUSERCD
+          	  , CONVERT(VARCHAR, A.UPDDATETIME, 120) AS UPDDATETIME
+          	  , A.TERMINALCD
+		   FROM S014 A WITH (NOLOCK)
+		   LEFT JOIN S010 B WITH (NOLOCK)
+		     ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+		  WHERE 1=1		 
+		<if test="S_ADDDATETIME_FROM != null and S_ADDDATETIME_FROM != ''">
+			AND A.ADDDATETIME <![CDATA[>=]]> REPLACE(#{S_ADDDATETIME_FROM}, '-', '')
+		</if>
+		<if test="S_ADDDATETIME_TO != null and S_ADDDATETIME_TO != ''">
+			AND A.ADDDATETIME <![CDATA[<]]> DATEADD(DAY, 1, REPLACE(#{S_ADDDATETIME_TO}, '-', ''))
+		</if>
+		<if test="S_NTTYPE != null and S_NTTYPE != ''">
+			<if test="S_NTTYPE == 'ALL' ">
+			   AND A.NTTYPE <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_NTTYPE != 'ALL' ">
+			   AND A.NTTYPE = #{S_NTTYPE}
+			</if>   
+		</if>
+		<if test="S_NTTARGET != null and S_NTTARGET != ''">
+			<if test="S_NTTARGET == 'ALL' ">
+			   AND A.TARGET <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_NTTARGET != 'ALL' ">
+			   AND A.TARGET = #{S_NTTARGET}
+			</if>   
+		</if>
+		<if test="S_NTKEY != null and S_NTKEY != ''">
+			AND A.NTKEY LIKE '%' + dbo.UFX_TRIM(#{S_NTKEY}) + '%'
+		</if>
+		<if test="S_USERCD != null and S_USERCD != ''">
+		    AND A.ADDUSERCD = #{S_USERCD}
+		</if>
+		<if test="S_ISUSING != null and S_ISUSING != ''">
+			<if test="S_ISUSING == 'ALL' ">
+			   AND A.ISUSING <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_ISUSING != 'ALL' ">
+			   AND A.ISUSING = #{S_ISUSING}
+			</if>   
+		</if>
+		<if test="S_NTTITLE != null and S_NTTITLE != ''">
+			AND A.TITLE LIKE '%' + dbo.UFX_TRIM(#{S_NTTITLE}) + '%'
+		</if>
+		<if test="S_ISACTIVE != null and S_ISACTIVE != ''">
+			<if test="S_ISACTIVE == 'ALL' ">
+			   AND A.STARTDT <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_ISACTIVE == 'ACTIVE' ">
+			   AND REPLACE(CONVERT(VARCHAR,GETDATE(),111), '/', '') BETWEEN A.STARTDT AND A.ENDDT
+			</if>   
+		</if>
+		 ORDER BY CASE WHEN A.NTTYPE = 'IMP' THEN 0 ELSE 1 END, A.ADDDATETIME DESC		 
+	</select>
+	
+	<!-- 조회수 증가 -->
+	<update id="setHits" parameterType="LDataMap">
+		/* sys.S000015.setHits */
+		UPDATE S014 WITH (ROWLOCK)
+		   SET HITS = HITS + 1     
+		 WHERE NTKEY = #{NTKEY}
+	</update>
+	
+	<!-- 삭제(공지사항) -->
+	<delete id="delNotice" parameterType="LDataMap">
+		/* sys.S000015.delNotice */
+		DELETE FROM S014 WITH (ROWLOCK)
+		 WHERE NTKEY = #{NTKEY}
+	</delete>
+	
+	<!-- 삭제(공지사항 대상) -->
+	<delete id="delNoticeTarget" parameterType="LDataMap">
+		/* sys.S000015.delNoticeTarget */
+		DELETE FROM S015 WITH (ROWLOCK)
+		 WHERE NTKEY = #{NTKEY}
+	</delete>
+	
+	<!-- 삭제(공지사항 파일) -->
+	<delete id="delNoticeFile" parameterType="LDataMap">
+		/* sys.S000015.delNoticeFile */
+		DELETE FROM S016 WITH (ROWLOCK)
+		 WHERE NTKEY = #{NTKEY}
+	</delete>
+	
+</mapper>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="atomyStockInspectionMapper">
+
+    <select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+        /* atomyStockInsertMapper.getSearch */
+        SELECT
+            A.ORD_CD            AS ordCd,
+            A.ORGCD             AS orgcd,
+            A.ORD_CNT           AS ordCnt,
+            A.UPLOAD_DATE       AS uploadDate,
+            UPPER(TRIM(A.E_NATION)) AS eNation,
+            A.XRT_INVC_SNO      AS xrtInvcSno,
+            A.INVC_SNO1         AS invcSno1,
+            dbo.UFX_TRIM(UPPER(A.SHIP_METHOD_CD)) AS shipMethodCd,
+            A.WGT               AS wgt,
+            CONVERT(INT, A.BOX_WIDTH) / 10  AS boxWidth,
+            CONVERT(INT, A.BOX_LENGTH) / 10 AS boxLength,
+            CONVERT(INT, A.BOX_HEIGHT) / 10  AS boxHeight,
+            A.BOX_VOLUME        AS boxVolume,
+            A.STOCK_DATE        AS stockDate,
+            A.STATUS_CD         AS statusCd,
+            A.XRT_SHIPPING_PRICE    AS xrtShippingPrice,
+            CASE
+                WHEN A.STATUS_CD = '10' THEN '주문등록'
+                WHEN A.STATUS_CD = '11' THEN '발송대기'
+                WHEN A.STATUS_CD = '12' THEN '발송완료'
+                WHEN A.STATUS_CD = '20' THEN '입금대기'
+                WHEN A.STATUS_CD = '21' THEN '결제완료'
+                WHEN A.STATUS_CD = '22' THEN '결제대기'
+                WHEN A.STATUS_CD = '23' THEN '결제실패'
+                WHEN A.STATUS_CD = '30' THEN '입고완료'
+                WHEN A.STATUS_CD = '31' THEN '창고보관'
+                WHEN A.STATUS_CD = '32' THEN '출고대기'
+                WHEN A.STATUS_CD = '33' THEN '검수완료'
+                WHEN A.STATUS_CD = '34' THEN '검수취소'
+                WHEN A.STATUS_CD = '35' THEN '선적대기'
+                WHEN A.STATUS_CD = '40' THEN '출고완료'
+                WHEN A.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN A.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN A.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN A.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN A.STATUS_CD = '54' THEN '통관대기'
+                WHEN A.STATUS_CD = '55' THEN '통관완료'
+                WHEN A.STATUS_CD = '56' THEN '배송시작'
+                WHEN A.STATUS_CD = '57' THEN '배송중'
+                WHEN A.STATUS_CD = '60' THEN '배송완료'
+                WHEN A.STATUS_CD = '80' THEN 'API오류'
+                WHEN A.STATUS_CD = '98' THEN '입금취소'
+                WHEN A.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END AS statusNm,
+            CASE
+                WHEN A.PAYMENT_TYPE = '1' THEN '건당결제'
+                WHEN A.PAYMENT_TYPE = '2' THEN '월말결제'
+                WHEN A.PAYMENT_TYPE = '3' THEN '정기결제'
+                WHEN A.PAYMENT_TYPE = '4' THEN '신용결제'
+                ELSE '-'
+            END AS paymentNm,
+            A.PAYMENT_TYPE      AS paymentType,
+            A.BOX_NO            AS boxNo
+        FROM TORDER A
+        WHERE 1 = 1
+        AND A.XRT_INVC_SNO = RTRIM(LTRIM(#{xrtInvcSno}))
+        AND A.DEL_FLG = 'N'
+    </select>
+
+    <select id="getInspectionList" parameterType="LDataMap" resultType="LDataMap">
+        /* atomyStockInsertMapper.getInspectionList */
+        SELECT
+            INVC_SNO AS xrtInvcSno,
+            CIPL_XRT_INVC_SNO AS ciplXrtInvcSno,
+            CASE
+                WHEN STATUS_CD = '33' THEN '[' + ISNULL(INVC_SNO, '') + '] 검수완료 (' + ISNULL(ADDUSERCD, '') + ')'
+                WHEN STATUS_CD = '34' THEN '[' + ISNULL(INVC_SNO, '') + '] 검수취소 (' + ISNULL(ADDUSERCD, '') + ')'
+                ELSE '오류가 발생하였습니다.'
+            END AS inspectionData
+        FROM TINSPECTION_HISTORY
+        WHERE 1 = 1
+        AND CONVERT(VARCHAR(10), ADDDATETIME, 112) = CONVERT(VARCHAR(10), GETDATE(), 112)
+        AND STATUS_CD IN ('33', '34')
+        ORDER BY ADDDATETIME DESC
+    </select>
+
+    <select id="getOrderDtl" parameterType="LDataMap" resultType="LDataMap">
+        /* atomyStockInsertMapper.getOrderDtl */
+        SELECT
+            GOODS_NM        AS goodsNm,
+            GOODS_OPTION    AS goodsOption,
+            GOODS_CNT       AS goodsCnt
+        FROM
+        TORDERDTL
+        WHERE ORD_CD = #{ordCd}
+        ORDER BY ORD_SEQ
+    </select>
+    
+    <select id="getBoxData" parameterType="LDataMap" resultType="LDataMap">
+        /* atomyStockInsertMapper.getBoxData */
+        SELECT
+            LENGTH  AS length,
+            WIDTH   AS width,
+            HEIGHT  AS height,
+            WEIGHT  AS weight
+        FROM ATOMY_BOX_SIZE 
+        WHERE 1 = 1
+        AND NO = #{boxNo}
+    </select>
+    
+    <select id="getGoodsList" parameterType="LDataMap" resultType="LDataMap">
+        /* atomyStockInsertMapper.getGoodsList */
+        SELECT
+            LENGTH  AS length,
+            WIDTH   AS width,
+            HEIGHT  AS height,
+            WEIGHT  AS weight
+        FROM ATOMY_BOX_SIZE 
+        WHERE 1 = 1
+        AND NO = #{boxNo}
+    </select>
+    
+    <select id="checkSendingComp" parameterType="LDataMap" resultType="LDataMap">
+        /* atomyStockInsertMapper.checkSendingComp */
+        SELECT
+            STATUS_CD AS statusCd
+        FROM TORDER
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </select>
+
+    <!-- 검수 이력 INSERT -->
+    <insert id="insertInspectionHistory" parameterType="LDataMap">
+        /* atomyStockInsertMapper.insertInspectionHistory */
+        INSERT INTO TINSPECTION_HISTORY (
+            ORD_CD,
+            INVC_SNO,
+            CIPL_XRT_INVC_SNO,
+            STATUS_CD,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{ordCd},
+            #{xrtInvcSno},
+            #{ciplXrtInvcSno},
+            #{statusCd},
+            #{usercd},
+            GETDATE(),
+            #{usercd},
+            GETDATE(),
+            #{loginIp}
+        )
+    </insert>
+    
+    <update id="updateTorder" parameterType="LDataMap">
+        /* atomyStockInsertMapper.updateTorder */
+        UPDATE TORDER WITH (ROWLOCK)
+        <trim prefix="SET" suffixOverrides=",">
+            <choose>
+                <when test='statusCd == "30"'>
+                    STOCK_USERCD = #{usercd},
+                    STOCK_DATE = GETDATE(),
+                </when>
+                <when test='statusCd == "10"'>
+                    <if test="wgt != null and wgt != ''">
+                        WGT = #{wgt},
+                    </if>
+                    <if test="boxWidth != null and boxWidth != ''">
+                        BOX_WIDTH = #{boxWidth},
+                    </if>
+                    <if test="boxLength != null and boxLength != ''">
+                        BOX_LENGTH = #{boxLength},
+                    </if>
+                    <if test="boxHeight != null and boxHeight != ''">
+                        BOX_HEIGHT = #{boxHeight},
+                    </if>
+                    <if test="boxVolume != null and boxVolume != ''">
+                        BOX_VOLUME = #{boxVolume},
+                    </if>
+                    STOCK_USERCD = NULL,
+                    STOCK_DATE = NULL,
+                    CONFIRM_DATE = NULL,
+                </when>
+                <otherwise>
+                    <if test="wgt != null and wgt != ''">
+                        WGT = #{wgt},
+                    </if>
+                    <if test="boxWidth != null and boxWidth != ''">
+                        BOX_WIDTH = #{boxWidth},
+                    </if>
+                    <if test="boxLength != null and boxLength != ''">
+                        BOX_LENGTH = #{boxLength},
+                    </if>
+                    <if test="boxHeight != null and boxHeight != ''">
+                        BOX_HEIGHT = #{boxHeight},
+                    </if>
+                    <if test="boxVolume != null and boxVolume != ''">
+                        BOX_VOLUME = #{boxVolume},
+                    </if>
+                    CONFIRM_DATE = GETDATE(),
+                </otherwise>
+            </choose>
+            <if test="statusCd != null and statusCd != ''">
+                STATUS_CD = #{statusCd},
+            </if>
+            <if test="usercd != null and usercd != ''">
+                UPDUSERCD = #{usercd},
+                UPDDATETIME = GETDATE()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+</mapper>

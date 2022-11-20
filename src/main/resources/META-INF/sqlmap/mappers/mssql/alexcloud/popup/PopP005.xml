@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopP005Mapper">
+
+	<!-- 로케이션 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP005Mapper.getSearch */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , B.NAME AS WHNM
+			 , A.LOCCD
+			 , A.LOCNAME
+			 , A.LOCGROUP
+			 , A.ISVIRTUAL
+			 , A.LOCTYPE
+			 , A.SLOTTYPE
+			 , A.PICKTYPE
+			 , A.ALLOCATETYPE
+			 , A.NOTALLOCFLG
+			 , A.WHINSEQ
+			 , A.WHOUTSEQ
+			 , A.BUIL
+			 , A.FLOOR
+			 , A.ZONE
+			 , A.LINE
+			 , A.RANGE
+			 , A.STEP
+			 , A.LANE
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.WEIGHTCAPACITY
+			 , A.CAPACITY
+			 , A.CUSTCD
+			 , C.NAME AS CUSTNM
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		 FROM P005 A WITH (NOLOCK)
+		 JOIN P004 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.WHCD = B.WHCD
+		 LEFT OUTER JOIN P003 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.CUSTCD = C.CUSTCD
+		WHERE A.ISUSING = 'Y'
+		  AND A.COMPCD = #{LOGIN_COMPCD}
+		  AND A.WHCD = #{S_WHCD}
+		<if test="S_LOCCD != null and S_LOCCD != ''">
+			AND ((A.LOCCD LIKE #{S_LOCCD} + '%')
+				OR (A.LOCNAME LIKE '%' + #{S_LOCCD} + '%'))
+		</if>
+		
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+			AND ((A.CUSTCD LIKE #{S_CUSTCD} + '%')
+				OR (C.NAME LIKE '%' + #{S_CUSTCD} + '%'))
+		</if>
+		<if test="S_LOCTYPE != null and S_LOCTYPE != ''">
+			AND A.LOCTYPE = #{S_LOCTYPE}
+		</if>
+		<if test="S_NOTALLOCFLG != null and S_NOTALLOCFLG != ''">
+			AND A.NOTALLOCFLG = #{S_NOTALLOCFLG}
+		</if>
+		<if test="S_SPACEVAL != null and S_SPACEVAL != ''">
+			<if test="S_SPACEKEY == 'WHINLOCCD'">
+				AND A.BUIL LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>
+			<if test="S_SPACEKEY == 'WHOUTLOCCD'">
+				AND A.FLOOR LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'RETURNLOCCD'">
+				AND A.ZONE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.LINE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.RANGE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.STEP LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.LANE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.LENGTH LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.WIDTH LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.HEIGHT LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.WEIGHTCAPACITY LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ASSYLOCCD'">
+				AND A.CAPACITY LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+		</if>
+		
+		ORDER BY LOCCD
+	</select>
+
+	<!-- 로케이션 팝업 : 코드 유효성-->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP005Mapper.getCheck */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.LOCNAME
+			 , A.LOCGROUP
+			 , A.ISVIRTUAL
+			 , A.LOCTYPE
+			 , A.SLOTTYPE
+			 , A.PICKTYPE
+			 , A.ALLOCATETYPE
+			 , A.NOTALLOCFLG
+			 , A.WHINSEQ
+			 , A.WHOUTSEQ
+			 , A.BUIL
+			 , A.FLOOR
+			 , A.ZONE
+			 , A.LINE
+			 , A.RANGE
+			 , A.STEP
+			 , A.LANE
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.WEIGHTCAPACITY
+			 , A.CAPACITY
+			 , A.CUSTCD
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		 FROM P005 A WITH (NOLOCK)
+		WHERE A.ISUSING = 'Y'
+		  AND A.COMPCD = #{LOGIN_COMPCD}
+	      AND A.WHCD = #{S_WHCD}
+		  AND A.LOCCD = #{S_LOCCD}
+		  
+	</select>
+</mapper>

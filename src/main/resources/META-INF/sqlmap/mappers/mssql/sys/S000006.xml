@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="S000006Mapper">
+	<!-- 권한 : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000006.getSearch */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , C.NAME AS ORGNM
+			 , A.USERCD
+			 , A.NAME
+			 , A.DEPTCD
+			 , A.POSITION
+			 , A.USERGROUP
+			 , B.SNAME1 + '[' + B.REMARK + ']' AS USERGROUPNM
+		  FROM S010 A WITH (NOLOCK)
+		  LEFT OUTER JOIN P002 C WITH (NOLOCK)
+		    ON A.COMPCD = C.COMPCD
+		   AND A.ORGCD = C.ORGCD
+		  LEFT JOIN S002 B WITH(NOLOCK) 
+		    ON A.COMPCD = B.COMPCD 
+		   AND A.USERGROUP = B.CODE
+		   AND B.CODEKEY = 'USERGROUP'
+		 WHERE 1=1
+		   AND A.ISUSING = 'Y'
+		<if test="S_COMPCD != null and S_COMPCD != ''">
+		   AND A.COMPCD = #{S_COMPCD}
+		</if>
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_DEPTCD != null and S_DEPTCD != ''">
+		   AND A.DEPTCD = #{S_DEPTCD}
+		</if>
+		<if test="S_USERCD != null and S_USERCD != ''">
+		   AND A.USERCD = #{S_USERCD}
+		</if>
+		<if test="S_USERGROUP != null and S_USERGROUP != ''">
+			AND A.USERGROUP = #{S_USERGROUP}
+		</if>
+		<if test="S_DEPTCD != null and S_DEPTCD != ''">
+			AND A.DEPTCD = #{S_DEPTCD}
+		</if>
+		<!-- 190903 cmju 창고 검색 추가 -->
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.WHCD = #{S_WHCD}
+		</if>
+		ORDER BY A.COMPCD, A.USERGROUP, A.DEPTCD, A.NAME
+	</select>
+	
+	<!-- 권한 : 대메뉴 리스트-->
+	<select id="getMenuL1" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000006.getMenuL1 */
+		SELECT  A.MENUL1KEY AS CODE,
+				A.L1TITLE AS VALUE
+          FROM S007 A WITH (NOLOCK)
+         WHERE COMPCD = #{S_COMPCD}
+	</select>              
+	
+	<!-- 권한 : 전체메뉴 리스트 -->
+	<select id="getMenuList" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000006.getMenuList */
+		SELECT K.COMPCD,
+		       K.MENUL1KEY,
+		       K.MENUL2KEY,
+		       K.APPKEY,
+		       K.TITLE,
+		       K.BTNSAVE,
+		       K.BTNDELETE,
+		       K.BTNEXECUTE,
+		       K.BTNPRINT
+  FROM (SELECT A.COMPCD,
+               A.MENUL1KEY,
+               B.MENUL2KEY,
+               C.APPKEY,
+               C.L3TITLE    AS TITLE,
+               A.SORTNO     AS P1,
+               B.SORTNO     AS P2,
+               C.SORTNO     AS P3,
+               D.BTNSAVE,
+               D.BTNDELETE,
+               D.BTNEXECUTE,
+               D.BTNPRINT
+          FROM S007 A WITH (NOLOCK)
+          JOIN S008 B WITH (NOLOCK)
+            ON A.COMPCD = B.COMPCD
+           AND A.MENUL1KEY = B.MENUL1KEY
+          JOIN S009 C WITH (NOLOCK)
+            ON B.COMPCD = C.COMPCD
+           AND B.MENUL1KEY = C.MENUL1KEY
+           AND B.MENUL2KEY = C.MENUL2KEY
+          JOIN S005 D WITH (NOLOCK)
+            ON C.APPKEY = D.APPKEY
+            AND D.USEYN = 'Y'
+         UNION ALL
+        SELECT A.COMPCD,
+               A.MENUL1KEY,
+               NULL,
+               NULL,
+               '[ ' + A.L1TITLE + ' ]',
+               A.SORTNO,
+               -1,
+               -1,
+               0,
+               0,
+               0,
+      		   0
+          FROM S007 A WITH (NOLOCK)
+         UNION ALL
+        SELECT A.COMPCD,
+               A.MENUL1KEY,
+               B.MENUL2KEY,
+               NULL,
+               '[ ' + B.L2TITLE + ' ]',
+               A.SORTNO,
+               B.SORTNO,
+               -1,
+               0,
+               0,
+               0,
+      		   0
+          FROM S007 A WITH (NOLOCK)
+          JOIN S008 B WITH (NOLOCK)
+            ON A.COMPCD = B.COMPCD
+           AND A.MENUL1KEY = B.MENUL1KEY) K
+         WHERE 1 = 1
+		   AND K.COMPCD = #{S_COMPCD}
+         <if test="S_MENUL1 != null and S_MENUL1 != ''">
+		   AND K.MENUL1KEY = #{S_MENUL1}
+		</if>
+ 		 ORDER BY K.P1, K.MENUL1KEY, K.P2, K.MENUL2KEY, P3
+	</select>
+	
+	<!-- 권한 : 사용가능 권한 리스트-->
+	<select id="getAuthList" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000006.getAuthList */
+		   SELECT K.COMPCD,
+		          K.USERCD,
+		          K.MENUL1KEY,
+		          K.MENUL2KEY,
+		          K.APPKEY,
+		          K.TITLE,
+		          K.AUTHSEARCH,
+		          K.AUTHUPD,
+		          K.AUTHDEL,
+		          K.AUTHEXEC,
+		          K.AUTHPRINT,
+		          K.BTNDELETE,
+		          K.BTNEXECUTE,
+		          K.BTNPRINT,
+		          K.BTNSAVE
+     FROM (SELECT B.COMPCD,
+                  A.USERCD,
+                  A.MENUL1KEY,
+                  A.MENUL2KEY,
+                  A.APPKEY,
+                  E.L3TITLE    AS TITLE,
+                  C.SORTNO AS P1,
+                  D.SORTNO AS P2,
+                  E.SORTNO AS P3,
+                  A.AUTHSEARCH,
+                  A.AUTHUPD,
+                  A.AUTHDEL,
+                  A.AUTHEXEC,
+                  A.AUTHPRINT,
+                  F.BTNSAVE,
+                  F.BTNDELETE,
+                  F.BTNEXECUTE,
+                  F.BTNPRINT
+             FROM S006 A WITH (NOLOCK)
+             JOIN S010 B WITH (NOLOCK)
+               ON A.COMPCD = B.COMPCD
+            AND A.USERCD = B.USERCD
+             JOIN S007 C WITH (NOLOCK)
+               ON A.COMPCD = C.COMPCD
+              AND A.MENUL1KEY = C.MENUL1KEY
+             JOIN S008 D WITH (NOLOCK)
+               ON A.COMPCD = D.COMPCD
+              AND A.MENUL1KEY = D.MENUL1KEY
+              AND A.MENUL2KEY = D.MENUL2KEY
+             JOIN S009 E WITH (NOLOCK)
+               ON A.COMPCD = E.COMPCD
+              AND A.MENUL1KEY = E.MENUL1KEY
+              AND A.MENUL2KEY = E.MENUL2KEY
+              AND A.APPKEY = E.APPKEY
+             JOIN S005 F WITH (NOLOCK)
+               ON E.APPKEY = F.APPKEY
+              AND F.USEYN = 'Y'
+            WHERE B.COMPCD = #{COMPCD}
+              AND B.USERCD = #{USERCD}
+           UNION ALL
+           SELECT A.COMPCD,
+                  #{USERCD} AS USERCD,
+                  A.MENUL1KEY,
+                  NULL,
+                  NULL,
+                  '[ ' + A.L1TITLE + ' ]',
+                  A.SORTNO,
+                  -1,
+                  -1,
+                  NULL,
+                  'N',
+                  'N',
+                  'N',
+                  'N',
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL
+             FROM S007 A WITH (NOLOCK)
+            WHERE A.COMPCD = #{COMPCD}
+            UNION ALL
+           SELECT A.COMPCD,
+                  #{USERCD} AS USERCD,
+                  A.MENUL1KEY,
+                  B.MENUL2KEY,
+                  NULL,
+                  '[ ' + B.L2TITLE + ' ]',
+                  A.SORTNO,
+                  B.SORTNO,
+                  -1,
+                  NULL,
+                  'N',
+                  'N',
+                  'N',
+                  'N',
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL
+             FROM S007 A WITH (NOLOCK)
+             JOIN S008 B WITH (NOLOCK)
+               ON A.COMPCD = B.COMPCD
+              AND A.MENUL1KEY = B.MENUL1KEY
+          WHERE A.COMPCD = #{COMPCD}) K
+          WHERE 1 = 1
+        <if test="S_MENUL1 != null and S_MENUL1 != ''">
+		   AND K.MENUL1KEY = #{S_MENUL1}
+		</if>
+    ORDER BY K.P1, K.MENUL1KEY, K.P2, K.MENUL2KEY, K.P3
+	</select>
+		
+	<!-- 권한 : 추가 -->
+	<update id="setAuth" parameterType="LDataMap">
+		/* sys.S000006.setAuth */
+	BEGIN
+		UPDATE S006 WITH (ROWLOCK)
+		   SET UPDUSERCD = #{LOGIN_USERCD}
+		   	 , UPDDATETIME = GETDATE()
+		   	 , TERMINALCD = #{LOGIN_IP}
+		 WHERE COMPCD = #{COMPCD}
+		   AND USERCD = #{USERCD}
+		   AND MENUL1KEY = #{MENUL1KEY}
+	       AND MENUL2KEY = #{MENUL2KEY}
+	       AND APPKEY = #{APPKEY}
+		IF @@ROWCOUNT = 0 
+		BEGIN
+		INSERT INTO S006 WITH (ROWLOCK)
+	           ( COMPCD
+	           , USERCD
+	           , MENUL1KEY
+	           , MENUL2KEY
+	           , APPKEY
+	           , AUTHSEARCH
+	           , AUTHUPD
+	           , AUTHDEL
+	           , AUTHEXEC
+	           , AUTHPRINT
+	           , ADDUSERCD
+	           , ADDDATETIME
+	           , UPDUSERCD
+	           , UPDDATETIME
+	           , TERMINALCD)
+	     VALUES
+	           ( #{COMPCD}
+	           , #{USERCD}
+	           , #{MENUL1KEY}
+	           , #{MENUL2KEY}
+	           , #{APPKEY}
+	           , 'C'
+	           , 'Y'
+	           , 'Y'
+	           , 'Y'
+	           , 'Y'
+	           , #{LOGIN_USERCD}
+	           , GETDATE()
+	           , #{LOGIN_USERCD}
+	           , GETDATE()
+	           , #{LOGIN_IP});
+       	END;    
+    END;
+	</update>
+	
+	<!-- 권한 : 권한 삭제 -->
+	<delete id="delAuth" parameterType="LDataMap">
+	/* sys.S000006.delAuth */
+		DELETE FROM S006 WITH (ROWLOCK)
+     	 WHERE USERCD = #{USERCD}
+     	   AND APPKEY = #{APPKEY}
+	</delete>
+	
+	<!-- 사용자별권한 : 검색 권한 저장 -->
+	<update id="updateAuthSearch" parameterType="LDataMap">
+	/* sys.S000006.updateAuthSearch */
+		BEGIN
+		<foreach collection="paramList" item="item" index="i" open="" close=";" separator=";">
+			UPDATE S006 WITH (ROWLOCK)
+			   SET UPDUSERCD = #{LOGIN_USERCD}
+			     , UPDDATETIME = GETDATE()
+			     , TERMINALCD = #{LOGIN_IP}
+			<if test='item.AUTHSEARCH == "C" or item.AUTHSEARCH == "O" or item.AUTHSEARCH == "D" or item.AUTHSEARCH == "U"' >
+				 , AUTHSEARCH = #{item.AUTHSEARCH}
+			</if>
+			WHERE USERCD = #{item.USERCD}
+			  AND MENUL1KEY = #{item.MENUL1KEY}
+			  AND MENUL2KEY = #{item.MENUL2KEY}
+			  AND APPKEY = #{item.APPKEY}
+		</foreach>
+		END;
+	</update>
+	
+	<!-- 사용자별권한 : 권한 버튼 저장 -->
+	<update id="updateUserXAuthDtAuth" parameterType="LDataMap">
+	/* sys.S000006.updateUserXAuthDtAuth */
+		BEGIN
+		<foreach collection="paramList" item="item" index="i" open="" close=";" separator=";">
+			UPDATE S006 WITH (ROWLOCK)
+			   SET UPDUSERCD = #{LOGIN_USERCD}
+			     , UPDDATETIME = GETDATE()
+			     , TERMINALCD = #{LOGIN_IP}
+			<if test='item.AUTHUPD == "Y" or item.AUTHUPD == "N"'>
+				 , AUTHUPD = #{item.AUTHUPD}
+			</if>
+			<if test='item.AUTHDEL == "Y" or item.AUTHDEL == "N"'>
+				 , AUTHDEL = #{item.AUTHDEL}
+			</if>
+			<if test='item.AUTHEXEC == "Y" or item.AUTHEXEC == "N"'>
+				 , AUTHEXEC = #{item.AUTHEXEC}
+			</if>
+			<if test='item.AUTHPRINT == "Y" or item.AUTHPRINT == "N"'>
+				 , AUTHPRINT = #{item.AUTHPRINT}
+			</if>
+			WHERE USERCD = #{item.USERCD}
+			  AND MENUL1KEY = #{item.MENUL1KEY}
+			  AND MENUL2KEY = #{item.MENUL2KEY}
+			  AND APPKEY = #{item.APPKEY}
+		</foreach>
+		END;
+	</update>
+	
+	<!-- 권한 : 이전 권한 삭제 -->
+	<delete id="delBeforeAuth" parameterType="LDataMap">
+	/* sys.S000006.delBeforeAuth */
+		DELETE FROM S006 WITH (ROWLOCK)
+     	 WHERE COMPCD = #{COMPCD}
+     	   AND USERCD = #{USERCD}
+	</delete>
+	
+	<!-- 사용자별권한 : 권한 복사 -->
+	<insert id="copyAuth" parameterType="LDataMap">
+	/* sys.S000006.copyAuth */
+	INSERT INTO S006 WITH (ROWLOCK)
+           (COMPCD
+           , USERCD
+           , MENUL1KEY
+           , MENUL2KEY
+           , APPKEY
+           , AUTHSEARCH
+           , AUTHUPD
+           , AUTHDEL
+           , AUTHEXEC
+           , AUTHPRINT
+           , ADDUSERCD
+           , ADDDATETIME
+           , UPDUSERCD
+           , UPDDATETIME
+           , TERMINALCD)
+    SELECT   A.COMPCD
+           , #{USERCD}
+           , A.MENUL1KEY
+           , A.MENUL2KEY
+           , A.APPKEY
+           , A.AUTHSEARCH
+           , A.AUTHUPD
+           , A.AUTHDEL
+           , A.AUTHEXEC
+           , A.AUTHPRINT
+           , #{LOGIN_USERCD}
+           , GETDATE()
+           , #{LOGIN_USERCD}
+           , GETDATE()
+           , #{LOGIN_IP}
+	  FROM S006 A WITH (NOLOCK)
+	 WHERE A.COMPCD = #{O_COMPCD}
+	   AND A.USERCD = #{O_USERCD}
+	</insert>
+</mapper>

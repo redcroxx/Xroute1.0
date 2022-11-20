@@ -1,0 +1,61 @@
+<!--
+====================================================================================================
+ 플러그인 설치 디자인 화면
+====================================================================================================
+ 플러그인 설치화면의 디자인의 변경이 가능합니다.
+ 
+ 1. 자바스크립트 구문을 사용할 수 없습니다.
+ 2. 키워드를 넣으면 해당 값이 자동으로 표시되며, 지울 경우 해당 값은 표시되지 않습니다.
+ 
+ 	{DOWNLOAD_URL} : 직접 다운로드 버튼을 눌렀을 경우 설치 파일 URL
+ 	{BROWSER_INFO} : 브라우저 정보 (브라우저 종류 및 버전 정보가 표시됨)
+ 	{INSTALL_GUIDE} : 브라우저 별 설치시 주의사항 (브라우저별 필수 보안설정, 권한, 재시작 필요성등의 안내말)
+ 	{UPGRADE_TITLE} : 최초의 설치시 : "설치" (한글 2 글자), 업그레이드 필요시 "재설치" (한글 3글자)
+ 
+====================================================================================================
+-->
+
+<table cellspacing=0 style='border:0px solid white;font-size:10pt;border-collapse:collapse;padding:0px;margin:0px;width:100%;height:100%;'>
+	<tr height=100% align='center'>
+		<td style='padding:0px;margin:0px;'>
+			<table cellspacing=0 style='border-collapse:collapse;padding:0px;margin:0px;width:100%;height:100%;border:0px solid red;'>
+				<tr>
+					<td align='left' style='height:64px;font-size:18pt;font-weight:bold;padding:0px 0px 0px 5px;background-color:#d50303;color:white;'>&nbsp;
+					플러그인 프로그램 {UPGRADE_TITLE}</td>
+				</tr>
+				<tr>
+					<td valign='top' align='left' style='font-size:11pt;font-weight:none;padding:35px 70px 35px 35px;background-color:white;color:#000;'>
+						<div style='font-size:13pt;font-weight:bold;'>
+							플러그인의 설치가 필요합니다.
+						</div>
+						<br>
+						설치 안내에 따라 프로그램을 설치하여 주십시오. <br>
+						설치 프로그램의 <font color='#ff6600'>다운로드가 완료되면 실행</font>하여 주십시오.<br><br>
+						자동으로 다운로드 설치가 안되면 직접 <font color='#ff6600'>다운로드</font> 버튼을 클릭하여 설치하고, 브라우저를 <font color='#ff6600'>재시작</font> 또는 <font color='#ff6600'>새로고침</font> 하시기 바랍니다.<br><br>
+
+						<div style='border:0px solid white;text-align:center;background-color:white;line-height:120%;width:100%;padding:10px;'>
+							<span style='font-weight:bold;padding:12px 16px 12px 16px;border:0px solid white;text-align:center;background-color:#d71921;'><a style='text-decoration:none;color:white;' href="{DOWNLOAD_URL}">직접 다운로드</a></span>
+						</div>
+						<br>
+						<div style='border:1px solid #ccc;background-color:#fdf0f0;line-height:220%;width:100%;height:96px;padding:20px;'>
+						{INSTALL_GUIDE}
+						</div>
+						<br>
+						<br>
+						<div style='font-size:9pt;border:1px solid #ccc;background-color:#efefef;line-height:160%;width:100%;padding:15px;'>
+						ㆍ시스템 정보 : {BROWSER_INFO}<br>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr height=68>
+		<td style='text-align:right;background-color:#dfdfdf;padding:0px;margin:0px;border:0px solid blue;color:white;'>
+			<!--
+			설치 문의 0000-0000
+			-->
+			&nbsp;
+		</td>
+	</tr>
+</table>

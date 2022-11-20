@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="paymentContentsListMapper">
+    <select id="getSearch" parameterType="commonSearchVo" resultType="LDataMap">
+        /* paymentContentsListMapper.getSearch */
+        SELECT
+            POID          AS "pOid",
+            CASE
+                WHEN PSTATUS_CD = '0051' THEN '계좌입금대기'
+                WHEN PSTATUS_CD = '0021' THEN '입금확인'
+                ELSE 'Error'
+            END           AS "pStatusCd",
+            PAMT          AS pAmt,
+            CONVERT(CHAR(10), CONVERT (DATETIME, VBANK_CREATE_DATE), 23)                          AS vBankCreateDate,
+            CONVERT(CHAR(10), CONVERT (DATETIME, CONVERT(CHAR(8), VBANK_CONFIRM_DATE, 23)), 23)   AS vBankConfirmDate
+        FROM TPAYMENT
+        WHERE 1 = 1
+        AND COMPCD = #{sCompCd}
+        <if test='sOrgCd != null and sOrgCd != ""'>
+            AND ORGCD = #{sOrgCd}
+        </if>
+        <choose>
+            <when test="sStatusCd == '0051'">
+                AND PSTATUS_CD = #{sStatusCd}
+            </when>
+            <when test="sStatusCd == '0021'">
+                AND PSTATUS_CD = #{sStatusCd}
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="sPeriodType == 'CREATE'">
+                AND VBANK_CREATE_DATE BETWEEN #{sToDate} AND #{sFromDate}
+            </when>
+            <when test="sPeriodType == 'CONFIRM'">
+                AND VBANK_CONFIRM_DATE BETWEEN #{sToDate} + '000000' AND #{sFromDate} + '235959'
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="sKeywordType == 'total'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND XRT_INVC_SNO = #{sKeyword}
+                    OR POID = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'poid'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND POID = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'xrtInvcSno'">
+                    AND POID IN (
+                        SELECT
+                            POID
+                        FROM
+                            TPAYMENTDTL
+                        WHERE 1 = 1
+                        AND COMPCD = #{sCompCd}
+                        <if test="sOrgCd != null and sOrgCd != ''">
+                            AND ORGCD = #{sOrgCd}
+                        </if>
+                        <if test="sKeyword != null and sKeyword != ''">
+                            AND XRT_INVC_SNO = #{sKeyword}
+                        </if>
+                    )
+
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        ORDER BY POID
+    </select>
+    
+    <select id="getPaymentDtl" parameterType="commonSearchVo" resultType="LDataMap">
+        /* paymentContentsListMapper.getPaymentDtl */
+        SELECT
+            ISNULL(POID, '')            AS "pOid",
+            ISNULL(PSEQ, '')            AS "pSeq",
+            ISNULL(ORD_CD, '')          AS "ordCd", 
+            ISNULL(XRT_INVC_SNO, '')    AS "xrtInvcSno",
+            ISNULL(XRT_SHIPPING_PRICE, '') AS "xrtShippingPrice"
+        FROM TPAYMENTDTL
+        WHERE 1 = 1
+        AND COMPCD = #{sCompCd}
+        <if test='sOrgCd != null and sOrgCd != ""'>
+            AND ORGCD = #{sOrgCd}
+        </if>
+        <if test="sEtcCd1 != null and sEtcCd1 != ''">
+            AND POID = #{sEtcCd1}
+        </if>
+        ORDER BY PSEQ
+    </select>
+</mapper>

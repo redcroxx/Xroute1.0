@@ -1,0 +1,53 @@
+<!--
+====================================================================================================
+ 브라우저 사용 불가 메시지 화면
+====================================================================================================
+ 메시지 화면의 디자인의 변경이 가능합니다.
+ 
+ 1. 자바스크립트 구문을 사용할 수 없습니다.
+ 2. 해당 시스템에 맞게 내용, 색상 등을 수정해서 사용하세요.
+====================================================================================================
+-->
+
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body style='margin:0px'>
+<table cellspacing=0 style='border:0px solid white;font-size:10pt;border-collapse:collapse;padding:0px;margin:0px;width:100%;height:100%;'>
+	<tr height=100% align='center'>
+		<td style='padding:0px;margin:0px;'>
+			<table cellspacing=0 style='border-collapse:collapse;padding:0px;margin:0px;width:100%;height:100%;border:0px solid red;'>
+				<tr>
+					<td align='left' style='height:64px;font-size:18pt;font-weight:bold;padding:0px 0px 0px 5px;background-color:#d50303;color:white;'>&nbsp;
+					웹소켓 미지원 브라우져</td>
+				</tr>
+				<tr>
+					<td valign='top' align='left' style='font-size:11pt;font-weight:none;padding:35px 70px 35px 35px;background-color:white;color:#000;'>
+						<br>
+						<div style='border:1px solid #ccc;background-color:#fdf0f0;line-height:220%;width:100%;height:96px;padding:20px;'>
+						해당 브라우져는 웹소켓 방식의 뷰어를 지원하지 않습니다.<br>
+						다른 브라우져를 사용 하시기 바랍니다.<br>
+						<div style='font-size:9pt;font-weight:bold;color:red;'>미지원 브라우져 : IE9 이하, Chrome 42이하, FireFox 39이하, Safari, Opera 31이하</div>
+						</div>
+						<br>
+						<br>
+						<div style='font-size:9pt;border:1px solid #ccc;background-color:#efefef;line-height:160%;width:100%;padding:15px;'>
+						ㆍ시스템 정보 : {BROWSER_INFO}<br>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr height=68>
+		<td style='text-align:right;background-color:#dfdfdf;padding:0px;margin:0px;border:0px solid blue;color:white;'>
+			<!--
+			설치 문의 0000-0000
+			-->
+			&nbsp;
+		</td>
+	</tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PopS120Mapper">
+	<!-- 전자결재문서확인 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopS120Mapper.getSearch */
+		SELECT A.DOCHTML
+		  FROM S120 A WITH (NOLOCK) 
+		 WHERE A.DOCNO = #{DOCNO} 
+	</select>
+	
+	<!-- 전자결재문서확인 팝업 : 검색 -->
+	<select id="getSearchDocNo" parameterType="LDataMap" resultType="String">
+		/* alexcloud.popup.PopS120Mapper.getSearchDocNo */
+		SELECT TOP 1 A.DOCNO
+		  FROM S100 A WITH (NOLOCK) 
+		 WHERE A.REFNO1 = #{REFNO1} 
+	</select>
+</mapper>

@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ShopeeOrderMapper">
+
+	<select id="getShopeeOrderCount" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		SELECT
+			COUNT(SHOPEE_SEQ) AS count
+		FROM TEMP_SHOPEE_ORDER
+		WHERE 1 = 1
+		AND ORDERSN = #{ordersn}
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+	</select>
+
+	<select id="getTorderFileSeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		/* ShopeeOrderMapper.getTorderFileSeq */
+		SELECT
+			MAX(a.fileCount) fileCount
+		FROM (
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDERFILE
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM TEMP_SHOPEE_ORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND CONVERT(CHAR(8), ADDDATETIME, 112) = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_AMAZON
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM API_ORDER_MASTER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+		) a
+	</select>
+
+	<select id="getRelaySeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		SELECT
+			CASE
+				WHEN a.relaySeq IS NULL THEN 0
+				ELSE a.relaySeq
+			END AS relaySeq
+		FROM (
+			SELECT
+				MAX(RELAY_SEQ) AS relaySeq
+			FROM TORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{ogrcd}
+			AND UPLOAD_DATE = #{fileYmd}
+		) a
+	</select>
+
+	<select id="getShopeeFileSeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		SELECT
+			CASE
+				WHEN a.fileSeq IS NULL THEN 0
+				ELSE a.fileSeq
+			END AS fileSeqCount
+		FROM (
+			SELECT
+				MAX(FILE_SEQ) AS fileSeq
+			FROM TEMP_SHOPEE_ORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compCd}
+			AND ORGCD = #{orgCd}
+			AND CONVERT(CHAR(8), ADDDATETIME, 112) = #{fileYmd}
+		) a
+	</select>
+
+	<select id="getSearch" parameterType="commonSearchVo" resultType="xrt.interfaces.shopee.vo.ShopeeOrderVo">
+		SELECT
+			SHOPEE_SEQ                  AS shopeeSeq
+			, ORDERSN                   AS ordersn
+			, ESTIMATED_SHIPPING_FEE    AS estimatedShippingFee
+			, PAYMENT_METHOD            AS paymentMethod
+			, DROPSHIPPER_PHONE         AS dropshipperPhone
+			, MESSAGE_TO_SELLER         AS messageToSeller
+			, SHIPPING_CARRIER          AS shippingCarrier
+			, CURRENCY                  AS currency
+			, CREATE_TIME               AS createTime
+			, PAY_TIME                  AS payTime
+			, ISNULL(DAYS_TO_SHIP, 0)   AS daysToShip
+			, NOTE                      AS note
+			, IS_SPLIT_UP               AS isSplitUp
+			, ISNULL(SHIP_BY_DATE, 0)   AS shipByDate
+			, CANCEL_BY                 AS cancelBy
+			, TRACKING_NO               AS trackingNo
+			, ORDER_STATUS              AS orderStatus
+			, NOTE_UPDATE_TIME          AS noteUpdateTime
+			, FM_TN                     AS fmTn
+			, UPDATE_TIME               AS updateTime
+			, CANCEL_REASON             AS cancelReason
+			, ESCROW_AMOUNT             AS escrowAmount
+			, BUYER_CANCEL_REASON       AS buyerCancelReason
+			, GOODS_TO_DECLARE          AS goodsToDeclare
+			, TOTAL_AMOUNT              AS totalAmount
+			, SERVICE_CODE              AS serviceCode
+			, COUNTRY                   AS country
+			, ACTUAL_SHPPING_COST       AS actualShippingCost
+			, COD                       AS cod
+			, DROPSHIPPER               AS dropshipper
+			, BUYER_USERNAME            AS buyerUsername
+			, RECV_TOWN                 AS recvTown
+			, RECV_CITY                 AS recvCity
+			, RECV_NAME                 AS recvName
+			, RECV_DISTRICT             AS recvDistrict
+			, RECV_COUNTRY              AS recvCountry
+			, RECV_ZIPCODE              AS recvZipcode
+			, RECV_FULL_ADDRESS         AS recvFullAddress
+			, RECV_PHONE                AS recvPhone
+			, RECV_STATE                AS recvState
+			, USERCD                    AS usercd
+			, COMPCD                    AS compcd
+			, ORGCD                     AS orgcd
+			, WHCD                      AS whcd
+			, REG_YN                    AS regYn
+			, IP_ADDR                   AS ipAddr
+			, CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+		FROM TEMP_SHOPEE_ORDER
+		WHERE 1 = 1
+		AND ORDER_STATUS = 'READY_TO_SHIP'
+		AND COUNTRY = #{sCountry}
+		<if test='sCompCd != null and sCompCd !=""'>
+		AND COMPCD = #{sCompCd}
+		</if>
+		<if test='sOrgCd != null and sOrgCd !=""'>
+		AND ORGCD = #{sOrgCd}
+		</if>
+		<if test='sWhcd != null and sWhcd !=""'>
+		AND WHCD = #{sWhcd}
+		</if>
+		AND ADDDATETIME BETWEEN #{sToDate} + ' 00:00:00' AND #{sToDate} + ' 23:59:59'
+	</select>
+
+	<select id="getShopeeOrderList" parameterType="commonSearchVo" resultType="xrt.interfaces.shopee.vo.ShopeeOrderVo">
+		SELECT
+			SHOPEE_SEQ                  AS shopeeSeq
+			, ORDERSN                   AS ordersn
+			, ESTIMATED_SHIPPING_FEE    AS estimatedShippingFee
+			, PAYMENT_METHOD            AS paymentMethod
+			, DROPSHIPPER_PHONE         AS dropshipperPhone
+			, MESSAGE_TO_SELLER         AS messageToSeller
+			, SHIPPING_CARRIER          AS shippingCarrier
+			, CURRENCY                  AS currency
+			, CREATE_TIME               AS createTime
+			, PAY_TIME                  AS payTime
+			, ISNULL(DAYS_TO_SHIP, 0)   AS daysToShip
+			, NOTE                      AS note
+			, IS_SPLIT_UP               AS isSplitUp
+			, ISNULL(SHIP_BY_DATE, 0)   AS shipByDate
+			, CANCEL_BY                 AS cancelBy
+			, TRACKING_NO               AS trackingNo
+			, ORDER_STATUS              AS orderStatus
+			, NOTE_UPDATE_TIME          AS noteUpdateTime
+			, FM_TN                     AS fmTn
+			, UPDATE_TIME               AS updateTime
+			, CANCEL_REASON             AS cancelReason
+			, ESCROW_AMOUNT             AS escrowAmount
+			, BUYER_CANCEL_REASON       AS buyerCancelReason
+			, GOODS_TO_DECLARE          AS goodsToDeclare
+			, TOTAL_AMOUNT              AS totalAmount
+			, SERVICE_CODE              AS serviceCode
+			, COUNTRY                   AS country
+			, ACTUAL_SHPPING_COST       AS actualShippingCost
+			, COD                       AS cod
+			, DROPSHIPPER               AS dropshipper
+			, BUYER_USERNAME            AS buyerUsername
+			, RECV_TOWN                 AS recvTown
+			, RECV_CITY                 AS recvCity
+			, RECV_NAME                 AS recvName
+			, RECV_DISTRICT             AS recvDistrict
+			, RECV_COUNTRY              AS recvCountry
+			, RECV_ZIPCODE              AS recvZipcode
+			, RECV_FULL_ADDRESS         AS recvFullAddress
+			, RECV_PHONE                AS recvPhone
+			, RECV_STATE                AS recvState
+			, USERCD                    AS usercd
+			, COMPCD                    AS compcd
+			, ORGCD                     AS orgcd
+			, WHCD                      AS whcd
+			, REG_YN                    AS regYn
+			, IP_ADDR                   AS ipAddr
+			, CONVERT(CHAR(8), ADDDATETIME, 112)    AS adddatetime
+		FROM TEMP_SHOPEE_ORDER
+		WHERE 1 = 1
+		AND COUNTRY = #{sCountry}
+		AND COMPCD = #{sCompCd}
+		AND ORGCD = #{sOrgCd}
+		AND REG_YN = 'N'
+		AND ORDER_STATUS = 'READY_TO_SHIP'
+	</select>
+
+	<select id="getShopeeOrderItemList" parameterType="xrt.interfaces.shopee.vo.ShopeeOrderVo" resultType="xrt.interfaces.shopee.vo.ShopeeOrderItemsVo">
+		SELECT
+			ORDERSN         AS ordersn
+			, WEIGHT        AS weight
+			, ITEM_ID       AS itemId
+			, ITEM_NAME     AS itemName
+			, VARIATION_QUANTITY_PURCHASED  AS variationQuantityPurchased
+			, VARIATION_ORIGINAL_PRICE      AS variationOriginalPrice
+			, USERCD        AS usercd
+			, COMPCD        AS compcd
+			, ORGCD         AS orgcd
+			, WHCD          AS whcd
+			, (SELECT COUNT(a.ORDERSN) FROM TEMP_SHOPEE_ORDER_ITEM a WHERE 1=1 AND a.ORDERSN = ORDERSN)    AS  orderCount
+			, (SELECT SUM(CONVERT(INT, VARIATION_ORIGINAL_PRICE)) FROM TEMP_SHOPEE_ORDER_ITEM a WHERE 1=1 AND a.ORDERSN = ORDERSN)   AS totalPrice
+		FROM TEMP_SHOPEE_ORDER_ITEM a
+		WHERE 1 = 1
+		AND ORDERSN = #{ordersn}
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+	</select>
+
+	<select id="getAPIData" parameterType="java.util.HashMap" resultType="xrt.fulfillment.interfaces.vo.InterfaceSettingVo">
+		SELECT
+			A.AUTH_ID           AS authId
+			, A.AUTH_KEY        AS authKey
+			, B.MAPPING_KEY     AS mappingKey
+			, B.ETC_KEY         AS etcKey
+		FROM TINTERFACE A
+		LEFT JOIN TINTERFACE_DTL B
+		ON A.USER_ID = B.USER_ID
+		WHERE 1 = 1
+		AND A.INTERFACE_TYPE = 'SHOPEE'
+		<if test='userCd != "" and userCd != null'>
+		AND A.USER_ID = #{userCd}
+		</if>
+		<if test='country != "" and country != null'>
+		AND B.MAPPING_KEY = #{country}
+		</if>
+	</select>
+
+	<select id="getAccountData" parameterType="commonSearchVo" resultType="xrt.fulfillment.interfaces.vo.InterfaceSettingVo">
+		SELECT
+			A.SHIP_METHOD       AS shipMethod
+			, A.PHONE_NUMBER    AS phoneNumber
+			, A.POST            AS post
+			, A.KO_ADDRESS      AS koAddress
+			, A.EN_ADDRESS      AS enAddress
+			, (SELECT "NAME" FROM S010 WHERE USERCD = USER_ID) AS userName
+			, (SELECT PAYMENT_TYPE FROM P002 WHERE COMPCD = #{sCompCd} AND ORGCD = #{sOrgCd}) AS paymentType
+		FROM TINTERFACE A
+		WHERE 1 = 1
+		AND A.INTERFACE_TYPE = 'SHOPEE'
+		<if test='sUserCd != "" and sUserCd != null'>
+		AND A.USER_ID = #{sUserCd}
+		</if>
+	</select>
+
+	<select id="getTorderList" parameterType="commonSearchVo" resultType="xrt.fulfillment.interfaces.vo.TOrderVo">
+		SELECT
+			ISNULL(ORD_CD        , '')      as ordCd
+			, ISNULL(XRT_INVC_SNO  , '')    as xrtInvcSno
+			, ISNULL(SHIP_NAME     , '')    as shipName
+			, ISNULL(SHIP_METHOD_CD, '')    as shipMethodCd
+			, ISNULL(SHIP_TEL      , '')    as shipTel
+			, ISNULL(SHIP_MOBILE   , '')    as shipMobile
+			, ISNULL(SHIP_ADDR     , '')    as shipAddr
+			, ISNULL(SHIP_POST     , '')    as shipPost
+			, ISNULL(RECV_NAME     , '')    as recvName
+			, ISNULL(RECV_TEL      , '')    as recvTel
+			, ISNULL(RECV_MOBILE   , '')    as recvMobile
+			, ISNULL(RECV_ADDR1    , '')    as recvAddr1
+			, ISNULL(RECV_ADDR2    , '')    as recvAddr2
+			, ISNULL(RECV_CITY     , '')    as recvCity
+			, ISNULL(RECV_STATE    , '')    as recvState
+			, ISNULL(RECV_POST     , '')    as recvPost
+			, ISNULL(RECV_NATION   , '')    as recvNation
+			, ISNULL(RECV_CURRENCY , '')    as recvCurrency
+			, ISNULL(E_NATION      , '')    as eNation
+			, ISNULL(S_NATION      , '')    as sNation
+			, CASE
+				WHEN CART_NO IS NULL THEN REPLACE(XRT_INVC_SNO,'XLF','LF')
+				WHEN CART_NO = '' THEN REPLACE(XRT_INVC_SNO,'XLF','LF')
+				ELSE CART_NO
+			  END   as cartNo
+			, ISNULL(MALL_NM      , '')    as mallNm
+		FROM TORDER
+		WHERE 1 = 1
+		AND FILE_NM_REAL = 'SHOPEE ORDER LIST API'
+		AND INVC_SNO1 IS NULL
+		AND DEL_FLG =  'N'
+		AND COMPCD = #{sCompCd}
+		AND ORGCD = #{sOrgCd}
+	</select>
+
+	<select id="getTorderDTL" parameterType="xrt.fulfillment.interfaces.vo.TOrderVo" resultType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+		SELECT
+			ISNULL(ORD_CD        , '')     as ordCd
+			, ISNULL(ORD_SEQ       , '')   as ordSeq
+			, ISNULL(GOODS_CD      , '')   as goodsCd
+			, ISNULL(GOODS_NM      , '')   as goodsNm
+			, ISNULL(GOODS_OPTION  , '')   as goodsOption
+			, ISNULL(GOODS_CNT     , 0)    as goodsCnt
+			, ISNULL(PAYMENT_PRICE , 0)    as paymentPrice
+			, ISNULL(ORD_NO        , '')   as ordNo
+		FROM TORDERDTL
+		WHERE 1 = 1
+		<if test="ordCd != null and ordCd != ''">
+		AND ORD_CD = #{ordCd}
+		</if>
+	</select>
+
+	<insert id="insertTempShopeeOrder" parameterType="xrt.interfaces.shopee.vo.ShopeeOrderVo">
+		<selectKey resultType="java.lang.Integer" keyProperty="shopeeSeq" order="BEFORE">
+			SELECT NEXT VALUE FOR TEMP_SHOPEE_ORDER_SEQ
+		</selectKey>
+
+		INSERT INTO TEMP_SHOPEE_ORDER (
+			SHOPEE_SEQ
+			, USERCD
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, FILE_SEQ
+			, ORDERSN
+			, ESTIMATED_SHIPPING_FEE
+			, PAYMENT_METHOD
+			, DROPSHIPPER_PHONE
+			, MESSAGE_TO_SELLER
+			, SHIPPING_CARRIER
+			, CURRENCY
+			<if test='createTime != "0" and createTime != null'>
+			, CREATE_TIME
+			</if>
+			<if test='payTime != "0" and payTime != null'>
+			, PAY_TIME
+			</if>
+			, DAYS_TO_SHIP
+			, NOTE
+			, IS_SPLIT_UP
+			, SHIP_BY_DATE
+			, CANCEL_BY
+			, TRACKING_NO
+			, ORDER_STATUS
+			<if test='noteUpdateTime != "0" and noteUpdateTime != null'>
+			, NOTE_UPDATE_TIME
+			</if>
+			, FM_TN
+			<if test='updateTime != "0" and updateTime != null'>
+			, UPDATE_TIME
+			</if>
+			, CANCEL_REASON
+			, ESCROW_AMOUNT
+			, BUYER_CANCEL_REASON
+			, GOODS_TO_DECLARE
+			, TOTAL_AMOUNT
+			, SERVICE_CODE
+			, COUNTRY
+			, ACTUAL_SHPPING_COST
+			, COD
+			, DROPSHIPPER
+			, BUYER_USERNAME
+			, RECV_TOWN
+			, RECV_CITY
+			, RECV_NAME
+			, RECV_DISTRICT
+			, RECV_COUNTRY
+			, RECV_ZIPCODE
+			, RECV_FULL_ADDRESS
+			, RECV_PHONE
+			, RECV_STATE
+			, REG_YN
+			, IP_ADDR
+			, ADDDATETIME
+			, UPDDATETIME 
+		) VALUES (
+			#{shopeeSeq}
+			, #{usercd}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{fileSeq}
+			, #{ordersn}
+			, #{estimatedShippingFee}
+			, #{paymentMethod}
+			, #{dropshipperPhone}
+			, #{messageToSeller}
+			, #{shippingCarrier}
+			, #{currency}
+			<if test='createTime != "0" and createTime != null'>
+			, #{createTime}
+			</if>
+			<if test='payTime != "0" and payTime != null'>
+			, #{payTime}
+			</if>
+			, #{daysToShip}
+			, #{note}
+			, #{isSplitUp}
+			, #{shipByDate}
+			, #{cancelBy}
+			, #{trackingNo}
+			, #{orderStatus}
+			<if test='noteUpdateTime != "0" and noteUpdateTime != null'>
+			,  #{noteUpdateTime}
+			</if>
+			, #{fmTn}
+			<if test='updateTime != "0" and updateTime != null'>
+			, #{updateTime}
+			</if>
+			, #{cancelReason}
+			, #{escrowAmount}
+			, #{buyerCancelReason}
+			, #{goodsToDeclare}
+			, #{totalAmount}
+			, #{serviceCode}
+			, #{country}
+			, #{actualShippingCost}
+			, #{cod}
+			, #{dropshipper}
+			, #{buyerUsername}
+			, #{recvTown}
+			, #{recvCity}
+			, #{recvName}
+			, #{recvDistrict}
+			, #{recvCountry}
+			, #{recvZipcode}
+			, #{recvFullAddress}
+			, #{recvPhone}
+			, #{recvState}
+			, #{regYn}
+			, #{ipAddr}
+			, getdate()
+			, getdate()
+		)
+	</insert>
+
+	<insert id="insertTempShopeeOrderItem" parameterType="xrt.interfaces.shopee.vo.ShopeeOrderItemsVo">
+		INSERT INTO TEMP_SHOPEE_ORDER_ITEM (
+			ORDERSN
+			, WEIGHT
+			, ITEM_NAME
+			, IS_WHOLESALE
+			, PROMOTION_TYPE
+			, ITEM_SKU
+			, VARIATION_DISCOUNTED_PRICEE
+			, VARIATION_ID
+			, VARIATION_NAME
+			, IS_ADD_ON_DEAL
+			, ITEM_ID
+			, PROMOTION_ID
+			, ADD_ON_DEAL_ID
+			, VARIATION_QUANTITY_PURCHASED
+			, VARIATION_SKU
+			, VARIATION_ORIGINAL_PRICE
+			, IS_MAIN_ITEM
+			, USERCD
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, ADDDATETIME
+			, UPDDATETIME 
+		) VALUES (
+			#{ordersn}
+			, #{weight}
+			, #{itemName}
+			, #{isWholesale}
+			, #{promotionType}
+			, #{itemSku}
+			, #{variationDiscountedPrice}
+			, #{variationId}
+			, #{variationName}
+			, #{isAddOnDeal}
+			, #{itemId}
+			, #{promotionId}
+			, #{addOnDealId}
+			, #{variationQuantityPurchased}
+			, #{variationSku}
+			, #{variationOriginalPrice}
+			, #{isMainItem}
+			, #{usercd}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, getdate()
+			, getdate()
+		)
+	</insert>
+
+	<insert id="insertTorder" parameterType="xrt.fulfillment.interfaces.vo.TOrderVo">
+		<selectKey resultType="java.util.HashMap" keyProperty="xrtInvcSno,ordCd" order="BEFORE">
+			SELECT
+				'XLF' + RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_XLF_INVC_SNOKEY), 10) AS xrtInvcSno
+				, 'W' + RIGHT('0000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDCD_KEY), 13) AS ordCd
+		</selectKey>
+
+		INSERT INTO TORDER (
+			ORD_CD
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, UPLOAD_DATE
+			, FILE_SEQ
+			, FILE_NM
+			, FILE_NM_REAL
+			, SITE_CD
+			, STATUS_CD
+			, STOCK_TYPE
+			, MALL_NM
+			, SHIP_METHOD_CD
+			, ORD_NO
+			, CART_NO
+			, ORD_CNT
+			, XRT_INVC_SNO
+			, INVC_SNO1
+			, INVC_SNO2
+			, S_NATION
+			, E_NATION
+			, WGT
+			, BOX_WIDTH
+			, BOX_LENGTH
+			, BOX_HEIGHT
+			, BOX_VOLUME
+			, C_WGT_CHARGE
+			, C_WGT_REAL
+			, C_BOX_WIDTH
+			, C_BOX_LENGTH
+			, C_BOX_HEIGHT
+			, C_WGT_VOLUME
+			, SHIP_NAME
+			, SHIP_TEL
+			, SHIP_MOBILE
+			, SHIP_ADDR
+			, SHIP_POST
+			, RECV_NAME
+			, RECV_TEL
+			, RECV_MOBILE
+			, RECV_ADDR1
+			, RECV_ADDR2
+			, RECV_CITY
+			, RECV_STATE
+			, RECV_POST
+			, RECV_NATION
+			, RECV_CURRENCY
+			, TOT_PAYMENT_PRICE
+			, INVC_PRINT_CNT
+			, INVC_PRINT_DATE
+			, STOCK_USERCD
+			, STOCK_DATE
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+			, RELAY_SEQ
+			, FILE_RELAY_SEQ
+			, PAYMENT_TYPE
+		) VALUES (
+			#{ordCd}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{uploadDate}
+			, #{fileSeq}
+			, #{fileNm}
+			, #{fileNmReal}
+			, #{siteCd}
+			, #{statusCd}
+			, #{stockType}
+			, #{mallNm}
+			, #{shipMethodCd}
+			, #{ordNo}
+			, #{cartNo}
+			, #{ordCnt}
+			, #{xrtInvcSno}
+			, #{invcSno1}
+			, #{invcSno2}
+			, #{sNation}
+			, #{eNation}
+			, #{wgt}
+			, #{boxWidth}
+			, #{boxLength}
+			, #{boxHeight}
+			, #{boxVolume}
+			, #{cWgtCharge}
+			, #{cWgtReal}
+			, #{cBoxWidth}
+			, #{cBoxLength}
+			, #{cBoxHeight}
+			, #{cWgtVolume}
+			, #{shipName}
+			, #{shipTel}
+			, #{shipMobile}
+			, #{shipAddr}
+			, #{shipPost}
+			, #{recvName}
+			, #{recvTel}
+			, #{recvMobile}
+			, #{recvAddr1}
+			, #{recvAddr2}
+			, #{recvCity}
+			, #{recvState}
+			, #{recvPost}
+			, #{recvNation}
+			, #{recvCurrency}
+			, #{totPaymentPrice}
+			, #{invcPrintCnt}
+			, #{invcPrintDate}
+			, #{stockUsercd}
+			, #{stockDate}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+			, #{relaySeq}
+			, #{fileRelaySeq}
+			, #{paymentType}
+		)
+	</insert>
+
+	<insert id="insertTOrderDtl" parameterType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+		INSERT INTO TORDERDTL (
+			ORD_CD
+			, ORD_SEQ
+			, COMPCD
+			, ORGCD
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_OPTION
+			, GOODS_CNT
+			, PAYMENT_PRICE
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, ORD_NO
+		) VALUES (
+			#{ordCd}
+			, #{ordSeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{goodsCd}
+			, #{goodsNm}
+			, #{goodsOption}
+			, #{goodsCnt}
+			, #{paymentPrice}
+			, #{addusercd}
+			, getdate()
+			, #{updusercd}
+			, getdate()
+			, #{terminalcd}
+			, #{ordNo}
+		)
+	</insert>
+
+	<update id="updateTempShopeeOrder" parameterType="xrt.interfaces.shopee.vo.ShopeeOrderVo">
+		UPDATE TEMP_SHOPEE_ORDER
+		SET REG_YN = 'Y'
+			, UPDDATETIME = getdate()
+		WHERE 1 = 1
+		AND ORDERSN = #{ordersn}
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+	</update>
+
+	<update id="updateTOrder" parameterType="java.util.HashMap">
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test='invcSno1 != null and invcSno1 != ""'>INVC_SNO1 = #{invcSno1},</if>
+			<if test='invcSno2 != null and invcSno2 != ""'>INVC_SNO2 = #{invcSno2},</if>
+			<if test='shippingCompany != null and shippingCompany != ""'>SHIPPING_COMPANY = #{shippingCompany},</if>
+			<if test='statusCd != null and statusCd != ""'>STATUS_CD = #{statusCd}, </if>
+		</trim>
+			, UPDDATETIME = getdate()
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+</mapper>

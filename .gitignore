@@ -1,0 +1,8 @@
+# directory
+target/
+.settings/
+
+# Eclipse Config File
+*.project
+*.classpath
+/workspace/

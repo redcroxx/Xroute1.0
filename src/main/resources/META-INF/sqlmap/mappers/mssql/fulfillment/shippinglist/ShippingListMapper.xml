@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="shippingListMapper">
+
+    <select id="getSearch" parameterType="commonSearchVo" resultType="shippingListVo">
+        /* ShippingListMapper.getSearch */
+        SELECT
+            o.ORGCD             AS orgcd
+            , o.MALL_NM         AS mallNm
+            , o.XRT_INVC_SNO    AS xrtInvcSno
+            , o.INVC_SNO1       AS invcSno1
+            , o.INVC_SNO2       AS invcSno2
+            , o.UPLOAD_DATE     AS uploadDate
+            , o.SHIP_METHOD_CD  AS shipMethodCd
+            , o.LOCAL_SHIPPER   AS localShipper
+            , o.S_NATION        AS sNation
+            , o.E_NATION        AS eNation
+            , o.RECV_NAME       AS recvName
+            , o.RECV_TEL        AS recvTel
+            , o.RECV_MOBILE     AS recvMobile
+            , o.RECV_ADDR1      AS recvAddr1
+            , o.RECV_ADDR2      AS recvAddr2
+            , o.RECV_POST       AS recvPost
+            , o.RECV_CURRENCY   AS recvCurrency
+            , o.ORD_CNT         AS ordCnt
+            , o.ORD_NO          AS ordNo
+            , o.CART_NO         AS cartNo
+            , CONVERT(CHAR(19), o.STOCK_DATE, 120) AS stockDate
+            , (SELECT TOP 1 STUFF(
+                (SELECT ', ' + od.GOODS_CD
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND o.ORD_CD = od.ORD_CD
+                 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+              FROM TORDERDTL
+            )                   AS goodsCd
+            , (SELECT TOP 1 STUFF(
+                (SELECT ', ' + od.GOODS_NM + ' ' + od.GOODS_CNT +'ea'
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND o.ORD_CD = od.ORD_CD
+                 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+              FROM TORDERDTL
+            )                   AS goodsNm
+            , (SELECT TOP 1 STUFF(
+                (SELECT ', ' + od.GOODS_OPTION
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND o.ORD_CD = od.ORD_CD
+                 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+              FROM TORDERDTL
+            )                   AS goodsOption
+            , (SELECT TOP 1 STUFF(
+                (SELECT ', ' + od.GOODS_CNT
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND o.ORD_CD = od.ORD_CD
+                 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+              FROM TORDERDTL
+            )                   AS goodsCnt
+            , o.TOT_PAYMENT_PRICE   AS totPaymentPrice
+            , CASE
+                WHEN o.STATUS_CD = '10' THEN '주문등록'
+                WHEN o.STATUS_CD = '11' THEN '발송대기'
+                WHEN o.STATUS_CD = '12' THEN '발송완료'
+                WHEN o.STATUS_CD = '20' THEN '입금대기'
+                WHEN o.STATUS_CD = '21' THEN '결제완료'
+                WHEN o.STATUS_CD = '22' THEN '결제대기'
+                WHEN o.STATUS_CD = '23' THEN '결제실패'
+                WHEN o.STATUS_CD = '30' THEN '입고완료'
+                WHEN o.STATUS_CD = '31' THEN '창고보관'
+                WHEN o.STATUS_CD = '32' THEN '출고대기'
+                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                WHEN o.STATUS_CD = '34' THEN '검수취소'
+                WHEN o.STATUS_CD = '35' THEN '선적대기'
+                WHEN o.STATUS_CD = '40' THEN '출고완료'
+                WHEN o.STATUS_CD = '50' THEN '인천공항출발(예정)'
+                WHEN o.STATUS_CD = '51' THEN '인천공항출발(완료)'
+                WHEN o.STATUS_CD BETWEEN '52' AND '57' THEN '배송중'
+                WHEN o.STATUS_CD = '57' THEN '배송중'
+                WHEN o.STATUS_CD = '60' THEN '수입국배송완료'
+                WHEN o.STATUS_CD = '80' THEN 'API오류'
+                WHEN o.STATUS_CD = '98' THEN '입금취소'
+                WHEN o.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END                     AS statusCdKr
+            , CASE
+                WHEN o.STATUS_CD = '10' THEN 'register order'
+                WHEN o.STATUS_CD = '11' THEN 'delivery standby'
+                WHEN o.STATUS_CD = '12' THEN 'delivery completed'
+                WHEN o.STATUS_CD = '20' THEN 'deposit standby'
+                WHEN o.STATUS_CD = '21' THEN 'payment completed'
+                WHEN o.STATUS_CD = '22' THEN 'payment standby'
+                WHEN o.STATUS_CD = '23' THEN 'payment failed'
+                WHEN o.STATUS_CD = '30' THEN 'receiving completed'
+                WHEN o.STATUS_CD = '31' THEN 'storage'
+                WHEN o.STATUS_CD = '32' THEN 'release standby'
+                WHEN o.STATUS_CD = '33' THEN 'inspection complete'
+                WHEN o.STATUS_CD = '34' THEN 'inspection cancel'
+                WHEN o.STATUS_CD = '35' THEN 'waiting for shipment'
+                WHEN o.STATUS_CD = '40' THEN 'release completed'
+                WHEN o.STATUS_CD = '50' THEN 'incheon airport departure (scheduled)'
+                WHEN o.STATUS_CD = '51' THEN 'incheon airport departure (completed)'
+                WHEN o.STATUS_CD = '52' THEN 'overseas airport arrival (scheduled)'
+                WHEN o.STATUS_CD = '53' THEN 'overseas airport arrival (completed)'
+                WHEN o.STATUS_CD = '54' THEN 'import customs clearance standby'
+                WHEN o.STATUS_CD = '55' THEN 'import customs clearance completed'
+                WHEN o.STATUS_CD = '56' THEN 'Carrier is about to deliver the shipment , or it is ready to pickup.'
+                WHEN o.STATUS_CD = '57' THEN 'Carrier has accepted or picked up shipment from shipper. The shipment is on the way.'
+                WHEN o.STATUS_CD = '60' THEN 'import country delivery completed'
+                WHEN o.STATUS_CD = '80' THEN 'api error'
+                WHEN o.STATUS_CD = '98' THEN 'cancel deposit'
+                WHEN o.STATUS_CD = '99' THEN 'cancel order'
+                ELSE '오류'
+            END                     AS statusCdEn
+            , o.C_WGT_CHARGE        AS cWgtCharge
+            , o.C_WGT_REAL          AS cWgtReal
+            , o.C_WGT_VOLUME        AS cWgtVolume
+            , o.C_BOX_WIDTH         AS cBoxWidth
+            , o.C_BOX_LENGTH        AS cBoxLength
+            , o.C_BOX_HEIGHT        AS cBoxHeight
+            , o.WGT                 AS xWgt
+            , o.BOX_WIDTH           AS xBoxWidth
+            , o.BOX_LENGTH          AS xBoxLength
+            , o.BOX_HEIGHT          AS xBoxHeight
+            , CONVERT(CHAR(19), o.ADDDATETIME, 120) AS adddatetime
+            , CONVERT(CHAR(19), o.UPDDATETIME, 120) AS upddatetime
+            , o.SHIP_NAME           AS shipName
+            , o.SHIP_TEL            AS shipTel
+            , o.SHIP_ADDR           AS shipAddr
+            , o.RECV_CITY           AS recvCity
+            , o.RECV_STATE          AS recvState
+            , o.UNIPASS_TKOFDT 		AS unipass_tkofdt
+            , CASE
+                WHEN o.SHIPPING_COMPANY is null or o.C_SHIPPING_PRICE = 0 or o.C_SHIPPING_PRICE is null THEN '0'
+                WHEN o.SHIPPING_COMPANY = 'SHIPPO' THEN CONVERT(NVARCHAR(20),CONVERT(NUMERIC(5,2),o.C_SHIPPING_PRICE))+' USD'
+                ELSE CONVERT(NVARCHAR(20),CEILING(o.C_SHIPPING_PRICE)) + ' KRW'
+              END AS cShippingPrice
+            , o.XRT_SHIPPING_PRICE  AS xrtShippingPrice
+            , CASE
+                WHEN o.PAYMENT_TYPE = '1' THEN '건당결제'
+                WHEN o.PAYMENT_TYPE = '2' THEN '월말결제'
+                WHEN o.PAYMENT_TYPE = '3' THEN '정기결제'
+                WHEN o.PAYMENT_TYPE = '4' THEN '신용결제'
+                ELSE '-'
+              END AS paymentType
+            , PURCHASE_URL      AS purchaseUrl
+        FROM TORDER o WITH (NOLOCK)
+        WHERE 1 = 1
+        AND o.DEL_FLG = 'N'
+        <if test='sOrgCd != null and sOrgCd != ""'>
+            AND o.ORGCD = #{sOrgCd}
+        </if>
+        <if test='sWhcd != null and sWhcd != ""'>
+            AND o.WHCD = #{sWhcd}
+        </if>
+        <if test="sFromNation != null and sFromNation != ''">
+            AND o.E_NATION = #{sFromNation}
+        </if>
+        <if test="sShipCompany != null and sShipCompany != ''">
+            AND o.SHIP_METHOD_CD = #{sShipCompany}
+        </if>
+        <choose>
+            <when test="sPeriodType == 'uploadDate'">
+                AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+            </when>
+            <when test="sPeriodType == 'stockDate'">
+                AND o.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="sKeywordType == 'total'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND o.XRT_INVC_SNO = #{sKeyword}
+                    OR o.CART_NO = #{sKeyword}
+                    OR o.ORD_NO = #{sKeyword}
+                    OR o.SELLER_REF_NO1 = #{sKeyword}
+                    OR o.SELLER_REF_NO2 = #{sKeyword}
+                    OR o.INVC_SNO1 = #{sKeyword}
+                    OR o.INVC_SNO2 = #{sKeyword}
+                    OR o.SHIP_METHOD_CD = #{sKeyword}
+                    OR o.LOCAL_SHIPPER = #{sKeyword}
+                    OR o.RECV_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+                    OR o.ORD_CD IN (
+                        SELECT
+                            ORD_CD
+                        FROM TORDERDTL
+                        WHERE 1 = 1
+                        <if test="sOrgCd != null and sOrgCd != ''">
+                            AND ORGCD = #{sOrgCd}
+                        </if>
+                        AND GOODS_NM LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%')
+                </if>
+            </when>
+            <when test="sKeywordType == 'xrtInvcSno'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.XRT_INVC_SNO = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'cartNo'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.CART_NO = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'orderNo'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.ORD_NO = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'sellerRefNo'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.SELLER_REF_NO1 = #{sKeyword}
+                OR o.SELLER_REF_NO2 = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'invcSno'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.INVC_SNO1 = #{sKeyword}
+                OR o.INVC_SNO2 = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'shipMethodCd'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.SHIP_METHOD_CD = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'localShipper'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.LOCAL_SHIPPER = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'recvName'">
+                <if test="sKeyword != null and sKeyword != ''">
+                AND o.RECV_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+                </if>
+            </when>
+            <when test="sKeywordType == 'goodsNm'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND o.ORD_CD IN (SELECT ORD_CD FROM TORDERDTL WHERE 1 = 1 
+                    <if test="sOrgCd != null and sOrgCd != ''">
+                        AND ORGCD = #{sOrgCd}
+                    </if>
+                        AND GOODS_NM LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%')
+                </if>
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        <if test="sToNation != null and sToNation != ''">
+            AND o.S_NATION = #{sToNation}
+        </if>
+        <if test="sFromNation != null and sFromNation != ''">
+            AND o.E_NATION = #{sFromNation}
+        </if>
+        <if test="sPaymentType != null and sPaymentType != ''">
+            AND o.PAYMENT_TYPE = #{sPaymentType}
+        </if>
+        <choose>
+          <when test="sEtcCd1 == '20'">
+              <if test="sStatusCd == 'order'">
+                    AND STATUS_CD IN ('10', '11', '12')
+              </if>
+              <if test="sStatusCd == 'warehouse'">
+                    AND STATUS_CD BETWEEN '20' AND '30'
+              </if>
+              <if test="sStatusCd == 'warehousing'">
+                    AND STATUS_CD IN ('31', '32', '33', '34', '35')
+              </if>
+              <if test="sStatusCd == 'shipped'">
+                    AND STATUS_CD IN ('40')
+              </if>
+              <if test="sStatusCd == 'delivery'">
+                    AND STATUS_CD BETWEEN '50' AND '59'
+              </if>
+              <if test="sStatusCd == 'delivered'">
+                    AND STATUS_CD IN ('60')
+              </if>
+              <if test="sStatusCd == 'error'">
+                    AND STATUS_CD IN ('32', '80', '99')
+              </if>
+          </when>
+          <otherwise>
+              <if test="sStatusCd != null and sStatusCd != ''">
+                  AND o.STATUS_CD = #{sStatusCd}
+              </if>
+          </otherwise>
+        
+        </choose>
+        ORDER BY o.XRT_INVC_SNO ASC
+    </select>
+
+    <select id="getTOrder" parameterType="LDataMap" resultType="LDataMap">
+        /* ShippingListMapper.getTOrder */
+        SELECT
+            ISNULL(COMPCD               , '') AS "compcd"
+            , ISNULL(ORGCD              , '') AS "orgcd"
+            , ISNULL(XRT_INVC_SNO       , '') AS "xrtInvcSno"
+            , ISNULL(INVC_SNO1          , '') AS "invcSno1"
+            , ISNULL(LOCAL_SHIPPER      , '') AS "slug"
+            , ISNULL(STATUS_CD          , '') AS "statusCd"
+            , ISNULL(ADDUSERCD          , '') AS "addusercd"
+        FROM TORDER
+        WHERE 1 = 1
+        <if test="xrtInvcSno != null and xrtInvcSno != ''">
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+        </if>
+        ORDER BY ADDUSERCD ASC
+    </select>
+    
+    <select id="shippingGetOrders" resultType="LDataMap">
+        /* ShippingListMapper.shippingGetOrders */
+        SELECT
+            ISNULL(COMPCD               , '') AS "compcd"
+            , ISNULL(ORGCD              , '') AS "orgcd"
+            , ISNULL(XRT_INVC_SNO       , '') AS "xrtInvcSno"
+            , ISNULL(INVC_SNO1          , '') AS "invcSno1"
+            , ISNULL(LOCAL_SHIPPER      , '') AS "slug"
+            , ISNULL(STATUS_CD          , '') AS "statusCd"
+            , ISNULL(ADDUSERCD          , '') AS "addusercd"
+        FROM TORDER
+        WHERE 1 = 1
+        AND ORGCD = 'M00494'
+        AND STATUS_CD BETWEEN '50' AND '80'
+        ORDER BY ADDUSERCD ASC
+    </select>
+    
+    <select id="getOrder" parameterType="LDataMap" resultType="LDataMap">
+        /* ShippingListMapper.getOrder */
+        SELECT
+            TOP(1)
+            ISNULL(o.ORD_CD               , '') AS "ordCd"
+            , ISNULL(o.COMPCD             , '') AS "compcd"
+            , ISNULL(o.ORGCD              , '') AS "orgcd"
+            , ISNULL(o.ORD_NO             , '') AS "ordNo"
+            , ISNULL(o.LOCAL_SHIPPER      , '') AS "localShipper"
+            , ISNULL(o.XRT_INVC_SNO       , '') AS "xrtInvcSno"
+            , ISNULL(o.INVC_SNO1          , '') AS "invcSno1"
+            , ISNULL(o.LOCAL_SHIPPER      , '') AS "slug"
+            , ISNULL(o.RECV_NATION        , '') AS "recvNation"
+            , (
+              CASE
+                WHEN o.ORGCD = 'M00494' THEN '2148-21, Baekjemunhwa-ro, Gongju-si, Chungcheongnam-do'
+                ELSE o.SHIP_ADDR
+              END) AS "shipAddr"
+            , (CASE
+                WHEN o.RECV_NATION = 'US' THEN ISNULL(o.RECV_ADDR1 + ' ' + REPLACE(o.RECV_ADDR2, '.', '') + o.RECV_CITY + ', ' + o.RECV_STATE + ' ' + o.RECV_POST + ', ' + o.RECV_NATION, '')
+                WHEN o.RECV_NATION = 'JP' THEN ISNULL(o.RECV_STATE, '') + ISNULL(o.RECV_CITY, '') + o.RECV_ADDR1 + REPLACE(o.RECV_ADDR2, '-', '')
+                WHEN o.RECV_NATION = 'JP' THEN ISNULL(o.RECV_STATE, '') + ISNULL(o.RECV_CITY, '') + o.RECV_ADDR1 + REPLACE(o.RECV_ADDR2, '.', '')
+                ELSE ISNULL(o.RECV_STATE, '') + ISNULL(o.RECV_CITY, '') + o.RECV_ADDR1 + REPLACE(o.RECV_ADDR2, '.', '')
+              END) AS "recvAddr"
+            , ISNULL(o.STATUS_CD          , '') AS "statusCd"
+            , ISNULL(o.ADDUSERCD          , '') AS "addusercd"
+            , ISNULL(CONVERT(CHAR(19), o.ADDDATETIME, 120)        , '') AS "adddatetime"
+            , (SELECT GOODS_CD
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = o.ORD_CD
+                 AND od.ORD_NO = o.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) AS goodsCd
+            , CASE
+                WHEN o.ORGCD = 'M00494' THEN (SELECT GOODS_EN_NM
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = o.ORD_CD
+                 AND od.ORD_NO = o.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) + '외 ' + CONVERT(NVARCHAR, (CONVERT(INT, ORD_CNT) - 1)) + '건'
+                ELSE (SELECT GOODS_NM
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = o.ORD_CD
+                 AND od.ORD_NO = o.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) + '외 ' + CONVERT(NVARCHAR, (CONVERT(INT, ORD_CNT) - 1)) + '건'
+            END                                 AS goodsNm
+            , ORD_CNT                           AS goodsCnt
+            , TOT_PAYMENT_PRICE                 AS paymentPrice
+        FROM TORDER o
+        WHERE 1 = 1
+        <if test="invcSno != null and invcSno != ''">
+        AND o.XRT_INVC_SNO = #{invcSno}
+        OR o.INVC_SNO1 = #{invcSno}
+        </if>
+        ORDER BY o.ADDUSERCD ASC
+    </select>
+
+    <select id="getTrackingHistory" parameterType="xrt.fulfillment.tracking.TrackingHistorytVO" resultType="xrt.fulfillment.tracking.TrackingHistorytVO">
+        /* ShippingListMapper.getTrackingHistory */
+            SELECT
+                t.TRACKING_SEQ    AS trackingSeq,
+                t.XRT_INVC_SNO    AS xrtInvcSno,
+                (
+                    SELECT S_NATION
+                    FROM TORDER o
+                    WHERE 1 = 1
+                    AND t.XRT_INVC_SNO = o.XRT_INVC_SNO
+                ) AS sNation,
+                t.STATUS_CD       AS statusCd,
+				t.STATUS_NM       AS statusNm,
+				ISNULL(t.status_En_Nm , t.status_Nm) AS statusEnNm,
+                CONVERT(VARCHAR, t.ADDDATETIME, 120) AS adddatetime
+            FROM
+                TRACKING_HISTORY t
+            WHERE 1 = 1 AND STATUS_CD &lt; 52
+        <if test="xrtInvcSno != null and xrtInvcSno != ''">
+            AND XRT_INVC_SNO = #{xrtInvcSno}
+        </if>
+        ORDER BY adddatetime ASC
+    </select>
+    
+    <select id="getOrgCd" parameterType="LDataMap" resultType="java.lang.String">
+        SELECT
+            ORGCD AS orgCd
+        FROM TORDER
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </select>
+    
+    <select id="getDeliveredData" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            T.ORD_NO AS ordNo,
+            D.ORD_SEQ AS ordSeq
+        FROM TORDER T
+        LEFT JOIN TORDERDTL D
+        ON T.ORD_CD = D.ORD_CD
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </select>
+
+    <update id="updateTorder" parameterType="LDataMap">
+        /* ShippingListMapper.updateTorder */
+        UPDATE TORDER
+        SET 
+            <if test="statusCd != null and statusCd != ''">
+	            STATUS_CD = #{statusCd},
+            </if>
+            UPDUSERCD = #{usercd}, 
+            UPDDATETIME = getdate()
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+    
+</mapper>

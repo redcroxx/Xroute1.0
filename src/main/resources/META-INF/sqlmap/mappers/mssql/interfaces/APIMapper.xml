@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xrt.interfaces.common.mapper.APIMapper">
+
+	<select id="getCommonCode" parameterType="xrt.interfaces.common.vo.ParamVo" resultType="xrt.interfaces.common.vo.CommonVo">
+		/* APIMapper.getCommonCode */
+		SELECT
+			CODEKEY		AS codekey
+			, CODE		AS code
+			, SNAME1	AS sname1
+			, SNAME2	AS sname2
+		FROM S002
+		WHERE CODEKEY = #{codekey}
+		AND COMPCD = '1000'
+	</select>
+	
+	<select id="getUSStateList" parameterType="java.util.Map" resultType="xrt.interfaces.common.vo.CommonVo">
+		/* APIMapper.getCommonCode */
+		SELECT
+			CODEKEY		AS codekey
+			, CODE		AS code
+			, SNAME1	AS sname1
+			, SNAME2	AS sname2
+		FROM S002
+		WHERE CODEKEY IN ('US_STATE_EAST','US_STATE_WEST')
+		AND COMPCD = '1000'
+	</select>
+
+	<select id="shippoShipment" parameterType="xrt.interfaces.common.vo.ParamVo" resultType="xrt.interfaces.common.vo.TorderVo">
+		/* APIMapper.shippoShipment */
+		SELECT
+			XRT_INVC_SNO				AS xrtInvcSno
+			, RECV_NAME					AS recvName
+			, RECV_TEL					AS recvTel
+			, RECV_MOBILE				AS recvMobile
+			, RECV_ADDR1				AS recvAddr1
+			, RECV_CITY					AS recvCity
+			, TRIM(RECV_STATE)			AS recvState
+			, RECV_POST					AS recvPost
+			, TRIM(E_NATION)			AS eNation
+			, SHIPPO_ID					AS shippoId
+			, ISNULL(BOX_LENGTH, 0.1)	AS boxLength
+			, ISNULL(BOX_WIDTH, 0.1)	AS boxWidth
+			, ISNULL(BOX_HEIGHT, 0.1)	AS boxHeight
+			, ISNULL(WGT, 0.1)			AS wgt
+		FROM TORDER
+		WHERE 1 = 1
+		<if test="xrtInvcSno != null and xrtInvcSno != ''">
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+		</if>
+	</select>
+
+	<select id="shippoRefund" parameterType="xrt.interfaces.common.vo.ParamVo" resultType="xrt.interfaces.common.vo.TorderVo">
+		/* APIMapper.shippoRefund */
+		SELECT
+			INVC_SNO1			AS invcSno1
+			, SHIPPO_ID			AS shippoId
+			, RECV_STATE		AS recvState
+			, TRIM(E_NATION)	AS eNation
+			, AMOUNT			AS amount
+		FROM TORDER
+		WHERE ORD_CD = #{ordCd}
+	</select>
+
+	<select id="aftershipTrackings" parameterType="xrt.interfaces.common.vo.ParamVo" resultType="xrt.interfaces.common.vo.TorderVo">
+		/* APIMapper.aftershipTrackings */
+		SELECT
+			ISNULL(o.ORD_CD				, '') AS ordCd
+			, ISNULL(o.ORD_NO			, '') AS ordNo
+			, ISNULL(o.XRT_INVC_SNO		, '') AS xrtInvcSno
+			, ISNULL(o.S_NATION			, '') AS sNation
+			, ISNULL(o.E_NATION			, '') AS eNation
+			, ISNULL(o.LOCAL_SHIPPER	, '') AS localShipper
+			, ISNULL(o.INVC_SNO1		, '') AS invcSno1
+			, ISNULL(o.INVC_SNO2		, '') AS invcSno2
+			, ISNULL(o.SLUG1			, '') AS slug1
+			, ISNULL(o.SLUG2			, '') AS slug2
+			, (SELECT TOP 1 STUFF(
+					(SELECT ', ' + od.GOODS_NM + ' ' + od.GOODS_CNT +'ea'
+					 FROM TORDERDTL od
+					 WHERE 1 = 1
+					 AND o.ORD_CD = od.ORD_CD
+					 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			   FROM TORDERDTL
+			) AS goodsNm
+			, (SELECT TOP 1 STUFF(
+					(SELECT ', ' + od.PAYMENT_PRICE
+					 FROM TORDERDTL od
+					 WHERE 1 = 1
+					 AND o.ORD_CD = od.ORD_CD
+					 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				FROM TORDERDTL
+			) AS price
+		FROM TORDER o
+		WHERE 1 = 1
+		AND o.XRT_INVC_SNO = #{xrtInvcSno}
+	</select>
+
+	<!-- 2019.12.12 jy.hong EFS API -->
+	<select id="orderShipment" parameterType="xrt.interfaces.common.vo.ParamVo" resultType="xrt.interfaces.common.vo.OrderDataVo">
+		/* APIMapper.orderShipment */
+		SELECT
+			XRT_INVC_SNO		AS xrtInvcSno
+			, RECV_NAME			AS recvName
+			, RECV_TEL			AS recvTel
+			, RECV_MOBILE		AS recvMobile
+			, RECV_ADDR1		AS recvAddr1
+			, RECV_CITY			AS recvCity
+			, TRIM(RECV_STATE)	AS recvState
+			, RECV_POST			AS recvPost
+			, TRIM(E_NATION)	 AS eNation
+		FROM TORDER
+		WHERE 1 = 1
+		<if test="xrtInvcSno != null and xrtInvcSno != ''">
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+		</if>
+	</select>
+	
+	<select id="getAuthCheck" parameterType="java.util.Map" resultType="xrt.interfaces.common.vo.ApiAuthKeyVo">
+		/* APIMapper.getAuthCheck */
+		SELECT
+			COMPCD		AS compcd
+			, ORGCD		AS orgcd
+			, WHCD		AS whcd
+			, USERCD	AS usercd
+			, TEST_KEY	AS testKey
+			, REAL_KEY	AS realKey
+		FROM API_AUTH_KEY
+		WHERE 1 = 1
+		AND (TEST_KEY = #{authKey} OR REAL_KEY = #{authKey})
+	</select>
+	
+	<!-- Seller 정보 조회 -->
+	<select id="getSeller" parameterType="xrt.interfaces.common.vo.ApiAuthKeyVo" resultType="LDataMap">
+		/* APIMapper.getSeller */
+		SELECT
+			A.NAME
+			, A.TEL1
+			, A.TEL2
+			, A.ENG_ADDR
+			, A.POST
+			, A.PAYMENT_TYPE
+		FROM P002 A
+		WHERE 1 = 1
+		AND A.COMPCD = #{compcd}
+		AND A.ORGCD = #{orgcd} 
+	</select>
+	
+	<select id="getFileSeq" parameterType="xrt.interfaces.common.vo.ReqOrderVo" resultType="java.lang.Integer">
+		/* APIMapper.getFileSeq */
+		SELECT
+			ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+		FROM API_ORDER_MASTER
+		WHERE 1 = 1
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+		AND WHCD = #{whcd}
+		AND FILE_YMD = #{fileYmd}
+	</select>
+
+	<!-- FileSeq 조회 -->
+	<select id="getTorderFileSeq" parameterType="xrt.interfaces.common.vo.ReqOrderVo" resultType="java.lang.Integer">
+		/* APIMapper.getTorderFileSeq */
+		SELECT
+			MAX(a.fileCount) AS fileCount
+		FROM (
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDERFILE
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM TEMP_SHOPEE_ORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND CONVERT(CHAR(8), ADDDATETIME, 112) = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_AMAZON
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM API_ORDER_MASTER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+		) a
+	</select>
+	
+	<!-- RelaySeq 조회  -->
+	<select id="getTorderRelaySeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		/* APIMapper.getRelaySeq */
+		SELECT
+			ISNULL(MAX(RELAY_SEQ), 0) AS relaySeq
+		FROM TORDER
+		WHERE 1 = 1
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+		AND UPLOAD_DATE = #{fileYmd}
+	</select>
+
+	<insert id="insertApiOrderMaster" parameterType="xrt.interfaces.common.vo.ReqOrderVo">
+		/* APIMapper.insertApiOrderMasger */
+		<selectKey resultType="java.util.HashMap" keyProperty="apiOrderSeq" order="BEFORE">
+			SELECT RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_API_ORDER), 10) AS apiOrderSeq
+		</selectKey>
+		INSERT INTO API_ORDER_MASTER (
+			API_ORDER_SEQ
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, INVC_SNO
+			, FILE_SEQ
+			, COMPANY
+			, FILE_YMD
+			, STORE_NAME
+			, SELLER_NAME
+			, ORDER_ID
+			, CART_ID
+			, BUYER_NAME
+			, CURRENCY
+			, SHIP_COUNTRY
+			, SHIP_CITY
+			, SHIP_STATE
+			, SHIP_POSTAL_CDE
+			, SHIP_ADDR1
+			, SHIP_ADDR2
+			, SHIP_NUMBER1
+			, SHIP_NUMBER2
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+		) VALUES (
+			#{apiOrderSeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{invcSno}
+			, #{fileSeq}
+			, #{company}
+			, #{fileYmd}
+			, #{storeName}
+			, #{sellerName}
+			, #{orderId}
+			, #{cartId}
+			, #{buyerName}
+			, #{currency}
+			, #{shipCountry}
+			, #{shipCity}
+			, #{shipState}
+			, #{shipPostalCode}
+			, #{shipAddr1}
+			, #{shipAddr2}
+			, #{shipNumber1}
+			, #{shipNumber2}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+		)
+	</insert>
+	
+	<insert id="insertApiOrderItem" parameterType="xrt.interfaces.common.vo.ReqItemVo">
+		/* APIMapper.insertApiOrderItem */
+		INSERT INTO API_ORDER_ITEMS (
+			COMPCD
+			, ORGCD
+			, WHCD
+			, INVC_SNO
+			, ORDER_ID
+			, ITEM_ORDER
+			, ITEM_ID
+			, ITEM_NAME
+			, ITEM_COUNT
+			, ITEM_PRICE
+			, ITEM_OPTION
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+		) VALUES (
+			#{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{invcSno}
+			, #{orderId}
+			, #{itemOrder}
+			, #{itemId}
+			, #{itemName}
+			, #{itemCount}
+			, #{itemPrice}
+			, #{itemOption}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+		)
+	</insert>
+	
+	<!--  -->
+	<insert id="insertTorder" parameterType="xrt.fulfillment.interfaces.vo.TOrderVo">
+		/* OrderAmazonMapper.insertTorder */
+		<selectKey resultType="java.util.HashMap" keyProperty="xrtInvcSno,ordCd" order="BEFORE">
+			SELECT
+				'XLF' + RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_XLF_INVC_SNOKEY), 10) AS xrtInvcSno
+				, 'W' + RIGHT('0000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDCD_KEY), 13) AS ordCd
+		</selectKey>
+		INSERT INTO TORDER (
+			ORD_CD
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, UPLOAD_DATE
+			, FILE_SEQ
+			, FILE_NM
+			, FILE_NM_REAL
+			, SITE_CD
+			, STATUS_CD
+			, STOCK_TYPE
+			, MALL_NM
+			, SHIP_METHOD_CD
+			, ORD_NO
+			, CART_NO
+			, ORD_CNT
+			, XRT_INVC_SNO
+			, INVC_SNO1
+			, INVC_SNO2
+			, S_NATION
+			, E_NATION
+			, WGT
+			, BOX_WIDTH
+			, BOX_LENGTH
+			, BOX_HEIGHT
+			, BOX_VOLUME
+			, C_WGT_CHARGE
+			, C_WGT_REAL
+			, C_BOX_WIDTH
+			, C_BOX_LENGTH
+			, C_BOX_HEIGHT
+			, C_WGT_VOLUME
+			, SHIP_NAME
+			, SHIP_TEL
+			, SHIP_MOBILE
+			, SHIP_ADDR
+			, SHIP_POST
+			, RECV_NAME
+			, RECV_TEL
+			, RECV_MOBILE
+			, RECV_ADDR1
+			, RECV_ADDR2
+			, RECV_CITY
+			, RECV_STATE
+			, RECV_POST
+			, RECV_NATION
+			, RECV_CURRENCY
+			, TOT_PAYMENT_PRICE
+			, INVC_PRINT_CNT
+			, INVC_PRINT_DATE
+			, STOCK_USERCD
+			, STOCK_DATE
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+			, RELAY_SEQ
+			, FILE_RELAY_SEQ
+			, PAYMENT_TYPE
+			, API_INVC_SNO
+		) VALUES (
+			#{ordCd}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{uploadDate}
+			, #{fileSeq}
+			, #{fileNm}
+			, #{fileNmReal}
+			, #{siteCd}
+			, #{statusCd}
+			, #{stockType}
+			, #{mallNm}
+			, #{shipMethodCd}
+			, #{ordNo}
+			, #{cartNo}
+			, #{ordCnt}
+			, #{xrtInvcSno}
+			, #{invcSno1}
+			, #{invcSno2}
+			, #{sNation}
+			, #{eNation}
+			, #{wgt}
+			, #{boxWidth}
+			, #{boxLength}
+			, #{boxHeight}
+			, #{boxVolume}
+			, #{cWgtCharge}
+			, #{cWgtReal}
+			, #{cBoxWidth}
+			, #{cBoxLength}
+			, #{cBoxHeight}
+			, #{cWgtVolume}
+			, #{shipName}
+			, #{shipTel}
+			, #{shipMobile}
+			, #{shipAddr}
+			, #{shipPost}
+			, #{recvName}
+			, #{recvTel}
+			, #{recvMobile}
+			, #{recvAddr1}
+			, #{recvAddr2}
+			, #{recvCity}
+			, #{recvState}
+			, #{recvPost}
+			, #{recvNation}
+			, #{recvCurrency}
+			, #{totPaymentPrice}
+			, #{invcPrintCnt}
+			, #{invcPrintDate}
+			, #{stockUsercd}
+			, #{stockDate}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+			, #{relaySeq}
+			, #{fileRelaySeq}
+			, #{paymentType}
+			, #{apiInvcSno}
+		)
+	</insert>
+	
+	<!--  -->
+	<insert id="insertTOrderDtl" parameterType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+		/* OrderAmazonMapper.insertTOrderDtl */
+		INSERT INTO TORDERDTL (
+			ORD_CD
+			, ORD_SEQ
+			, COMPCD
+			, ORGCD
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_OPTION
+			, GOODS_CNT
+			, PAYMENT_PRICE
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, ORD_NO
+		) VALUES (
+			#{ordCd}
+			, #{ordSeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{goodsCd}
+			, #{goodsNm}
+			, #{goodsOption}
+			, #{goodsCnt}
+			, #{paymentPrice}
+			, #{addusercd}
+			, getdate()
+			, #{updusercd}
+			, getdate()
+			, #{terminalcd}
+			, #{ordNo}
+		)
+	</insert>
+	
+	<update id="updateTorderByShippo" parameterType="xrt.interfaces.common.vo.TorderVo">
+		/* APIMapper.updateTorderByShippo */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="amount != null and amount != ''">AMOUNT = #{amount},</if>
+			<if test="invcSno1 != null and invcSno1 != ''">INVC_SNO1 = #{invcSno1},</if>
+			<if test="localShipper != null and localShipper != ''">LOCAL_SHIPPER = #{localShipper},</if>
+			<if test="shippoId != null and shippoId != ''">SHIPPO_ID = #{shippoId}  </if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+	
+	<update id="efsTrackingUpd" parameterType="trackingInfoVo">
+		/* APIMapper.efsTrackingUpd */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="localShipper != null and localShipper != ''">LOCAL_SHIPPER = #{localShipper},</if>
+			<if test="invcSno != null and invcSno != ''">INVC_SNO2 = #{invcSno},</if>
+			<if test="wgtCharge != null and wgtCharge != ''">C_WGT_CHARGE = #{wgtCharge},</if>
+			<if test="wgtReal != null and wgtReal != ''">C_WGT_REAL = #{wgtReal},</if>
+			<if test="boxWidth != null and boxWidth != ''">C_BOX_WIDTH = #{boxWidth},</if>
+			<if test="boxLength != null and boxLength != ''">C_BOX_LENGTH = #{boxLength},</if>
+			<if test="boxHeight != null and boxHeight != ''">C_BOX_HEIGHT = #{boxHeight},</if>
+			<if test="wgtVolume != null and wgtVolume != ''">C_WGT_VOLUME = #{wgtVolume},</if>
+			<if test="shippingPrice != null and shippingPrice != ''">C_SHIPPING_PRICE = #{shippingPrice}</if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+</mapper>

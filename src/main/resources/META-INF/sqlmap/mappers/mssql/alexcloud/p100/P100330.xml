@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100330Mapper">
+
+	<!-- 입고적치지시 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100330.getSearch */
+		SELECT A.COMPCD,
+			   A.ORGCD AS ORGCD,
+			   C.NAME AS ORGNM,
+			   A.WHCD AS WHCD,
+			   B.NAME AS WHNM,
+			   
+			   A.ITEMCD,
+			   D.NAME AS ITEMNM,
+			   
+			   CASE	
+			     WHEN (A.QTY - A.ALLOCQTY - ISNULL(F.IMSCHQTY,0)) = 0 THEN F.AFTERLOCCD
+			   	 ELSE DBO.UFX_GETINSLOCCD(A.COMPCD, A.ORGCD, A.WHCD, A.ITEMCD) 
+			   END AS SCHLOCCD,
+			   B.WHINLOCCD,
+			   
+			   (A.QTY - A.ALLOCQTY - ISNULL(F.IMSCHQTY,0)) AS QTY,
+			   (A.QTY - A.ALLOCQTY - ISNULL(F.IMSCHQTY,0)) AS MVQTY,
+			   ISNULL(F.IMSCHQTY, 0) AS IMSCHQTY,
+			   dbo.UFX_GetBoxEaQty(D.UNITTYPE, 'BOX', D.INBOXQTY, (A.QTY - A.ALLOCQTY - ISNULL(F.IMSCHQTY,0))) AS MVQTY_BOX,
+		       dbo.UFX_GetBoxEaQty(D.UNITTYPE, 'EA', D.INBOXQTY, (A.QTY - A.ALLOCQTY - ISNULL(F.IMSCHQTY,0))) AS MVQTY_EA,
+		       
+		       A.LOTKEY,
+		       E.LOT1,
+		       E.LOT2,
+		       E.LOT3,
+		       E.LOT4,
+		       E.LOT5,
+		       
+			   D.ITEMSIZE,
+		       D.UNITCD,
+		       D.INBOXQTY,
+		       D.INPLTQTY,
+		       D.UNITTYPE,
+		       
+		       D.F_USER01,
+		       D.F_USER02,
+		       D.F_USER03,
+		       D.F_USER04,
+		       D.F_USER05,
+		       D.F_USER11,
+		       D.F_USER12,
+		       D.F_USER13,
+		       D.F_USER14,
+		       D.F_USER15
+		       
+		  FROM P810 A WITH (NOLOCK)
+		  JOIN P004 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		   AND A.WHCD = B.WHCD
+		   AND A.LOCCD = B.WHINLOCCD
+		  JOIN P002 C WITH (NOLOCK)
+		    ON A.COMPCD = C.COMPCD
+		   AND A.ORGCD = C.ORGCD
+		  JOIN P006 D WITH (NOLOCK)
+		    ON A.COMPCD = D.COMPCD
+		   AND A.ORGCD = D.ORGCD
+		   AND A.ITEMCD = D.ITEMCD
+		  JOIN P007 E WITH (NOLOCK)
+		    ON A.LOTKEY = E.LOTKEY
+		  LEFT OUTER JOIN (
+					SELECT X.COMPCD, X.BEFOREWHCD AS WHCD, X.ORGCD
+						 , Y.ITEMCD, SUM(Y.IMSCHQTY) AS IMSCHQTY, Y.LOTKEY, Y.BEFORELOCCD AS LOCCD, Y.AFTERLOCCD AS AFTERLOCCD  
+					  FROM P710 X
+					  JOIN P711 Y ON X.IMKEY = Y.IMKEY
+					 WHERE X.IMTYPE = 'LOC1' 
+					   AND X.MVTYPE = 'INS'
+					   AND X.IMSTS <![CDATA[ <> ]]> '99'
+					   AND Y.IMDSTS = '100'
+					   AND Y.IMSCHQTY <![CDATA[ <> ]]> 0
+					   <if test="S_WHCD != null and S_WHCD != ''">
+					   	  AND X.IMWHCD = #{S_WHCD}
+					   </if>
+					 GROUP BY X.COMPCD, X.BEFOREWHCD, X.ORGCD
+						 , Y.ITEMCD, Y.LOTKEY, Y.BEFORELOCCD, Y.AFTERLOCCD
+				  ) F
+  			ON A.COMPCD = F.COMPCD AND A.ORGCD = F.ORGCD AND A.WHCD = F.WHCD AND A.ITEMCD = F.ITEMCD AND A.LOTKEY = F.LOTKEY AND A.LOCCD = F.LOCCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.QTY - A.ALLOCQTY <![CDATA[ > ]]> 0
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.WHCD = #{S_WHCD}
+		</if>
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND (D.ITEMCD LIKE '%' + #{S_ITEM} + '%' 
+			  OR D.NAME LIKE '%' + #{S_ITEM} + '%') 
+		</if>
+	</select>
+	
+	<!-- 적치지시 생성 프로시저 -->
+	<select id="setMoveLoc" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_CreateMoveLoc(#{XML, jdbcType = VARCHAR, mode = IN}
+		                  , #{COMPCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{ORGCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{WHCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+	
+</mapper>

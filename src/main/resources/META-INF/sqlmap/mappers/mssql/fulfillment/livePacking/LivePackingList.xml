@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="LivePackingListMapper">
+
+	<select id="getSearch" parameterType="commonSearchVo" resultType="xrt.sys.popup.LivePackingVo">
+		/* LivePackingListMapper.getSearch */
+		SELECT
+			LIVE_PACKING_SEQ	AS livePackingSeq
+			, ORGCD				AS orgcd
+			, XRT_INVC_SNO		AS xrtInvcSno
+			, S3_URL				AS s3Url
+			, ADDUSERCD			AS addusercd
+			, CONVERT(NVARCHAR, ADDDATETIME, 120)	AS adddatetime
+			, UPDUSERCD			AS updusercd
+			, CONVERT(NVARCHAR, UPDDATETIME, 120)	AS upddatetime
+			, TERMINALCD			AS terminalcd
+		FROM LIVE_PACKING
+		WHERE 1 = 1
+		<if test="sOrgCd != null and sOrgCd != ''">
+		AND ORGCD = #{sOrgCd}
+		</if>
+		<if test="sKeyword != null and sKeyword != ''">
+		AND XRT_INVC_SNO = #{sKeyword}
+		</if>
+		AND ADDDATETIME BETWEEN CONVERT(CHAR(19), #{sToDate} + ' 00:00:00') AND CONVERT(CHAR(19), #{sFromDate} + ' 23:59:59')
+		ORDER BY ADDDATETIME ASC
+	</select>
+
+</mapper>

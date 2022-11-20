@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 중메뉴  -->
+<mapper namespace="S000008Mapper">
+
+	<!-- 중메뉴 : 대메뉴 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+	/* sys.s000008.getSearch */
+		SELECT A.COMPCD		/*회사코드*/
+			 , A.MENUL1KEY	/*대메뉴코드*/
+			 , A.L1TITLE	/*대메뉴명*/
+			 , A.SORTNO		/*정렬순*/
+			 , A.REMARKS    /*비고*/
+			 , A.ADDUSERCD	/*등록자ID*/
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME /*등록일시*/
+			 , A.UPDUSERCD  /*수정자ID*/ 
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME  /*수정일시*/
+			 , TERMINALCD /*IP*/
+		FROM S007 A WITH (NOLOCK)
+		WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_L1TITLE != null and S_L1TITLE !=''">
+			AND A.L1TITLE LIKE '%' + dbo.UFX_TRIM(#{S_L1TITLE}) + '%' 
+		</if>
+		<if test="S_L2TITLE != null and S_L2TITLE !=''">
+			AND EXISTS (SELECT 1
+						  FROM S008 F WITH (NOLOCK)
+						 WHERE F.MENUL1KEY = A.MENUL1KEY	
+						   AND F.L2TITLE LIKE '%' + dbo.UFX_TRIM(#{S_L2TITLE}) + '%')
+		</if>		
+		ORDER BY A.SORTNO 
+		
+	</select>
+	
+	<!-- 대메뉴 : 중메뉴 마스터 디테일 그리드 검색 -->
+	<select id="getMstList" parameterType="LDataMap" resultType="LDataMap">
+	/* sys.s000008.getMstList */
+		SELECT A.COMPCD		/*회사코드*/
+			 , A.MENUL1KEY	/*대메뉴코드*/
+			 , A.MENUL2KEY	/*중메뉴코드*/
+			 , A.L2TITLE	/*중메뉴명*/
+			 , A.SORTNO     /*정렬순*/
+		 	 , A.REMARKS    /*비고*/
+			 , A.ADDUSERCD	/*등록자ID*/
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME /*등록일시*/
+			 , A.UPDUSERCD  /*수정자ID*/ 
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME  /*수정일시*/
+			 , TERMINALCD /*IP*/		
+		FROM S008 A WITH (NOLOCK)
+		WHERE  A.COMPCD = #{COMPCD}
+		<if test="MENUL1KEY != null and MENUL1KEY !=''"> 
+			AND	A.MENUL1KEY = #{MENUL1KEY} 
+		</if>
+		ORDER BY A.SORTNO	
+	</select>
+	
+	<!-- 대메뉴 : 소메뉴 마스터 디테일 그리드 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+	/* sys.s000008.getDetailList */
+		SELECT A.COMPCD		/*회사코드*/
+			 , A.MENUL1KEY	/*대메뉴코드*/
+			 , A.MENUL2KEY	/*중메뉴코드*/
+			 , A.APPKEY     /*프로그램코드*/
+			 , A.L3TITLE	/*소메뉴명*/
+			 , A.SORTNO     /*정렬순*/
+		     , A.REMARKS    /*비고*/
+			 , A.ADDUSERCD	/*등록자ID*/
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME /*등록일시*/
+			 , A.UPDUSERCD  /*수정자ID*/ 
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME  /*수정일시*/
+			 , TERMINALCD /*IP*/
+			 , A.APPKEY AS REALAPPKEY 	
+		FROM S009 A WITH (NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.MENUL1KEY = #{MENUL1KEY}
+		  AND A.MENUL2KEY = #{MENUL2KEY}
+		ORDER BY A.SORTNO	
+	</select>
+	
+	<!-- 대메뉴 : 중메뉴코드 중복 체크 -->
+	<select id="menul2keyChk" parameterType="LDataMap" resultType="int">
+		/* sys.s000008.menul2keyChk*/
+		SELECT COUNT(1) AS CNT
+		  FROM S008 WITH (NOLOCK)
+		 WHERE COMPCD = #{COMPCD}
+		   AND MENUL1KEY = #{MENUL1KEY}
+		   AND MENUL2KEY = #{MENUL2KEY}	
+	</select>
+	
+	<!-- 대메뉴 : 중메뉴 신규 추가  -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* sys.s000008.insertMst */
+		INSERT INTO S008 WITH (ROWLOCK)
+			(COMPCD,   /* S008 - 회사코드*/
+			MENUL1KEY, /* S008 - 중메뉴코드*/
+			MENUL2KEY, 
+			L2TITLE,
+			SORTNO,
+			REMARKS,
+			ADDUSERCD,
+			ADDDATETIME,
+			UPDUSERCD,
+			UPDDATETIME,
+			TERMINALCD
+			)
+		VALUES
+			(#{COMPCD},
+			#{MENUL1KEY},
+			#{MENUL2KEY},
+			#{L2TITLE},
+			#{SORTNO},
+			#{REMARKS},
+			#{LOGIN_USERCD},
+			GETDATE(),
+			#{LOGIN_USERCD},
+			GETDATE(),
+			#{LOGIN_IP}
+			)	
+	</insert>
+	
+	<!-- 대메뉴 : 소메뉴코드 중복 체크 -->
+	<select id="appkeyChk" parameterType="LDataMap" resultType="int">
+		/* sys.s000008.appkeyChk*/
+		SELECT COUNT(1) AS CNT
+		  FROM S009 WITH (NOLOCK)
+		 WHERE APPKEY = #{APPKEY}	
+	</select>	
+			
+	<!-- 대메뉴 : 소메뉴 신규 추가  -->
+	<insert id="insertDet" parameterType="LDataMap">
+		/* sys.s000008.insertDet */
+		INSERT INTO S009 WITH (ROWLOCK)
+			(COMPCD,
+			MENUL1KEY,
+			MENUL2KEY,
+			APPKEY,
+			L3TITLE,
+			SORTNO,
+			REMARKS,
+			ADDUSERCD,
+			ADDDATETIME,
+			UPDUSERCD,
+			UPDDATETIME,
+			TERMINALCD
+			)
+		VALUES
+			(#{COMPCD},
+			#{MENUL1KEY},
+			#{MENUL2KEY},
+			#{APPKEY},
+			#{L3TITLE},
+			#{SORTNO},
+			#{REMARKS},
+			#{LOGIN_USERCD},
+			GETDATE(),
+			#{LOGIN_USERCD},
+			GETDATE(),
+			#{LOGIN_IP}
+			)	
+	</insert>
+	
+	<!-- 대메뉴 : 중메뉴 수정  -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* sys.s000008.updateDet */
+		UPDATE S008 WITH (ROWLOCK)
+		   SET MENUL2KEY = #{MENUL2KEY}
+		     , L2TITLE = #{L2TITLE}
+			 , SORTNO = #{SORTNO}
+			 , REMARKS = #{REMARKS}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+			 , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND MENUL1KEY = #{MENUL1KEY}
+		  AND MENUL2KEY = #{MENUL2KEY} 
+	</update>
+	
+	<!-- 대메뉴 : 소메뉴 수정  -->
+	<update id="updateDet" parameterType="LDataMap">
+		/* sys.s000008.updateDet2 */
+		UPDATE S009 WITH (ROWLOCK)
+		   SET APPKEY = #{APPKEY}
+		     , L3TITLE = #{L3TITLE}
+			 , SORTNO = #{SORTNO}
+			 , REMARKS = #{REMARKS}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+			 , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND MENUL1KEY = #{MENUL1KEY}
+		  AND MENUL2KEY = #{MENUL2KEY} 		
+		  AND APPKEY = #{REALAPPKEY}
+	</update>
+	
+	<!-- 대메뉴 : 중메뉴 삭제  -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/*sys.s000008.deleteMst*/
+		DELETE FROM S008 WITH (ROWLOCK)
+		WHERE COMPCD = #{COMPCD} 
+			AND MENUL1KEY = #{MENUL1KEY} 
+			AND MENUL2KEY = #{MENUL2KEY}
+	</delete>
+	
+	<!-- 대메뉴 : 중메뉴 삭제시 소메뉴 삭제  -->
+	<delete id="deleteDelete" parameterType="LDataMap">
+		/*sys.s000008.deleteDelete*/
+		DELETE FROM S009 WITH (ROWLOCK)
+		WHERE COMPCD = #{COMPCD} 
+			AND MENUL1KEY = #{MENUL1KEY} 
+			AND MENUL2KEY = #{MENUL2KEY}
+	</delete>
+	
+	<!-- 대메뉴 : 소메뉴 삭제  -->
+	<delete id="deleteDet" parameterType="LDataMap">
+		/*sys.s000008.deleteDet*/
+		DELETE FROM S009 WITH (ROWLOCK)
+		WHERE COMPCD = #{COMPCD} 
+			AND MENUL1KEY = #{MENUL1KEY} 
+			AND MENUL2KEY = #{MENUL2KEY} 
+			AND APPKEY = #{APPKEY}
+	</delete>
+	
+	
+ </mapper>

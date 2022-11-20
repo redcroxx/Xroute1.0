@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P800100Mapper">
+	
+	<!-- 재고조회  -->
+	<select id="getSearch1" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p800.p800100.getSearch1 */
+		SELECT COMPCD, COMPNM, WHCD, ORGCD, ORGNM, X.ITEMCD, ITEMNM, CUSTCD, CUSTNM
+		     , UNITCD, ITEMSIZE, UNITTYPE, INBOXQTY, INPLTQTY
+		     
+		     , X.QTY
+       		 , ALLOCQTY AS ALLOCQTY
+       		 , AVAILABLEQTY AS AVAILABLEQTY
+		     , F_USER01 , F_USER02 , F_USER03 , F_USER04 , F_USER05
+		     , F_USER11 , F_USER12 , F_USER13 , F_USER14 , F_USER15
+		     
+		FROM (
+			SELECT A.COMPCD 
+			     , MAX(B.NAME) AS COMPNM
+				 , A.ORGCD
+				 , MAX(C.NAME) AS ORGNM
+				 , A.WHCD
+				 , E.CUSTCD
+				 , MAX(F.NAME) AS CUSTNM
+				 
+				 , A.ITEMCD 
+				 , MAX(E.NAME) AS ITEMNM
+				 , MAX(E.UNITCD) AS UNITCD     
+			     , MAX(E.ITEMSIZE) AS ITEMSIZE 
+			     , MAX(E.UNITTYPE) AS UNITTYPE 
+			     , E.INBOXQTY
+		         , E.INPLTQTY
+		         
+				 , SUM(A.QTY) AS QTY
+				 , SUM(A.ALLOCQTY) AS ALLOCQTY
+				 , SUM(A.QTY-A.ALLOCQTY) AS AVAILABLEQTY
+				 
+				 , MAX(E.F_USER01) AS F_USER01
+				 , MAX(E.F_USER02) AS F_USER02
+				 , MAX(E.F_USER03) AS F_USER03
+				 , MAX(E.F_USER04) AS F_USER04
+				 , MAX(E.F_USER05) AS F_USER05
+				 , MAX(E.F_USER11) AS F_USER11
+				 , MAX(E.F_USER12) AS F_USER12
+				 , MAX(E.F_USER13) AS F_USER13
+				 , MAX(E.F_USER14) AS F_USER14
+				 , MAX(E.F_USER15) AS F_USER15
+				 
+			  FROM TINVENTORY A WITH (NOLOCK)
+			  JOIN P001 B WITH (NOLOCK)
+			    ON A.COMPCD = B.COMPCD
+			  JOIN P002 C WITH (NOLOCK)
+			    ON A.COMPCD = C.COMPCD
+			   AND A.ORGCD = C.ORGCD
+			  JOIN P006 E WITH (NOLOCK)
+			    ON A.COMPCD = E.COMPCD
+			   AND A.ORGCD = E.ORGCD 
+			   AND A.ITEMCD = E.ITEMCD 
+			  LEFT OUTER JOIN P003 F WITH (NOLOCK)
+			    ON E.COMPCD = F.COMPCD 
+			   AND E.ORGCD = F.ORGCD
+			   AND E.CUSTCD = F.CUSTCD
+			  JOIN P004 G WITH (NOLOCK)
+			    ON A.COMPCD = G.COMPCD
+			   AND A.WHCD = G.WHCD
+			 WHERE A.COMPCD = #{S_COMPCD}
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+			   AND A.ORGCD = #{S_ORGCD}
+			</if>
+			<if test="S_WHCD != null and S_WHCD != ''">
+			   AND A.WHCD = #{S_WHCD}
+			</if>
+			<if test="S_LOCCD != null and S_LOCCD != ''">
+			   AND A.LOCCD LIKE '%' + dbo.UFX_Trim(#{S_LOCCD}) + '%' 
+			</if>
+			<if test="S_ITEMCD != null and S_ITEMCD != ''">
+				AND E.ITEMCD = #{S_ITEMCD}
+			</if>
+			<if test="S_CUSTCD != null and S_CUSTCD != ''">
+				AND E.CUSTCD = #{S_CUSTCD}
+			</if>
+			<if test="S_ITEM != null and S_ITEM != ''">
+				AND (E.ITEMCD LIKE '%' + UPPER(dbo.UFX_Trim(#{S_ITEM})) + '%' 
+				  OR E.NAME LIKE '%' + UPPER(dbo.UFX_Trim(#{S_ITEM})) + '%')
+			</if>
+		    <if test="S_LOTKEY != null and S_LOTKEY != ''">
+		   		AND A.LOTKEY LIKE '%' + UPPER(dbo.UFX_Trim(#{S_LOTKEY})) + '%'
+			</if>
+			<if test="S_GUBUN != null and S_GUBUN != ''">
+		   		<if test="S_GUBUN == 1 ">
+		   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) > 0
+		   		</if>
+		   		<if test="S_GUBUN == 2 ">
+		   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) = 0
+		   		</if> 
+			</if>
+			<if test="S_F_USER01 != null and S_F_USER01 != ''">
+			    AND E.F_USER01 = dbo.UFX_Trim(#{S_F_USER01})
+			</if>
+			<if test="S_F_USER02 != null and S_F_USER02 != ''">
+			    AND E.F_USER02 = dbo.UFX_Trim(#{S_F_USER02})
+			</if>
+			<if test="S_F_USER03 != null and S_F_USER03 != ''">
+			    AND E.F_USER03 = dbo.UFX_Trim(#{S_F_USER03})
+			</if>
+			<if test="S_F_USER04 != null and S_F_USER04 != ''">
+			    AND E.F_USER04 = dbo.UFX_Trim(#{S_F_USER04})
+			</if>
+			<if test="S_F_USER05 != null and S_F_USER05 != ''">
+			    AND E.F_USER05 = dbo.UFX_Trim(#{S_F_USER05})
+			</if>
+			<if test="S_F_USER11 != null and S_F_USER11 != ''">
+			    AND E.F_USER11 = dbo.UFX_Trim(#{S_F_USER11})
+			</if>
+			<if test="S_F_USER12 != null and S_F_USER12 != ''">
+			    AND E.F_USER12 = dbo.UFX_Trim(#{S_F_USER12})
+			</if>
+			<if test="S_F_USER13 != null and S_F_USER13 != ''">
+			    AND E.F_USER13 = dbo.UFX_Trim(#{S_F_USER13})
+			</if>
+			<if test="S_F_USER14 != null and S_F_USER14 != ''">
+			    AND E.F_USER14 = dbo.UFX_Trim(#{S_F_USER14})
+			</if>
+			<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		 		AND E.F_USER15 = dbo.UFX_Trim(#{S_F_USER15})
+			</if>
+			<if test="S_WHINVTYPE != null and S_WHINVTYPE != ''">
+				AND G.WHINVTYPE = #{S_WHINVTYPE}
+			</if>
+			<if test="S_CUSTCD != null and S_CUSTCD != ''">
+				AND E.CUSTCD = #{S_CUSTCD}
+			</if>
+			GROUP BY A.COMPCD, A.ORGCD, A.WHCD, A.ITEMCD, E.CUSTCD, E.ITEMCD, E.INBOXQTY, E.INPLTQTY 
+		) X
+		ORDER BY COMPCD, WHCD, ORGCD, X.ITEMCD
+	</select>
+	
+	<!-- 재고조회 화주x창고  -->
+	<select id="getSearch2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p800.p800100.getSearch2 */
+		SELECT COMPCD, COMPNM, ORGCD, ORGNM, X.WHCD, WHNM, X.ITEMCD, ITEMNM, CUSTCD, CUSTNM
+		     , UNITCD, ITEMSIZE, UNITTYPE, INBOXQTY, INPLTQTY
+		     
+		     , X.QTY
+       		 , ALLOCQTY AS ALLOCQTY
+       		 , AVAILABLEQTY AS AVAILABLEQTY
+		     , F_USER01 , F_USER02 , F_USER03 , F_USER04 , F_USER05
+		     , F_USER11 , F_USER12 , F_USER13 , F_USER14 , F_USER15
+		FROM (
+			SELECT A.COMPCD 
+			     , MAX(B.NAME) AS COMPNM
+				 , A.ORGCD
+				 , MAX(C.NAME) AS ORGNM
+				 , A.WHCD
+				 , MAX(D.NAME) AS WHNM
+				 , E.CUSTCD
+				 , MAX(F.NAME) AS CUSTNM
+				 
+				 , A.ITEMCD 
+				 , MAX(E.NAME) AS ITEMNM
+				 , MAX(E.UNITCD) AS UNITCD     
+			     , MAX(E.ITEMSIZE) AS ITEMSIZE 
+			     , MAX(E.UNITTYPE) AS UNITTYPE 
+			     , E.INBOXQTY
+		         , E.INPLTQTY
+		         
+				 , SUM(A.QTY) AS QTY
+				 , SUM(A.ALLOCQTY) AS ALLOCQTY
+				 , SUM(A.QTY-A.ALLOCQTY) AS AVAILABLEQTY
+				 
+				 , MAX(E.F_USER01) AS F_USER01
+				 , MAX(E.F_USER02) AS F_USER02
+				 , MAX(E.F_USER03) AS F_USER03
+				 , MAX(E.F_USER04) AS F_USER04
+				 , MAX(E.F_USER05) AS F_USER05
+				 , MAX(E.F_USER11) AS F_USER11
+				 , MAX(E.F_USER12) AS F_USER12
+				 , MAX(E.F_USER13) AS F_USER13
+				 , MAX(E.F_USER14) AS F_USER14
+				 , MAX(E.F_USER15) AS F_USER15
+			  FROM TINVENTORY A WITH (NOLOCK)
+			  JOIN P001 B WITH (NOLOCK)
+			    ON A.COMPCD = B.COMPCD
+			  JOIN P002 C WITH (NOLOCK)
+			    ON A.COMPCD = C.COMPCD
+			   AND A.ORGCD = C.ORGCD
+			  JOIN P004 D WITH (NOLOCK)
+			    ON A.COMPCD = D.COMPCD
+			   AND A.WHCD = D.WHCD
+			  JOIN P006 E WITH (NOLOCK)
+			    ON A.COMPCD = E.COMPCD
+			   AND A.ORGCD = E.ORGCD 
+			   AND A.ITEMCD = E.ITEMCD
+			  LEFT OUTER JOIN P003 F WITH (NOLOCK)
+			    ON E.COMPCD = F.COMPCD 
+			   AND E.ORGCD = F.ORGCD
+			   AND E.CUSTCD = F.CUSTCD
+			 WHERE A.COMPCD = #{S_COMPCD}
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+			   AND A.ORGCD = #{S_ORGCD}
+			</if>
+			<if test="S_WHCD != null and S_WHCD != ''">
+			   AND A.WHCD = #{S_WHCD}
+			</if>
+			<if test="S_LOCCD != null and S_LOCCD != ''">
+			   AND A.LOCCD = #{S_LOCCD}
+			</if>
+			<if test="S_ITEM != null and S_ITEM != ''">
+				AND (E.ITEMCD LIKE '%' + UPPER(dbo.UFX_Trim(#{S_ITEM})) + '%' 
+				  OR E.NAME LIKE '%' + UPPER(dbo.UFX_Trim(#{S_ITEM})) + '%')
+			</if>
+			<if test="S_ITEMCD != null and S_ITEMCD != ''">
+				AND E.ITEMCD = #{S_ITEMCD}
+			</if>
+			<if test="S_CUSTCD != null and S_CUSTCD != ''">
+				AND E.CUSTCD = #{S_CUSTCD}
+			</if>
+		    <if test="S_LOTKEY != null and S_LOTKEY != ''">
+		   		AND A.LOTKEY LIKE '%' + UPPER(dbo.UFX_Trim(#{S_LOTKEY})) + '%'
+			</if>
+			<if test="S_GUBUN != null and S_GUBUN != ''">
+		   		<if test="S_GUBUN == 1 ">
+		   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) > 0
+		   		</if>
+		   		<if test="S_GUBUN == 2 ">
+		   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) = 0
+		   		</if> 
+			</if>
+			<if test="S_F_USER01 != null and S_F_USER01 != ''">
+			    AND E.F_USER01 = dbo.UFX_Trim(#{S_F_USER01})
+			</if>
+			<if test="S_F_USER02 != null and S_F_USER02 != ''">
+			    AND E.F_USER02 = dbo.UFX_Trim(#{S_F_USER02})
+			</if>
+			<if test="S_F_USER03 != null and S_F_USER03 != ''">
+			    AND E.F_USER03 = dbo.UFX_Trim(#{S_F_USER03})
+			</if>
+			<if test="S_F_USER04 != null and S_F_USER04 != ''">
+			    AND E.F_USER04 = dbo.UFX_Trim(#{S_F_USER04})
+			</if>
+			<if test="S_F_USER05 != null and S_F_USER05 != ''">
+			    AND E.F_USER05 = dbo.UFX_Trim(#{S_F_USER05})
+			</if>
+			<if test="S_F_USER11 != null and S_F_USER11 != ''">
+			    AND E.F_USER11 = dbo.UFX_Trim(#{S_F_USER11})
+			</if>
+			<if test="S_F_USER12 != null and S_F_USER12 != ''">
+			    AND E.F_USER12 = dbo.UFX_Trim(#{S_F_USER12})
+			</if>
+			<if test="S_F_USER13 != null and S_F_USER13 != ''">
+			    AND E.F_USER13 = dbo.UFX_Trim(#{S_F_USER13})
+			</if>
+			<if test="S_F_USER14 != null and S_F_USER14 != ''">
+			    AND E.F_USER14 = dbo.UFX_Trim(#{S_F_USER14})
+			</if>
+			<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		 		AND E.F_USER15 = dbo.UFX_Trim(#{S_F_USER15})
+			</if>
+			<if test="S_CUSTCD != null and S_CUSTCD != ''">
+				AND E.CUSTCD = #{S_CUSTCD}
+			</if>
+			 GROUP BY A.COMPCD, A.ORGCD, A.WHCD, A.ITEMCD, E.CUSTCD, E.ITEMCD, E.INBOXQTY, E.INPLTQTY 
+			 ) X
+		 ORDER BY COMPCD, X.WHCD, ORGCD, X.ITEMCD
+	</select>
+	
+	<!-- 재고조회 화주x창고x로케이션  -->
+	<select id="getSearch3" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p800.p800100.getSearch3 */
+		SELECT A.COMPCD 
+		     , B.NAME AS COMPNM
+			 , A.ORGCD
+			 , C.NAME AS ORGNM
+			 , A.WHCD
+			 , D.NAME AS WHNM
+			 , E.CUSTCD
+			 , G.NAME AS CUSTNM
+			 
+			 , A.LOCCD
+			 , A.LOTKEY
+			 , A.ITEMCD 
+			 , E.NAME AS ITEMNM
+			 , E.UNITCD   
+		     , E.ITEMSIZE 
+		     , E.UNITTYPE 
+		     , E.INBOXQTY
+	         , E.INPLTQTY
+	         
+			 , A.QTY AS QTY
+			 , A.ALLOCQTY AS ALLOCQTY
+			 , (A.QTY-A.ALLOCQTY) AS AVAILABLEQTY
+			 
+			 , F.LOT1 AS LOT1
+			 , F.LOT2 AS LOT2
+			 , F.LOT3 AS LOT3
+			 , F.LOT4 AS LOT4
+			 , F.LOT5 AS LOT5
+			 , E.F_USER01 AS F_USER01
+			 , E.F_USER02 AS F_USER02
+			 , E.F_USER03 AS F_USER03
+			 , E.F_USER04 AS F_USER04
+			 , E.F_USER05 AS F_USER05
+			 , E.F_USER11 AS F_USER11
+			 , E.F_USER12 AS F_USER12
+			 , E.F_USER13 AS F_USER13
+			 , E.F_USER14 AS F_USER14
+			 , E.F_USER15 AS F_USER15
+			 
+		  FROM TINVENTORY A WITH (NOLOCK)
+		  JOIN P001 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		  JOIN P002 C WITH (NOLOCK)
+		    ON A.COMPCD = C.COMPCD
+		   AND A.ORGCD = C.ORGCD
+		  JOIN P004 D WITH (NOLOCK)
+		    ON A.COMPCD = D.COMPCD
+		   AND A.WHCD = D.WHCD
+		  JOIN P006 E WITH (NOLOCK)
+		    ON A.COMPCD = E.COMPCD
+		   AND A.ORGCD = E.ORGCD
+		   AND A.ITEMCD = E.ITEMCD
+		  JOIN P007 F WITH (NOLOCK)
+		    ON A.LOTKEY = F.LOTKEY
+		  LEFT OUTER JOIN P003 G WITH (NOLOCK)
+		    ON E.COMPCD = G.COMPCD 
+		   AND E.ORGCD = G.ORGCD
+		   AND E.CUSTCD = G.CUSTCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		 
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND A.WHCD = #{S_WHCD}
+		</if>
+		<if test="S_LOCCD != null and S_LOCCD != ''">
+		   AND A.LOCCD LIKE '%' + dbo.UFX_Trim(#{S_LOCCD}) + '%' 
+		</if>
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+			AND E.ITEMCD = #{S_ITEMCD}
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+			AND E.CUSTCD = #{S_CUSTCD}
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND (E.ITEMCD LIKE '%' + UPPER(dbo.UFX_Trim(#{S_ITEM})) + '%' 
+			  OR E.NAME LIKE '%' + UPPER(dbo.UFX_Trim(#{S_ITEM})) + '%')
+		</if>
+	    <if test="S_LOTKEY != null and S_LOTKEY != ''">
+	   		AND A.LOTKEY LIKE '%' + UPPER(dbo.UFX_Trim(#{S_LOTKEY})) + '%'
+		</if>
+		<if test="S_GUBUN != null and S_GUBUN != ''">
+	   		<if test="S_GUBUN == 1 ">
+	   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) > 0
+	   		</if>
+	   		<if test="S_GUBUN == 2 ">
+	   			AND (ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0)) = 0
+	   		</if> 
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		    AND E.F_USER01 = dbo.UFX_Trim(#{S_F_USER01})
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		    AND E.F_USER02 = dbo.UFX_Trim(#{S_F_USER02})
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		    AND E.F_USER03 = dbo.UFX_Trim(#{S_F_USER03})
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		    AND E.F_USER04 = dbo.UFX_Trim(#{S_F_USER04})
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		    AND E.F_USER05 = dbo.UFX_Trim(#{S_F_USER05})
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		    AND E.F_USER11 = dbo.UFX_Trim(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		    AND E.F_USER12 = dbo.UFX_Trim(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		    AND E.F_USER13 = dbo.UFX_Trim(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		    AND E.F_USER14 = dbo.UFX_Trim(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+	 		AND E.F_USER15 = dbo.UFX_Trim(#{S_F_USER15})
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+			AND E.CUSTCD = #{S_CUSTCD}
+		</if>
+		 ORDER BY A.COMPCD, A.ORGCD, A.WHCD, A.LOCCD, A.ITEMCD
+	</select>
+</mapper>

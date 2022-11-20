@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="OrderListDtlMapper">
+    <select id="getStatusCd" parameterType="commonSearchVo" resultType="LDataMap">
+        /* OrderListDtlMapper.getStatusCd */
+        SELECT
+            STATUS_CD   AS "statusCd"
+        FROM TORDER
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </select>
+
+    <select id="getOrderDtl" parameterType="commonSearchVo" resultType="LDataMap">
+        /* OrderListDtlMapper.getTorder */
+        SELECT
+            XRT_INVC_SNO     AS "xrtInvcSno"
+            , PAYMENT_TYPE   AS "paymentType"
+            , MALL_NM        AS "mallNm"
+            , SHIP_METHOD_CD AS "shipMethodCd"
+            , E_NATION       AS "eNation"
+            , SHIP_NAME      AS "shipName"
+            , SHIP_TEL       AS "shipTel"
+            , RECV_NAME      AS "recvName"
+            , RECV_TEL       AS "recvTel"
+            , RECV_CITY      AS "recvCity"
+            , RECV_STATE     AS "recvState"
+            , RECV_POST      AS "recvPost"
+            , RECV_ADDR1     AS "recvAddr1"
+            , RECV_ADDR2     AS "recvAddr2"
+            , TOT_PAYMENT_PRICE   AS "totPaymentPrice"
+            , PURCHASE_URL   AS "purchaseUrl"
+            , STATUS_CD      AS "statusCd"
+        FROM TORDER
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </select>
+
+    <select id="getOrderItems" parameterType="commonSearchVo" resultType="LDataMap">
+        /* OrderListDtlMapper.getTorderDtl */
+        SELECT
+            ORD_CD          AS "ordCd"
+            , ORD_SEQ       AS "ordSeq"
+            , GOODS_CD      AS "goodsCd"
+            , GOODS_NM      AS "goodsNm"
+            , GOODS_OPTION  AS "goodsOption"
+            , GOODS_CNT     AS "goodsCnt"
+        FROM TORDERDTL
+        WHERE 1 = 1
+        AND ORD_CD = (SELECT ORD_CD FROM TORDER WHERE 1=1 AND XRT_INVC_SNO = #{xrtInvcSno})
+        ORDER BY ORD_SEQ ASC
+    </select>
+
+    <update id="updateTorder" parameterType="LDataMap">
+        /* OrderListDtlMapper.updateTorder */
+        UPDATE TORDER
+        <trim prefix="SET" suffixOverrides=",">
+            <if test='paymentType != null and paymentType != ""'>
+                PAYMENT_TYPE = #{paymentType},
+            </if>
+            <if test='mallNm != null and mallNm != ""'>
+                MALL_NM = #{mallNm},
+            </if>
+            <if test='shipMethodCd != null and shipMethodCd != ""'>
+                SHIP_METHOD_CD = #{shipMethodCd},
+            </if>
+            <if test='shipName != null and shipName != ""'>
+                SHIP_NAME = #{shipName},
+            </if>
+            <if test='shipTel != null and shipTel != ""'>
+                SHIP_TEL = #{shipTel},
+            </if>
+            <if test='recvName != null and recvName != ""'>
+                RECV_NAME = #{recvName},
+            </if>
+            <if test='recvTel != null and recvTel != ""'>
+                RECV_TEL = #{recvTel},
+            </if>
+            <if test='recvCity != null and recvCity != ""'>
+                RECV_CITY = #{recvCity},
+            </if>
+            <if test='recvState != null and recvState != ""'>
+                RECV_STATE = #{recvState},
+            </if>
+            <if test='recvPost != null and recvPost != ""'>
+                RECV_POST = #{recvPost},
+            </if>
+            <if test='recvAddr1 != null and recvAddr1 != ""'>
+                RECV_ADDR1 = #{recvAddr1},
+            </if>
+            <if test='recvAddr2 != null and recvAddr2 != ""'>
+                RECV_ADDR2 = #{recvAddr2},
+            </if>
+            <if test='statusCd != null and statusCd != ""'>
+                STATUS_CD = #{statusCd},
+            </if>
+            <if test='totPaymentPrice != null and totPaymentPrice != ""'>
+                TOT_PAYMENT_PRICE = #{totPaymentPrice},
+            </if>
+            <if test='purchaseUrl != null and purchaseUrl != ""'>
+                PURCHASE_URL = #{purchaseUrl},
+            </if>
+            <if test='usercd != null and usercd != ""'>
+                UPDUSERCD   = #{usercd},
+                UPDDATETIME = getdate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+
+    <update id="updateTorderDtl" parameterType="LDataMap">
+        /* OrderListDtlMapper.updateTorderDtl */
+        UPDATE TORDERDTL
+        <trim prefix="SET" suffixOverrides=",">
+            <if test='goodsCd != null and goodsCd != ""'>
+                GOODS_CD = #{goodsCd},
+            </if>
+            <if test='goodsNm != null and goodsNm != ""'>
+                GOODS_NM = #{goodsNm},
+            </if>
+            <if test='goodsOption != null and goodsOption != ""'>
+                GOODS_OPTION = #{goodsOption},
+            </if>
+            <if test='usercd != null and usercd != ""'>
+                UPDUSERCD   = #{usercd},
+                UPDDATETIME = getdate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND ORD_CD = #{ordCd}
+        AND ORD_SEQ = #{ordSeq}
+    </update>
+</mapper>

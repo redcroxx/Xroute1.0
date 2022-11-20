@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="OrderMemoMapper">
+
+    <select id="getSearchShippingMemo" parameterType="commonSearchVo" resultType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+        /* OrderMemoMapper.getSearchShippingMemo */
+        SELECT 
+            om.ORDER_MEMO_SEQ AS orderMemoSeq
+            , om.XRT_INVC_SNO AS xrtInvcSno
+            , o.ORD_NO        AS ordNo
+            , om.MEMOTYPE AS memoType
+            , o.E_NATION AS eNation
+            , om.ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), om.ADDDATETIME, 120) AS adddatetime
+            , CASE
+                WHEN o.STATUS_CD = '10' THEN '주문등록'
+                WHEN o.STATUS_CD = '11' THEN '발송대기'
+                WHEN o.STATUS_CD = '12' THEN '발송완료'
+                WHEN o.STATUS_CD = '20' THEN '입금대기'
+                WHEN o.STATUS_CD = '21' THEN '결제완료'
+                WHEN o.STATUS_CD = '22' THEN '결제대기'
+                WHEN o.STATUS_CD = '23' THEN '결제실패'
+                WHEN o.STATUS_CD = '30' THEN '입고완료'
+                WHEN o.STATUS_CD = '31' THEN '창고보관'
+                WHEN o.STATUS_CD = '32' THEN '출고대기'
+                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                WHEN o.STATUS_CD = '34' THEN '검수취소'
+                WHEN o.STATUS_CD = '35' THEN '선적대기'
+                WHEN o.STATUS_CD = '40' THEN '출고완료'
+                WHEN o.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN o.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN o.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN o.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN o.STATUS_CD = '54' THEN '통관대기'
+                WHEN o.STATUS_CD = '55' THEN '통관완료'
+                WHEN o.STATUS_CD = '56' THEN '배송시작'
+                WHEN o.STATUS_CD = '57' THEN '배송중'
+                WHEN o.STATUS_CD = '60' THEN '배송완료'
+                WHEN o.STATUS_CD = '80' THEN 'API오류'
+                WHEN o.STATUS_CD = '98' THEN '입금취소'
+                WHEN o.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END AS shippingStatus 
+            , om.STATUS_CD AS statusCd
+        FROM ORDER_MEMO_MASTER om
+        LEFT JOIN TORDER o
+        on om.XRT_INVC_SNO = o.XRT_INVC_SNO
+        where 1 = 1
+        <if test='sOrgCd != null and sOrgCd != ""'>
+            AND o.ORGCD = #{sOrgCd}
+            AND om.MEMOAUTHORITY = 'total'
+        </if>
+        <if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+            AND om.XRT_INVC_SNO = #{sXrtInvcSno} OR o.ORD_NO = #{sXrtInvcSno}
+        </if>
+        <if test='sStatusCd == "N"'>
+            AND om.STATUS_CD = #{sStatusCd} 
+        </if>
+        ORDER BY om.ORDER_MEMO_SEQ DESC
+    </select>
+
+	<select id="getSearchMainMemo" parameterType="commonSearchVo" resultType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		/* OrderMemoMapper.getSearchMainMemo */
+        SELECT 
+            om.ORDER_MEMO_SEQ AS orderMemoSeq
+            , om.XRT_INVC_SNO AS xrtInvcSno
+            , o.ORD_NO        AS ordNo
+            , om.MEMOTYPE AS memoType
+            , o.E_NATION AS eNation
+            , om.ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), om.ADDDATETIME, 120) AS adddatetime
+            , CASE
+                WHEN o.STATUS_CD = '10' THEN '주문등록'
+                WHEN o.STATUS_CD = '11' THEN '발송대기'
+                WHEN o.STATUS_CD = '12' THEN '발송완료'
+                WHEN o.STATUS_CD = '20' THEN '입금대기'
+                WHEN o.STATUS_CD = '21' THEN '결제완료'
+                WHEN o.STATUS_CD = '22' THEN '결제대기'
+                WHEN o.STATUS_CD = '23' THEN '결제실패'
+                WHEN o.STATUS_CD = '30' THEN '입고완료'
+                WHEN o.STATUS_CD = '31' THEN '창고보관'
+                WHEN o.STATUS_CD = '32' THEN '출고대기'
+                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                WHEN o.STATUS_CD = '34' THEN '검수취소'
+                WHEN o.STATUS_CD = '35' THEN '선적대기'
+                WHEN o.STATUS_CD = '40' THEN '출고완료'
+                WHEN o.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN o.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN o.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN o.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN o.STATUS_CD = '54' THEN '통관대기'
+                WHEN o.STATUS_CD = '55' THEN '통관완료'
+                WHEN o.STATUS_CD = '56' THEN '배송시작'
+                WHEN o.STATUS_CD = '57' THEN '배송중'
+                WHEN o.STATUS_CD = '60' THEN '배송완료'
+                WHEN o.STATUS_CD = '80' THEN 'API오류'
+                WHEN o.STATUS_CD = '98' THEN '입금취소'
+                WHEN o.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END AS shippingStatus 
+            , om.STATUS_CD AS statusCd
+        FROM ORDER_MEMO_MASTER om
+        LEFT JOIN TORDER o
+        ON om.XRT_INVC_SNO = o.XRT_INVC_SNO
+        WHERE 1 = 1
+        <if test='sOrgCd != null and sOrgCd != "9999"'>
+            AND o.ORGCD = #{sOrgCd}
+            AND om.MEMOAUTHORITY = 'total'
+        </if>
+        <if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+            AND om.XRT_INVC_SNO = #{sXrtInvcSno} OR o.ORD_NO = #{sXrtInvcSno}
+        </if>
+        <if test='sStatusCd == "N"'>
+            AND om.STATUS_CD = #{sStatusCd} 
+        </if>
+        ORDER BY om.ORDER_MEMO_SEQ DESC
+	</select>
+	
+	<select id="getSearchList" parameterType="LDataMap" resultType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		/* OrderMemoMapper.getSearchList */
+		SELECT
+			om.ORDER_MEMO_SEQ		AS orderMemoSeq
+			, om.COMPCD	            AS compcd
+			, om.ORGCD				AS orgcd
+			, om.WHCD				AS whcd
+			, om.XRT_INVC_SNO		AS xrtInvcSno
+			, om.TITLE				AS title
+			, om.CONTENTS			AS contents
+			, (
+			    SELECT COUNT(*)
+			    FROM ORDER_MEMO_REPLY
+			    WHERE 1 = 1
+			    AND ORDER_MEMO_SEQ = om.ORDER_MEMO_SEQ
+			) AS replyCount
+			, om.STATUS_CD			                    AS statusCd
+			, om.ADDUSERCD			                    AS addusercd
+			, CONVERT(CHAR(19), om.ADDDATETIME, 120)    AS adddatetime
+			, om.UPDUSERCD			                    AS updusercd
+			, CONVERT(CHAR(19), om.UPDDATETIME, 120)    AS upddatetime
+			, om.TERMINALCD		                        AS terminalcd
+			, om.MEMOTYPE 	                            AS memoType
+			, om.MEMOAUTHORITY		                    AS memoAuthority
+			, om.MEMOFILEPATH		                    AS memoFilePath
+			, om.E_NATION			                    AS eNation
+			, (SELECT 
+			         CASE
+                            WHEN od.STATUS_CD = '10' THEN '주문등록'
+                            WHEN od.STATUS_CD = '11' THEN '발송대기'
+                            WHEN od.STATUS_CD = '12' THEN '발송완료'
+                            WHEN od.STATUS_CD = '20' THEN '입금대기'
+                            WHEN od.STATUS_CD = '21' THEN '결제완료'
+                            WHEN od.STATUS_CD = '22' THEN '결제대기'
+                            WHEN od.STATUS_CD = '23' THEN '결제실패'
+                            WHEN od.STATUS_CD = '30' THEN '입고완료'
+                            WHEN od.STATUS_CD = '31' THEN '창고보관'
+                            WHEN od.STATUS_CD = '32' THEN '출고대기'
+                            WHEN od.STATUS_CD = '33' THEN '검수완료'
+                            WHEN od.STATUS_CD = '34' THEN '검수취소'
+                            WHEN od.STATUS_CD = '35' THEN '선적대기'
+                            WHEN od.STATUS_CD = '40' THEN '출고완료'
+                            WHEN od.STATUS_CD = '50' THEN '공항출발(예정)'
+                            WHEN od.STATUS_CD = '51' THEN '공항출발(완료)'
+                            WHEN od.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                            WHEN od.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                            WHEN od.STATUS_CD = '54' THEN '통관대기'
+                            WHEN od.STATUS_CD = '55' THEN '통관완료'
+                            WHEN od.STATUS_CD = '56' THEN '배송시작'
+                            WHEN od.STATUS_CD = '57' THEN '배송중'
+                            WHEN od.STATUS_CD = '60' THEN '배송완료'
+                            WHEN od.STATUS_CD = '80' THEN 'API오류'
+                            WHEN od.STATUS_CD = '98' THEN '입금취소'
+                            WHEN od.STATUS_CD = '99' THEN '주문취소'
+                            ELSE '오류'
+                        END AS shippingStatus
+                        FROM TORDER od
+                        WHERE 1 = 1
+                        AND od.XRT_INVC_SNO = om.XRT_INVC_SNO
+                    ) AS shippingStatus
+		FROM ORDER_MEMO_MASTER om
+		WHERE 1 = 1
+		<if test="sOrgCd != null and sOrgCd != ''">
+		AND om.ORGCD = #{sOrgCd}
+		</if>
+		<if test="sWhcd != null and sWhcd != ''">
+		AND om.WHCD = #{sWhcd}
+		</if>
+		<if test="xrtInvcSno != null and xrtInvcSno != ''">
+		AND om.XRT_INVC_SNO = #{xrtInvcSno}
+		</if>
+		<if test="statusCd != null and statusCd != ''">
+		AND om.STATUS_CD = #{statusCd}
+		</if>
+		<if test="memoType != null and memoType != ''">
+		AND om.memoType = #{memoType}
+		</if>
+		AND om.ADDDATETIME BETWEEN CONVERT(CHAR(19), #{sToDate} + ' 00:00:00') AND CONVERT(CHAR(19), #{sFromDate} + ' 23:59:59')
+		ORDER BY om.ADDDATETIME DESC
+	</select>
+	
+	<select id="getSearchMemoInfo" parameterType="xrt.fulfillment.order.memo.OrderMemoMasterVo" resultType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		SELECT
+			ORDER_MEMO_SEQ		AS orderMemoSeq
+			, COMPCD			AS compcd
+			, ORGCD				AS orgcd
+			, WHCD				AS whcd
+			, XRT_INVC_SNO		AS xrtInvcSno
+			, TITLE				AS title
+			, CONTENTS			AS contents
+			, STATUS_CD			AS statusCd
+			, ADDUSERCD			AS addusercd
+			, CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+			, UPDUSERCD			AS updusercd
+			, CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+			, TERMINALCD		AS terminalcd
+			, MEMOTYPE 	AS memoType
+			, MEMOAUTHORITY		AS memoAuthority
+			, MEMOFILEPATH		AS memoFilePath
+			, E_NATION			AS eNation
+		FROM ORDER_MEMO_MASTER
+		WHERE 1 = 1
+		AND ORDER_MEMO_SEQ = #{orderMemoSeq}
+		<if test="xrtInvcSno != null and xrtInvcSno !=''">
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+		</if>
+	</select>
+
+	<select id="getSearchFilePath" parameterType="xrt.fulfillment.order.memo.OrderMemoMasterVo" resultType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		SELECT
+			MEMOFILEPATH AS memoFilePath
+		FROM ORDER_MEMO_MASTER
+		WHERE ORDER_MEMO_SEQ = #{orderMemoSeq}
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+	</select>
+	
+	<select id="getSearch" parameterType="LDataMap" resultType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		/* OrderMemoMapper.getSearch */
+		SELECT
+			ORDER_MEMO_SEQ		AS orderMemoSeq
+			, COMPCD			AS compcd
+			, ORGCD				AS orgcd
+			, WHCD				AS whcd
+			, XRT_INVC_SNO		AS xrtInvcSno
+			, TITLE				AS title
+			, CONTENTS			AS contents
+			, STATUS_CD			AS statusCd
+			, ADDUSERCD			AS addusercd
+			, CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+			, UPDUSERCD			AS updusercd
+			, CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+			, TERMINALCD		AS terminalcd
+		FROM ORDER_MEMO_MASTER
+		WHERE 1 = 1
+		<if test="xrtInvcSno != null and xrtInvcSno != ''">
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+		</if>
+		<if test="statusCd != null and statusCd != ''">
+		AND STATUS_CD = #{statusCd}
+		</if>
+		<choose>
+			<when test="orgcd == null">
+			</when>
+			<when test="orgcd != null and orgcd != '9999' and orgcd != ''">
+			AND ORGCD  = #{orgcd}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		ORDER BY ADDDATETIME
+	</select>
+	
+	<insert id="insertMemo" parameterType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		<selectKey resultType="java.util.HashMap" keyProperty="orderMemoSeq" order="BEFORE">
+			SELECT RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDER_MEMO_MASTER), 10) AS orderMemoSeq
+		</selectKey>
+		INSERT INTO ORDER_MEMO_MASTER (
+			ORDER_MEMO_SEQ
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, XRT_INVC_SNO
+			, TITLE
+			, CONTENTS
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+			, MEMOTYPE
+			, MEMOAUTHORITY
+			, MEMOFILEPATH
+			, E_NATION
+		) VALUES (
+			#{orderMemoSeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{xrtInvcSno}
+			, ''
+			, #{contents}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+			, #{memoType}
+			, #{memoAuthority}
+			, #{memoFilePath}
+			, (SELECT E_NATION 
+				FROM TORDER od
+				WHERE od.XRT_INVC_SNO = #{xrtInvcSno}
+			) 
+		)
+	</insert>
+	
+	<update id="updateMemo" parameterType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		UPDATE ORDER_MEMO_MASTER
+		SET 
+			ORDER_MEMO_SEQ = #{orderMemoSeq},
+			XRT_INVC_SNO = #{xrtInvcSno},
+			CONTENTS = #{contents},
+			UPDUSERCD = #{updusercd},
+			UPDDATETIME = getdate(),
+			TERMINALCD = #{terminalcd},
+			MEMOTYPE = #{memoType},
+			MEMOAUTHORITY = #{memoAuthority},
+			MEMOFILEPATH = #{memoFilePath}
+		WHERE 1 = 1
+		AND ORDER_MEMO_SEQ = #{orderMemoSeq} 
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+	
+	<update id="updateMemoStatus" parameterType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		UPDATE ORDER_MEMO_MASTER
+		SET STATUS_CD = 'Y'
+		WHERE 1 = 1
+		AND ORDER_MEMO_SEQ = #{orderMemoSeq} 
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+	
+	<delete id="deleteMemo" parameterType="xrt.fulfillment.order.memo.OrderMemoMasterVo">
+		DELETE FROM ORDER_MEMO_MASTER
+		WHERE 1 = 1
+		AND ORDER_MEMO_SEQ = #{orderMemoSeq} 
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</delete>
+	
+	<select id="getNumber" parameterType="LDataMap" resultType="java.lang.Integer">
+        SELECT
+            COUNT(NUMBER)   AS number
+        FROM ORDER_MEMO_REPLY
+        WHERE 1 = 1
+        AND ORDER_MEMO_SEQ = #{orderMemoSeq}
+        ORDER BY NUMBER
+    </select>
+	
+	<insert id="insertReply" parameterType="xrt.fulfillment.order.memo.OrderMemoReplyVo">
+	    <selectKey resultType="java.util.HashMap" keyProperty="orderMemoReplySeq" order="BEFORE">
+            SELECT RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDER_MEMO_REPLY), 10) AS orderMemoReplySeq
+        </selectKey>
+        INSERT INTO ORDER_MEMO_REPLY(
+            COMPCD
+            , ORGCD
+            , WHCD
+            , ORDER_MEMO_REPLY_SEQ
+            , ORDER_MEMO_SEQ
+            , NUMBER
+            , CONTENTS
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        )VALUES(
+            #{compcd}
+            , #{orgcd}
+            , #{whcd}
+            , #{orderMemoReplySeq}
+            , #{orderMemoSeq}
+            , #{number}
+            , #{contents}
+            , #{addusercd}
+            , GETDATE()
+            , #{updusercd}
+            , GETDATE()
+            , #{terminalcd}
+        )
+	</insert>
+	
+	<select id="getMemoReplyList" parameterType="LDataMap" resultType="xrt.fulfillment.order.memo.OrderMemoReplyVo">
+	   SELECT
+	       COMPCD AS compcd
+	       , ORGCD AS orgcd
+	       , WHCD AS whcd
+	       , ORDER_MEMO_REPLY_SEQ AS orderMemoReplySeq
+	       , ORDER_MEMO_SEQ AS orderMemoSeq
+	       , NUMBER AS number
+	       , CONTENTS AS contents
+	       , ADDUSERCD AS addusercd
+	       , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+	       , UPDUSERCD AS updusercd
+	       , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+	       , (SELECT 
+	               CASE
+	                   WHEN omm.MEMOTYPE = 'shipping' THEN '배송관련문의'
+	                   WHEN omm.MEMOTYPE = 'payment' THEN '결제관련문의'
+	                   WHEN omm.MEMOTYPE = 'others' THEN '기타문의'
+	                   ELSE '오류'
+	                   END AS memoType
+	               FROM ORDER_MEMO_MASTER omm
+	               WHERE 1 = 1
+	               AND ORDER_MEMO_SEQ = #{orderMemoSeq}
+	       ) AS memoType
+	       , (SELECT 
+                        CASE
+                            WHEN od.STATUS_CD = '10' THEN '주문등록'
+                            WHEN od.STATUS_CD = '11' THEN '발송대기'
+                            WHEN od.STATUS_CD = '12' THEN '발송완료'
+                            WHEN od.STATUS_CD = '20' THEN '입금대기'
+                            WHEN od.STATUS_CD = '21' THEN '결제완료'
+                            WHEN od.STATUS_CD = '22' THEN '결제대기'
+                            WHEN od.STATUS_CD = '23' THEN '결제실패'
+                            WHEN od.STATUS_CD = '30' THEN '입고완료'
+                            WHEN od.STATUS_CD = '31' THEN '창고보관'
+                            WHEN od.STATUS_CD = '32' THEN '출고대기'
+                            WHEN od.STATUS_CD = '33' THEN '검수완료'
+                            WHEN od.STATUS_CD = '34' THEN '검수취소'
+                            WHEN od.STATUS_CD = '35' THEN '선적대기'
+                            WHEN od.STATUS_CD = '40' THEN '출고완료'
+                            WHEN od.STATUS_CD = '50' THEN '공항출발(예정)'
+                            WHEN od.STATUS_CD = '51' THEN '공항출발(완료)'
+                            WHEN od.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                            WHEN od.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                            WHEN od.STATUS_CD = '54' THEN '통관대기'
+                            WHEN od.STATUS_CD = '55' THEN '통관완료'
+                            WHEN od.STATUS_CD = '56' THEN '배송시작'
+                            WHEN od.STATUS_CD = '57' THEN '배송중'
+                            WHEN od.STATUS_CD = '60' THEN '배송완료'
+                            WHEN od.STATUS_CD = '80' THEN 'API오류'
+                            WHEN od.STATUS_CD = '98' THEN '입금취소'
+                            WHEN od.STATUS_CD = '99' THEN '주문취소'
+                            ELSE '오류'
+                        END AS shippingStatus
+                        FROM TORDER od
+                        WHERE 1 = 1
+                        AND od.XRT_INVC_SNO IN(
+                            SELECT XRT_INVC_SNO
+                            FROM ORDER_MEMO_MASTER
+                            WHERE 1 = 1
+                            AND ORDER_MEMO_SEQ = #{orderMemoSeq}
+                        )
+           ) AS shippingStatus
+	  FROM ORDER_MEMO_REPLY
+	  WHERE 1 = 1
+	  AND ORDER_MEMO_SEQ = #{orderMemoSeq}
+      ORDER BY ADDDATETIME DESC, NUMBER DESC
+	</select>
+</mapper>

@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="promotionCodeMapper">
+    
+    <select id="getSearch" parameterType="LDataMap" resultType="xrt.sys.promotionCode.PromotionCodeVO">
+        /* promotionCodeMapper.getSearch */
+        SELECT
+            A.PROMOTION_CODE_SEQ  AS promotionCodeSeq,
+            A.PROMOTION_CODE      AS promotionCode,
+            A.CODE_START_DATE     AS codeStartDate,
+            A.CODE_END_DATE       AS codeEndDate,
+            A.codePeriod,
+            A.CODE_COUNT          AS codeCount,
+            A.DISCOUNT_START_DATE AS discountStartDate,
+            A.DISCOUNT_END_DATE   AS discountEndDate,
+            A.discountPeriod,
+            A.PREMIUM             AS premium,
+            A.DHL                 AS dhl,
+            A.CONTENT             AS content
+        FROM (
+            SELECT
+                PROMOTION_CODE_SEQ,
+                PROMOTION_CODE,
+                CONVERT(CHAR(10), CODE_START_DATE, 126) AS CODE_START_DATE,
+                CONVERT(CHAR(10), CODE_END_DATE, 126)   AS CODE_END_DATE,
+                CONVERT(CHAR(10), CODE_START_DATE, 126) + ' ~ ' + CONVERT(CHAR(10), CODE_END_DATE, 126) AS codePeriod,
+                CODE_COUNT,
+                CONVERT(CHAR(10), DISCOUNT_START_DATE, 126) AS DISCOUNT_START_DATE,
+                CONVERT(CHAR(10), DISCOUNT_END_DATE, 126)   AS DISCOUNT_END_DATE,
+                CONVERT(CHAR(10), DISCOUNT_START_DATE, 126) + ' ~ ' + CONVERT(CHAR(10), DISCOUNT_END_DATE, 126) AS discountPeriod,
+                PREMIUM,
+                DHL,
+                CONTENT,
+                CONVERT(CHAR(8), CODE_START_DATE, 112) AS startDate,
+                CONVERT(CHAR(8), CODE_END_DATE, 112)   AS endDate
+            FROM PROMOTION_CODE
+            WHERE 1 = 1
+        ) A
+        WHERE 1 = 1
+        AND (A.startDate  <![CDATA[<=]]> #{sToDate} AND A.endDate <![CDATA[>=]]> #{sFromDate}) 
+        <if test='sPromotionCode != null and sPromotionCode != ""'>
+            AND A.PROMOTION_CODE = #{sPromotionCode}
+        </if>
+    </select>
+    
+    <select id="getPromotionCode" parameterType="LDataMap" resultType="xrt.sys.promotionCode.PromotionCodeVO">
+        /* promotionCodeMapper.getPromotionCode */
+        SELECT
+            A.PROMOTION_CODE_SEQ  AS promotionCodeSeq,
+            A.CODE_COUNT          AS codeCount,
+            A.PREMIUM             AS premium,
+            A.DHL                 AS dhl,
+            A.discountPeriod
+        FROM (
+            SELECT
+                PROMOTION_CODE_SEQ,
+                PROMOTION_CODE,
+                CASE
+                    WHEN CODE_COUNT != 0 THEN 'Y'
+                    ELSE 'N'
+                END AS CODE_COUNT,
+                PREMIUM,
+                DHL,
+                CONVERT(CHAR(10), DISCOUNT_START_DATE, 126) + ' ~ ' + CONVERT(CHAR(10), DISCOUNT_END_DATE, 126) AS discountPeriod,
+                CONVERT(CHAR(8), CODE_START_DATE, 112) AS startDate,
+                CONVERT(CHAR(8), CODE_END_DATE, 112)   AS endDate
+            FROM PROMOTION_CODE
+            WHERE 1 = 1
+        ) A
+        WHERE 1 = 1
+        AND (A.startDate  <![CDATA[<=]]> #{toDay} AND A.endDate <![CDATA[>=]]> #{toDay}) 
+        <if test='promotionCode != null and promotionCode != ""'>
+            AND A.PROMOTION_CODE = #{promotionCode}
+        </if>
+    </select>
+    
+    <select id="checkPromotionCode" parameterType="LDataMap" resultType="java.lang.String">
+        /* promotionCodeMapper.checkPromotionCode */
+        SELECT
+            ISNULL(PROMOTION_CODE, '') AS "promotionCode"
+        FROM P002
+        WHERE 1 = 1
+        AND MEM_USERCD = #{usercd} 
+    </select>
+    
+    <select id="getPromotionCodeData" parameterType="LDataMap" resultType="xrt.sys.promotionCode.PromotionCodeVO">
+        /* promotionCodeMapper.getPromotionCodeData */
+        SELECT
+            PROMOTION_CODE_SEQ  AS promotionCodeSeq,
+            PROMOTION_CODE      AS promotionCode,
+            CODE_COUNT          AS codeCount,
+            CONVERT(CHAR(10), CODE_START_DATE, 126)     AS codeStartDate,
+            CONVERT(CHAR(10), CODE_END_DATE, 126)       AS codeEndDate,
+            CONVERT(CHAR(10), DISCOUNT_START_DATE, 126) AS discountStartDate,
+            CONVERT(CHAR(10), DISCOUNT_END_DATE, 126)   AS discountEndDate,
+            PREMIUM             AS premium,
+            DHL                 AS dhl,
+            CONTENT             AS content
+        FROM PROMOTION_CODE
+        WHERE 1 = 1
+        <if test='promotionCodeSeq != null and promotionCodeSeq != ""'>
+            AND PROMOTION_CODE_SEQ = #{promotionCodeSeq}
+        </if>
+    </select>
+    
+    <insert id="insertPromotionCode" parameterType="xrt.sys.promotionCode.PromotionCodeVO">
+        <selectKey resultType="java.lang.String" keyProperty="promotionCodeSeq" order="BEFORE">
+            /* promotionCodeMapper.getPROMOTION_CODE_SEQ */
+            SELECT 
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR PROMOTION_CODE_SEQ), 20) AS promotionCodeSeq
+        </selectKey>
+        /* promotionCodeMapper.insertPromotionCode */
+        INSERT INTO PROMOTION_CODE (
+            PROMOTION_CODE_SEQ,
+            PROMOTION_CODE,
+            CODE_COUNT,
+            CODE_START_DATE,
+            CODE_END_DATE,
+            DISCOUNT_START_DATE,
+            DISCOUNT_END_DATE,
+            PREMIUM,
+            DHL,
+            CONTENT,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{promotionCodeSeq},
+            #{promotionCode},
+            #{codeCount},
+            #{codeStartDate},
+            #{codeEndDate},
+            #{discountStartDate},
+            #{discountEndDate},
+            #{premium},
+            #{dhl},
+            #{content},
+            #{addusercd},
+            GETDATE(),
+            #{updusercd},
+            GETDATE(),
+            #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updateP002" parameterType="LDataMap">
+        /* promotionCodeMapper.updateP002 */
+        UPDATE P002
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="promotionCode != null and promotionCode != ''">
+                PROMOTION_CODE = #{promotionCode},
+            </if>
+            <if test="usercd != null and usercd != ''">
+                UPDUSERCD = #{usercd},
+                UPDDATETIME = GETDATE()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND MEM_USERCD = #{usercd}
+    </update>
+    
+    <update id="updatePromotionCode" parameterType="xrt.sys.promotionCode.PromotionCodeVO">
+        /* promotionCodeMapper.updatePromotionCode */
+        UPDATE PROMOTION_CODE
+        <trim prefix="SET" suffixOverrides=",">
+            <choose>
+                <when test='codeCount == "Y"'>
+                    CODE_COUNT = CODE_COUNT - 1,
+                </when>
+                <when test='codeCount != "Y"'>
+                    CODE_COUNT = #{codeCount},
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+            <if test="codeStartDate != null and codeStartDate != ''">
+                CODE_START_DATE = #{codeStartDate},
+            </if>
+            <if test="codeEndDate != null and codeEndDate != ''">
+                CODE_END_DATE = #{codeEndDate},
+            </if>
+            <if test="discountStartDate != null and discountStartDate != ''">
+                DISCOUNT_START_DATE = #{discountStartDate},
+            </if>
+            <if test="discountEndDate != null and discountEndDate != ''">
+                DISCOUNT_END_DATE = #{discountEndDate},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = GETDATE()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND PROMOTION_CODE_SEQ = #{promotionCodeSeq}
+    </update>
+    
+    <delete id="deletePromotionCode" parameterType="LDataMap">
+        /* promotionCodeMapper.deletePromotionCode */
+        DELETE FROM PROMOTION_CODE
+        WHERE 1 = 1
+        AND PROMOTION_CODE_SEQ = #{promotionCodeSeq}
+    </delete>
+    
+</mapper>

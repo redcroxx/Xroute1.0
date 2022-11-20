@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyBoxSizeMapper">
+
+    <select id="getSearch" parameterType="xrt.fulfillment.atomy.AtomyBoxSizeVO" resultType="xrt.fulfillment.atomy.AtomyBoxSizeVO">
+        SELECT
+            ATOMY_BOX_SIZE_SEQ AS atomyBozSizeSeq
+            , COMPCD AS compcd
+            , NO AS no
+            , LENGTH AS length
+            , WIDTH AS width
+            , HEIGHT AS height
+            , CBM AS cbm
+            , WEIGHT AS weight
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            ATOMY_BOX_SIZE
+        WHERE 1 = 1
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <insert id="insertAtomyBoxSize" parameterType="xrt.fulfillment.atomy.AtomyBoxSizeVO">
+        <selectKey resultType="java.util.HashMap" keyProperty="atomyBozSizeSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR ATOMY_BOX_SIZE_SEQ), 20) AS atomyBozSizeSeq
+        </selectKey>
+        INSERT INTO ATOMY_BOX_SIZE
+        (
+            ATOMY_BOX_SIZE_SEQ
+            , COMPCD
+            , NO 
+            , LENGTH
+            , WIDTH
+            , HEIGHT
+            , CBM
+            , WEIGHT
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{atomyBozSizeSeq}
+            , #{compcd}
+            , #{no}
+            , #{length}
+            , #{width}
+            , #{height}
+            , #{cbm}
+            , #{weight}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updateAtomyBoxSize" parameterType="xrt.fulfillment.atomy.AtomyBoxSizeVO">
+        UPDATE ATOMY_BOX_SIZE
+        SET
+            NO = #{no}
+            , LENGTH = #{length}
+            , WIDTH = #{width}
+            , HEIGHT = #{height}
+            , CBM = #{cbm}
+            , WEIGHT = #{weight}
+            , UPDUSERCD = #{updusercd}
+            , UPDDATETIME = getDate()
+            , TERMINALCD = #{terminalcd}
+         WHERE 1 = 1
+         AND ATOMY_BOX_SIZE_SEQ = #{atomyBozSizeSeq}
+    </update>
+    
+    <delete id="deleteBoxSize" parameterType="LDataMap">
+        DELETE FROM ATOMY_BOX_SIZE
+        WHERE 1 = 1
+    </delete>
+</mapper>

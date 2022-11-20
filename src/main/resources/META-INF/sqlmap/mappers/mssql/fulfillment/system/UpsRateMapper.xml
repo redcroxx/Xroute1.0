@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UpsRateMapper">
+
+    <select id="getSearch" parameterType="xrt.fulfillment.system.UpsRateVO" resultType="xrt.fulfillment.system.UpsRateVO">
+        SELECT
+            KG AS kg
+            , ZONE1 AS zone1
+            , ZONE2 AS zone2
+            , ZONE3 AS zone3
+            , ZONE4 AS zone4
+            , ZONE5 AS zone5
+            , ZONE6 AS zone6
+            , ZONE7 AS zone7
+            , ZONE8 AS zone8
+            , ZONE9 AS zone9
+            , ZONE10 AS zone10
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            UPS_RATE
+        WHERE 1 = 1
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <insert id="insertUpsRate" parameterType="xrt.fulfillment.system.UpsRateVO">
+        <selectKey resultType="java.util.HashMap" keyProperty="upsRateSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_UPS_RATE), 10) AS upsRateSeq
+        </selectKey>
+        INSERT INTO UPS_RATE(
+            UPS_RATE_SEQ
+            , KG
+            , ZONE1
+            , ZONE2
+            , ZONE3
+            , ZONE4
+            , ZONE5
+            , ZONE6
+            , ZONE7
+            , ZONE8
+            , ZONE9
+            , ZONE10
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{upsRateSeq}
+            , #{kg}
+            , #{zone1}
+            , #{zone2}
+            , #{zone3}
+            , #{zone4}
+            , #{zone5}
+            , #{zone6}
+            , #{zone7}
+            , #{zone8}
+            , #{zone9}
+            , #{zone10}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+     <update id="updateUpsRate" parameterType="xrt.fulfillment.system.UpsRateVO">
+        UPDATE
+            UPS_RATE
+         <trim prefix="SET" suffixOverrides=",">
+            <if test="zone1 != null and zone1 !=''">
+                ZONE1 = #{zone1},
+            </if>
+            <if test="zone2 != null and zone2 !=''">
+                ZONE2 = #{zone2},
+            </if>
+            <if test="zone3 != null and zone3 !=''">
+                ZONE3 = #{zone3},
+            </if>
+            <if test="zone4 != null and zone4 !=''">
+                ZONE4 = #{zone4},
+            </if>
+            <if test="zone5 != null and zone5 !=''">
+                ZONE5 = #{zone5},
+            </if>
+            <if test="zone6 != null and zone6 !=''">
+                ZONE6 = #{zone6},
+            </if>
+            <if test="zone7 != null and zone7 !=''">
+                ZONE7 = #{zone7},
+            </if>
+            <if test="zone8 != null and zone8 !=''">
+                ZONE8 = #{zone8},
+            </if>
+            <if test="zone9 != null and zone9 !=''">
+                ZONE9 = #{zone9},
+            </if>
+            <if test="zone10 != null and zone10 !=''">
+                ZONE10 = #{zone10},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+         </trim>
+         WHERE 1 = 1
+         AND KG = #{kg}
+     </update>
+     
+    <delete id="deleteUpsRate" parameterType="LDataMap">
+        DELETE FROM DHL_RATE
+        WHERE 1 = 1
+    </delete>
+
+</mapper>

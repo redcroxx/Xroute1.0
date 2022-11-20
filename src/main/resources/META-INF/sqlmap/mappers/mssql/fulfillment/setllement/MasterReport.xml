@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="MasterReportMapper">
+    <select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+        /* MasterReportMapper.getSearch */
+        <choose>
+            <when test='nation.equalsIgnoreCase("US")'>
+                SELECT
+                    A.XRT_INVC_SNO
+                    , A.ORD_CNT
+                    , ISNULL(A.INVC_SNO1, '')   AS INVC_SNO
+                    , A.WGT
+                    , (SELECT TOP 1 STUFF(
+                        (SELECT
+                            ', '+ od.GOODS_NM +
+                            CASE
+                                WHEN od.GOODS_OPTION IS NULL THEN ''
+                                WHEN od.GOODS_OPTION = '' THEN ''
+                                ELSE '/' + od.GOODS_OPTION
+                            END GOODS_OPTION
+                         FROM TORDERDTL od
+                         WHERE 1 = 1
+                         AND A.ORD_CD = od.ORD_CD
+                         FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+                      FROM TORDERDTL)               AS GOODS
+                    , (SELECT P02.ENG_CEO
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_CEO
+                    , (SELECT P02.NAME
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_NAME
+                    , (SELECT P02.ENG_ADDR
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_ADDR
+                    , (SELECT P02.TEL1
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_TEL
+                    , A.RECV_NAME
+                    , A.RECV_ADDR1
+                    , A.RECV_ADDR2
+                    , A.RECV_CITY
+                    , A.RECV_TEL
+                    , A.RECV_STATE
+                    , A.RECV_POST
+                    , 'WEST' AS ZONE
+                    , A.SHIPPING_COMPANY
+                FROM TORDER A
+                WHERE 1 = 1
+                AND A.E_NATION = 'US'
+                AND A.SHIP_METHOD_CD = 'PREMIUM'
+                AND A.DEL_FLG = 'N'
+                <if test='usState == "US_STATE_EAST" and DATE_TO lt 20200403'>
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND TRIM(A.RECV_STATE) IN (SELECT CODE FROM S002 WHERE  CODEKEY = 'US_STATE_EAST')
+                    AND A.STATUS_CD IN ('30', '40', '50', '60')
+                </if>
+                <if test='usState == "US_STATE_EAST" and DATE_TO gt 20200402 and DATE_TO lt 20201221'>
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND TRIM(A.RECV_STATE) IN (SELECT CODE FROM S002 WHERE  CODEKEY = 'US_STATE_EAST')
+                    AND CONVERT(FLOAT, A.WGT, 5) <![CDATA[>]]> 0.3685
+                    AND A.STATUS_CD IN ('30', '40', '50', '60')
+                </if>
+                <if test='usState == "US_STATE_EAST" and DATE_TO lt 20201221 and DATE_FROM gt 20201220'>
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND '20201220')
+                    AND A.STATUS_CD IN ('30', '40', '50', '60')
+                </if>
+                <if test='usState == "US_STATE_EAST" and DATE_TO gt 20201220'>
+                    AND A.STATUS_CD IS NULL
+                </if>
+                <if test='usState == "US_STATE_WEST" and DATE_TO lt 20200403'>
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND TRIM(A.RECV_STATE) IN (SELECT CODE FROM S002 WHERE  CODEKEY = 'US_STATE_WEST')
+                    AND A.STATUS_CD IN ('30', '40', '50', '60')
+                </if>
+                <if test='usState == "US_STATE_WEST" and DATE_TO gt 20200402 and DATE_TO lt 20201221 and DATE_FROM lt 20201221'>
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND TRIM(A.RECV_STATE) IN (SELECT CODE FROM S002 WHERE  CODEKEY = 'US_STATE_WEST')
+                    AND A.STATUS_CD IN ('30', '40', '50', '60')
+                    UNION
+                    SELECT
+                        A.XRT_INVC_SNO
+                        , A.ORD_CNT
+                        , ISNULL(A.INVC_SNO1, '')   AS INVC_SNO
+                        , A.WGT
+                        , (SELECT TOP 1 STUFF(
+                            (SELECT
+                                ', '+ od.GOODS_NM +
+                                CASE
+                                    WHEN od.GOODS_OPTION IS NULL THEN ''
+                                    WHEN od.GOODS_OPTION = '' THEN ''
+                                    ELSE '/' + od.GOODS_OPTION
+                                END GOODS_OPTION
+                             FROM TORDERDTL od
+                             WHERE 1 = 1
+                             AND A.ORD_CD = od.ORD_CD
+                             FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+                          FROM TORDERDTL)               AS GOODS
+                        , (SELECT P02.ENG_CEO
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_CEO
+                        , (SELECT P02.NAME
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_NAME
+                        , (SELECT P02.ENG_ADDR
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_ADDR
+                        , (SELECT P02.TEL1
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_TEL
+                        , A.RECV_NAME
+                        , A.RECV_ADDR1
+                        , A.RECV_ADDR2
+                        , A.RECV_TEL
+                        , A.RECV_CITY
+                        , A.RECV_STATE
+                        , A.RECV_POST
+                        , 'WEST' AS ZONE
+                        , A.SHIPPING_COMPANY
+                    FROM TORDER A
+                    WHERE 1 = 1
+                    AND A.E_NATION = 'US'
+                    AND A.SHIP_METHOD_CD = 'PREMIUM'
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND TRIM(A.RECV_STATE) IN (SELECT CODE FROM S002 WHERE  CODEKEY = 'US_STATE_EAST')
+                    AND CONVERT(FLOAT, A.WGT, 5) <![CDATA[<=]]> 0.3685
+                    AND A.STATUS_CD BETWEEN '30' AND '60'
+                    AND A.DEL_FLG = 'N'
+                </if>
+                <if test='usState == "US_STATE_WEST" and DATE_TO lt 20201221 and DATE_FROM gt 20201220'>
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND TRIM(A.RECV_STATE) IN (SELECT CODE FROM S002 WHERE  CODEKEY = 'US_STATE_WEST')
+                    AND A.STATUS_CD IN ('30', '40', '50', '60')
+                    UNION
+                    SELECT
+                        A.XRT_INVC_SNO
+                        , A.ORD_CNT
+                        , ISNULL(A.INVC_SNO1, '')   AS INVC_SNO
+                        , A.WGT
+                        , (SELECT TOP 1 STUFF(
+                            (SELECT
+                                ', '+ od.GOODS_NM +
+                                CASE
+                                    WHEN od.GOODS_OPTION IS NULL THEN ''
+                                    WHEN od.GOODS_OPTION = '' THEN ''
+                                    ELSE '/' + od.GOODS_OPTION
+                                END GOODS_OPTION
+                             FROM TORDERDTL od
+                             WHERE 1 = 1
+                             AND A.ORD_CD = od.ORD_CD
+                             FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+                          FROM TORDERDTL)               AS GOODS
+                        , (SELECT P02.ENG_CEO
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_CEO
+                        , (SELECT P02.NAME
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_NAME
+                        , (SELECT P02.ENG_ADDR
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_ADDR
+                        , (SELECT P02.TEL1
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_TEL
+                        , A.RECV_NAME
+                        , A.RECV_ADDR1
+                        , A.RECV_ADDR2
+                        , A.RECV_TEL
+                        , A.RECV_CITY
+                        , A.RECV_STATE
+                        , A.RECV_POST
+                        , 'WEST' AS ZONE
+                        , A.SHIPPING_COMPANY
+                    FROM TORDER A
+                    WHERE 1 = 1
+                    AND A.E_NATION = 'US'
+                    AND A.SHIP_METHOD_CD = 'PREMIUM'
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN '20201221' AND #{DATE_FROM})
+                    AND TRIM(A.RECV_STATE) IN (SELECT CODE FROM S002 WHERE  CODEKEY = 'US_STATE_EAST')
+                    AND A.STATUS_CD BETWEEN '30' AND '60'
+                    AND A.DEL_FLG = 'N'
+                </if>
+                <if test='usState == "US_STATE_WEST" and DATE_TO gt 20201220'>
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND A.STATUS_CD BETWEEN '30' AND '60'
+                </if>
+            </when>
+            <otherwise>
+                SELECT
+                    A.XRT_INVC_SNO
+                    , A.ORD_CNT
+                    , CASE
+                        WHEN A.SHIPPING_COMPANY = 'SHIPPO' THEN INVC_SNO1
+                        WHEN A.SHIPPING_COMPANY = 'QXPRESS' THEN INVC_SNO1
+                        ELSE A.INVC_SNO2
+                      END INVC_SNO
+                    , A.WGT
+                    , A.GOODS
+                    , A.SELLER_CEO
+                    , A.SELLER_NAME
+                    , A.SELLER_ADDR
+                    , A.SELLER_TEL
+                    , A.RECV_NAME
+                    , A.RECV_ADDR1
+                    , A.RECV_ADDR2
+                    , A.RECV_TEL
+                    , A.RECV_CITY
+                    , A.RECV_STATE
+                    , A.RECV_POST
+                    , A.ZONE
+                FROM (
+                    SELECT
+                        A.XRT_INVC_SNO
+                        , A.ORD_CNT
+                        , ISNULL(A.INVC_SNO1, '')   AS INVC_SNO1
+                        , ISNULL(A.INVC_SNO2, '')   AS INVC_SNO2
+                        , A.WGT
+                        , (SELECT TOP 1 STUFF(
+                            (SELECT
+                                ', '+ od.GOODS_NM +
+                                CASE
+                                    WHEN od.GOODS_OPTION IS NULL THEN ''
+                                    WHEN od.GOODS_OPTION = '' THEN ''
+                                    ELSE '/' + od.GOODS_OPTION
+                                END GOODS_OPTION
+                             FROM TORDERDTL od
+                             WHERE 1 = 1
+                             AND A.ORD_CD = od.ORD_CD
+                             FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+                          FROM TORDERDTL)               AS GOODS
+                        , (SELECT P02.ENG_CEO
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_CEO
+                        , (SELECT P02.NAME
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_NAME
+                        , (SELECT P02.ENG_ADDR
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_ADDR
+                        , (SELECT P02.TEL1
+                           FROM P002 P02
+                          WHERE A.ORGCD = P02.ORGCD)    AS SELLER_TEL
+                        , A.RECV_NAME
+                        , A.RECV_ADDR1
+                        , A.RECV_ADDR2
+                        , A.RECV_CITY
+                        , A.RECV_STATE
+                        , A.RECV_TEL
+                        , A.RECV_POST
+                        , CASE
+                            WHEN A.E_NATION = 'US' THEN
+                                CASE
+                                    WHEN #{usState} = 'US_STATE_EAST' THEN 'EAST'
+                                    WHEN #{usState} = 'US_STATE_WEST' THEN 'WEST'
+                                END
+                            ELSE ''
+                          END                           AS ZONE
+                        , A.SHIPPING_COMPANY
+                    FROM TORDER A
+                    WHERE 1 = 1
+                    AND A.E_NATION = #{nation}
+                    AND A.SHIP_METHOD_CD = 'PREMIUM'
+                    AND (CONVERT(VARCHAR,A.STOCK_DATE,112) BETWEEN #{DATE_TO} AND #{DATE_FROM})
+                    AND A.STATUS_CD BETWEEN '30' AND '60'
+                    AND A.DEL_FLG = 'N'
+                ) A
+            </otherwise>
+        </choose>
+    </select>
+</mapper>

@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 사용자 관리 -->
+<mapper namespace="S000010Mapper">
+
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* S000010.getSearch */
+		SELECT 
+			A.COMPCD
+			, B.NAME AS COMPNM
+			, A.USERCD
+			, A.NAME
+			, A.ORGCD
+			, C.NAME AS ORGNM
+			, A.CUSTCD
+			, D.NAME AS CUSTNM
+			, A.DEPTCD
+			, A.POSITION
+			, A.WHCD
+			, E.NAME AS WHNM
+			, A.USERGROUP
+			, G.SNAME1 + '[' + G.REMARK + ']' AS USERGROUPNM
+			, A.PHONENO
+			, A.FAX
+			, A.EMAIL
+			, A.SEX
+			, A.BIRTHDATE
+			, A.WORKTYPE
+			, A.EMPLOYTYPE
+			, A.EMPLOYDATE
+			, CONVERT(VARCHAR, A.PWDCHGDATE, 20) AS PWDCHGDATE
+			, A.ISLOCK
+			, A.ATTACH_FILE_PATH
+			, A.ATTACH_FILE_REAL_NAME
+			, A.ISUSING
+			, RTRIM(LTRIM(F.PRINT1)) AS PRINT1
+			, RTRIM(LTRIM(F.PRINT2)) AS PRINT2
+			, RTRIM(LTRIM(H.SCALE1)) AS SCALE1
+			, A.ADDUSERCD
+			, CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			, A.UPDUSERCD
+			, CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			, A.TERMINALCD
+		FROM S010 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		ON A.COMPCD = B.COMPCD
+		LEFT OUTER JOIN P002 C WITH (NOLOCK)
+		ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD
+		LEFT OUTER JOIN P003 D WITH (NOLOCK)
+		ON A.COMPCD = D.COMPCD AND A.CUSTCD = D.CUSTCD
+		LEFT OUTER JOIN P004 E WITH (NOLOCK)
+		ON A.COMPCD = E.COMPCD AND A.WHCD = E.WHCD
+		LEFT OUTER JOIN S017 F WITH(NOLOCK)
+		ON A.COMPCD = F.COMPCD AND A.USERCD = F.USERCD
+		LEFT OUTER JOIN TSCALE H WITH(NOLOCK)
+		ON A.COMPCD = H.COMPCD AND A.USERCD = H.USERCD
+		LEFT JOIN S002 G WITH(NOLOCK)
+		ON A.COMPCD = G.COMPCD
+		AND A.USERGROUP = G.CODE
+		AND G.CODEKEY = 'USERGROUP'
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND A.COMPCD = #{S_COMPCD}
+			</if>
+			<if test="S_USER != null and S_USER != ''">
+			AND ((A.USERCD LIKE '%' + #{S_USER} + '%') OR (A.NAME LIKE '%' + #{S_USER} + '%'))
+			</if>
+			<if test="S_ISUSING != null and S_ISUSING != ''">
+			AND A.ISUSING = #{S_ISUSING}
+			</if>
+			<if test="S_USERGROUP != null and S_USERGROUP != ''">
+			AND A.USERGROUP = #{S_USERGROUP}
+			</if>
+			<!-- 190903 cmju 권한에 따라 해당 셀러 목록만 보이도록 수정 -->
+			<if test="USERGROUP_CD != null and USERGROUP_CD != ''">
+				<choose>
+					<when test="USERGROUP_CD == '80'"></when>
+					<when test="USERGROUP_CD == '70'">
+					AND A.WHCD = #{WHCD}
+					</when>
+					<when test="USERGROUP_CD == '60' or USERGROUP_CD == '50' or USERGROUP_CD == '30' or USERGROUP_CD == '20'">
+					AND A.USERCD = #{USERCD}
+					</when>
+					<when test="USERGROUP_CD == '40'">
+					AND A.ORGCD = #{ORGCD}
+					</when>
+					<otherwise>
+					AND A.USERCD = #{USERCD}
+					</otherwise>
+				</choose>
+			</if>
+			<if test="S_DEPTCD != null and S_DEPTCD != ''">
+			AND A.DEPTCD = #{S_DEPTCD}
+			</if>
+			<!-- 190903 cmju 검색조건 셀러, 창고 추가 -->
+			<if test="S_ITEM != null and S_ITEM != ''">
+			AND (A.ORGCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' OR C.NAME LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+			</if>
+			<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.WHCD = #{S_WHCD}
+			</if>
+		</trim>
+		ORDER BY A.COMPCD, A.USERGROUP, A.DEPTCD, A.USERCD
+	</select>
+
+	<!-- 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* S000010.getDetail */
+		SELECT
+			A.COMPCD
+			, A.USERCD
+			, A.NAME
+			, A.ORGCD
+			, A.CUSTCD
+			, A.DEPTCD
+			, A.POSITION
+			, A.WHCD
+			, A.USERGROUP
+			, A.PHONENO
+			, A.FAX
+			, A.EMAIL
+			, A.SEX
+			, A.BIRTHDATE
+			, A.WORKTYPE
+			, A.EMPLOYTYPE
+			, A.EMPLOYDATE
+			, A.ISDRT
+			, A.PWDCHGDATE
+			, A.ISLOCK
+			, A.ATTACH_FILE_PATH
+			, A.ATTACH_FILE_REAL_NAME
+			, A.ISUSING
+			, A.ADDUSERCD
+			, CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			, A.UPDUSERCD
+			, CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			, A.TERMINALCD
+		FROM S010 A WITH
+		(NOLOCK)
+		WHERE USERCD = #{USERCD}
+	</select>
+
+	<!-- 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* S000010.insertMst */
+		INSERT INTO S010 WITH (ROWLOCK) (
+			COMPCD
+			, USERCD
+			, NAME
+			, PASS
+			, ORGCD
+			, CUSTCD
+			, POSITION
+			, WHCD
+			, USERGROUP
+			, DEPTCD
+			, PHONENO
+			, FAX
+			, EMAIL
+			, SEX
+			, BIRTHDATE
+			, WORKTYPE
+			, EMPLOYTYPE
+			, EMPLOYDATE
+			, PWDCHGDATE
+			, ISLOCK
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			#{COMPCD}
+			, dbo.UFX_Trim(UPPER(#{USERCD}))
+			, #{NAME}
+			, dbo.UFX_Encryption2(dbo.UFX_Trim(LOWER(#{USERCD}))
+			, #{ENCKEY})
+			, #{ORGCD}
+			, #{CUSTCD}
+			, #{POSITION}
+			, #{WHCD}
+			, #{USERGROUP}
+			, #{DEPTCD}
+			, #{PHONENO}
+			, #{FAX}
+			, #{EMAIL}
+			, #{SEX}
+			, #{BIRTHDATE}
+			, #{WORKTYPE}
+			, #{EMPLOYTYPE}
+			, #{EMPLOYDATE}
+			, #{PWDCHGDATE}
+			, #{ISLOCK}
+			, ISNULL(CONVERT(NVARCHAR, #{ISUSING}), 'Y')
+			, #{LOGIN_USERCD} 
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 프린터 추가 -->
+	<insert id="insertPrint" parameterType="LDataMap">
+		/* S000010.insertPrint */
+		INSERT INTO S017 WITH (ROWLOCK) (
+			COMPCD
+			, USERCD
+			, NAME
+			, PRINT1
+			, PRINT2
+			, PRINT3
+			, PRINT4
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			#{COMPCD}
+			, dbo.UFX_Trim(UPPER(#{USERCD}))
+			, #{NAME}
+			<if test="PRINT1 != NULL">
+			, #{PRINT1}
+			</if>
+			<if test="PRINT1 == NULL">
+			, 'Microsoft Print to PDF'
+			</if>
+			, #{PRTIN2}
+			, #{PRINT3}
+			, #{PRINT4}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+	
+		<!-- 저울 추가 -->
+	<insert id="insertScale" parameterType="LDataMap">
+		/* S000010.insertScale */
+		INSERT INTO TSCALE WITH (ROWLOCK) (
+			COMPCD
+			, USERCD
+			, NAME
+			, SCALE1
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			#{COMPCD}
+			, dbo.UFX_Trim(UPPER(#{USERCD}))
+			, #{NAME}
+			<if test="SCALE1 != NULL">
+			, #{SCALE1} 
+			</if>
+			<if test="SCALE1 == NULL">
+			, 'SC02'
+			</if>
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* S000010.updateMst */
+		UPDATE S010 WITH (ROWLOCK)
+		SET 
+			NAME = #{NAME}
+			, ORGCD = #{ORGCD}
+			, CUSTCD = #{CUSTCD}
+			, POSITION = #{POSITION}
+			, DEPTCD = #{DEPTCD}
+			, WHCD = #{WHCD}
+			, USERGROUP = #{USERGROUP}
+			, PHONENO = #{PHONENO}
+			, FAX = #{FAX}
+			, EMAIL = #{EMAIL}
+			, SEX = #{SEX}
+			, BIRTHDATE = #{BIRTHDATE}
+			, WORKTYPE = #{WORKTYPE}
+			, EMPLOYTYPE = #{EMPLOYTYPE}
+			, EMPLOYDATE = #{EMPLOYDATE}
+			, PWDCHGDATE = #{PWDCHGDATE}
+			, ISLOCK = #{ISLOCK}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND USERCD = #{USERCD}
+	</update>
+
+	<!-- 프린터 수정 -->
+	<update id="updatePrint" parameterType="LDataMap">
+		/* S000010.updatePrint */
+		UPDATE S017 WITH (ROWLOCK)
+		SET	
+			PRINT1 = #{PRINT1}
+			, PRINT2 = #{PRINT2}
+			, PRINT3 = #{PRINT3}
+			, PRINT4 = #{PRINT4}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND USERCD = #{USERCD}
+	</update>
+	
+	<!-- 프린터 수정 -->
+	<update id="updateScale" parameterType="LDataMap">
+		/* S000010.updatePrint */
+		UPDATE TSCALE WITH (ROWLOCK)
+		SET
+			SCALE1 = #{SCALE1}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD =
+		#{COMPCD}
+		AND USERCD = #{USERCD}
+	</update>
+
+	<!-- 삭제 (사용/미사용) -->
+	<update id="updateIsusing" parameterType="LDataMap">
+		/* S000010.updateIsusing */
+		UPDATE S010 WITH (ROWLOCK)
+		SET 
+			ISUSING = #{ISUSING}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND USERCD = #{USERCD}
+	</update>
+
+	<!-- 비밀번호 초기화 -->
+	<update id="updatePassInit" parameterType="LDataMap">
+		/* S000010.updatePassInit */
+		UPDATE S010 WITH (ROWLOCK)
+		SET 
+			PASS = dbo.UFX_Encryption2(LOWER(#{USERCD}), #{ENCKEY})
+			, PWDCHGDATE = GETDATE()
+			, ISLOCK = 'N'
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND USERCD = #{USERCD}
+	</update>
+
+	<!-- 로그인 이력 저장 -->
+	<insert id="insertLoginHistory" parameterType="LDataMap">
+		/* S000010.insertLoginHistory */
+		INSERT INTO S013 (
+			COMPCD
+			, USERCD
+			, HISTORYKEY
+			, HISTORYTYPE
+			, HISTORYDATETIME
+			, USERIP
+			, USERLOCALIP
+			, USEROS
+			, USERBROWSER
+			, STATUS
+			, REMARK
+		) VALUES (
+			#{COMPCD}
+			, #{USERCD}
+			, (SELECT ISNULL(MAX(HISTORYKEY), 0) + 1 FROM S013 WHERE COMPCD = #{COMPCD} AND USERCD = #{USERCD})
+			, #{HISTORYTYPE}
+			, GETDATE()
+			, #{USERIP}
+			, #{USERLOCALIP}
+			, #{USEROS}
+			, #{USERBROWSER}
+			, 'S'
+			, '비밀번호 초기화'
+		)
+	</insert>
+</mapper>

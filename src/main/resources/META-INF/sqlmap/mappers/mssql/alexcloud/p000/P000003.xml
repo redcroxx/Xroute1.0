@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 거래처 관리 -->
+<mapper namespace="P000003Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000003.getSearch */
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , A.ORGCD
+			 , G.NAME ORGNM
+			 , A.CUSTCD
+			 , A.CUSTGROUP
+			 , A.CATEGORYCD AS CUSTCAT3CD
+		     , D.NAME AS CUSTCAT3NM
+		     , E.NAME AS CUSTCAT2NM
+		     , F.NAME AS CUSTCAT1NM
+			 , A.NAME
+			 , A.SNAME
+			 , A.ANAME
+			 , A.CEO
+			 , A.BIZKIND
+			 , A.BIZTYPE
+			 , A.BIZNO
+			 , A.ADDR1
+			 , A.ADDR2
+			 , A.ADDR3
+			 , A.POST
+			 , A.COUNTRYCD
+			 , A.PORTCD
+			 , A.DISTRICTCD
+			 , A.PHONE1
+			 , A.PHONE2
+			 , A.FAX1
+			 , A.FAX2
+			 , A.EMAIL
+			 , A.URL
+			 , A.REFUSERNM
+			 , A.REFUSERPHONE
+			 , A.ISSUPPLIER
+			 , A.ISSHIPPER
+			 , A.ISDELIVERY
+			 , A.REMARK
+			 , A.F_USER1
+			 , A.F_USER2
+			 , A.F_USER3
+			 , A.F_USER4
+			 , A.F_USER5
+			 , A.F_USER6
+			 , A.F_USER7
+			 , A.F_USER8
+			 , A.F_USER9
+			 , A.F_USER10
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.UPDUSERCD
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		FROM P003 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		LEFT OUTER JOIN P018 D WITH (NOLOCK)
+		  ON A.COMPCD = D.COMPCD AND A.CATEGORYCD = D.CATEGORYCD
+		LEFT OUTER JOIN P018 E WITH (NOLOCK)
+	      ON D.COMPCD = E.COMPCD AND D.PCATEGORYCD = E.CATEGORYCD
+		LEFT OUTER JOIN P018 F WITH (NOLOCK)
+	      ON E.COMPCD = F.COMPCD AND E.PCATEGORYCD = F.CATEGORYCD
+	    JOIN P002 G WITH (NOLOCK)
+	      ON G.COMPCD = A.COMPCD
+	     AND G.ORGCD = A.ORGCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+				AND A.COMPCD = #{S_COMPCD}
+			</if>
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+				AND A.ORGCD = #{S_ORGCD}
+			</if>
+			<if test="S_CUST != null and S_CUST != ''">
+				AND (A.CUSTCD LIKE '%' + dbo.UFX_Trim(#{S_CUST}) + '%' OR A.NAME LIKE '%' + dbo.UFX_Trim(#{S_CUST}) + '%')
+			</if>
+			<if test="S_CUSTCATCD != null and S_CUSTCATCD != ''">
+				AND (A.CATEGORYCD = #{S_CUSTCATCD}
+					OR E.CATEGORYCD = #{S_CUSTCATCD}
+					OR F.CATEGORYCD = #{S_CUSTCATCD})
+			</if>
+			<trim prefix="AND (" prefixOverrides="OR" suffix=")">
+				<if test='S_ISSUPPLIER == "Y"'>
+					OR (A.ISSUPPLIER = 'Y' AND A.ISSHIPPER LIKE '%' AND A.ISDELIVERY LIKE '%')
+				</if>
+				<if test='S_ISSHIPPER == "Y"'>
+					OR (A.ISSUPPLIER LIKE '%' AND A.ISSHIPPER = 'Y' AND A.ISDELIVERY LIKE '%')
+				</if>
+				<if test='S_ISDELIVERY == "Y"'>
+					OR (A.ISSUPPLIER LIKE '%' AND A.ISSHIPPER LIKE '%' AND A.ISDELIVERY = 'Y')
+				</if>
+			</trim>
+			<if test="S_ISUSING != null and S_ISUSING != ''">
+				AND A.ISUSING = #{S_ISUSING}
+			</if>
+		</trim>
+		ORDER BY A.COMPCD, A.ORGCD, A.CUSTCD 
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000003.getDetail */
+		SELECT A.COMPCD
+			 , A.CUSTCD
+			 , A.CUSTGROUP
+			 , A.CATEGORYCD
+			 , A.NAME
+			 , A.SNAME
+			 , A.ANAME
+			 , A.CEO
+			 , A.BIZKIND
+			 , A.BIZTYPE
+			 , A.BIZNO
+			 , A.ADDR1
+			 , A.ADDR2
+			 , A.ADDR3
+			 , A.POST
+			 , A.COUNTRYCD
+			 , A.PORTCD
+			 , A.DISTRICTCD
+			 , A.PHONE1
+			 , A.PHONE2
+			 , A.FAX1
+			 , A.FAX2
+			 , A.EMAIL
+			 , A.URL
+			 , A.REFUSERNM
+			 , A.REFUSERPHONE
+			 , A.ISSALES
+			 , A.ISSUPPLIER
+			 , A.ISSHIPPER
+			 , A.ISDELIVERY
+			 , A.REMARK
+			 , A.F_USER1
+			 , A.F_USER2
+			 , A.F_USER3
+			 , A.F_USER4
+			 , A.F_USER5
+			 , A.F_USER6
+			 , A.F_USER7
+			 , A.F_USER8
+			 , A.F_USER9
+			 , A.F_USER10
+			 , A.ISUSING
+		FROM P003 A WITH (NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.ORGCD = #{ORGCD}
+		  AND A.CUSTCD = #{CUSTCD}
+	</select>
+
+	<!-- 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000003.insertMst */
+		INSERT INTO P003 WITH (ROWLOCK)(
+			COMPCD, CUSTCD, ORGCD, CUSTGROUP, CATEGORYCD, NAME
+		  , SNAME, ANAME, CEO, BIZKIND, BIZTYPE
+		  , BIZNO, ADDR1, ADDR2, ADDR3, POST
+		  , COUNTRYCD, PORTCD, DISTRICTCD, PHONE1, PHONE2
+		  , FAX1, FAX2, EMAIL, URL, REFUSERNM
+		  , REFUSERPHONE, ISSALES, ISSUPPLIER, ISSHIPPER, ISDELIVERY
+		  , F_USER1, F_USER2, F_USER3, F_USER4, F_USER5
+		  , F_USER6, F_USER7, F_USER8, F_USER9, F_USER10
+		  , REMARK, ISUSING
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, dbo.UFX_Trim(#{CUSTCD}), #{ORGCD}, #{CUSTGROUP}, #{CUSTCAT3CD}, #{NAME}
+		  , CASE WHEN #{SNAME} IS NULL THEN #{NAME}  WHEN #{SNAME}= '' THEN #{NAME} ELSE #{SNAME} END
+		  , CASE WHEN #{ANAME} IS NULL THEN #{NAME}  WHEN #{ANAME}= '' THEN #{NAME} ELSE #{ANAME} END
+		  , #{CEO}, #{BIZKIND}, #{BIZTYPE}
+		  , #{BIZNO}, #{ADDR1}, #{ADDR2}, #{ADDR3}, #{POST}
+		  , #{COUNTRYCD}, #{PORTCD}, #{DISTRICTCD}, #{PHONE1}, #{PHONE2}
+		  , #{FAX1}, #{FAX2}, #{EMAIL}, #{URL}, #{REFUSERNM}
+		  , #{REFUSERPHONE}, #{ISSALES}, #{ISSUPPLIER}, #{ISSHIPPER}, #{ISDELIVERY}
+		  , #{F_USER1}, #{F_USER2}, #{F_USER3}, #{F_USER4}, #{F_USER5}
+		  , #{F_USER6}, #{F_USER7}, #{F_USER8}, #{F_USER9}, #{F_USER10}
+		  , #{REMARK}, ISNULL(CONVERT(NVARCHAR, #{ISUSING}), 'Y')
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000003.updateMst */
+		UPDATE P003 WITH (ROWLOCK)
+		   SET CUSTGROUP = #{CUSTGROUP}
+		     , CATEGORYCD = #{CUSTCAT3CD}
+		     , NAME = #{NAME}
+		     , SNAME = #{SNAME}
+		     , ANAME = #{ANAME}
+		     , CEO = #{CEO}
+		     , BIZKIND = #{BIZKIND}
+		     , BIZTYPE = #{BIZTYPE}
+		     , BIZNO = #{BIZNO}
+		     , ADDR1 = #{ADDR1}
+		     , ADDR2 = #{ADDR2}
+		     , ADDR3 = #{ADDR3}
+		     , POST = #{POST}
+		     , COUNTRYCD = #{COUNTRYCD}
+		     , PORTCD = #{PORTCD}
+		     , DISTRICTCD = #{DISTRICTCD}
+		     , PHONE1 = #{PHONE1}
+		     , PHONE2 = #{PHONE2}
+		     , FAX1 = #{FAX1}
+		     , FAX2 = #{FAX2}
+		     , EMAIL = #{EMAIL}
+		     , URL = #{URL}
+		     , REFUSERNM = #{REFUSERNM}
+		     , REFUSERPHONE = #{REFUSERPHONE}
+		     , ISSALES = #{ISSALES}
+		     , ISSUPPLIER = #{ISSUPPLIER}
+		     , ISSHIPPER = #{ISSHIPPER}
+		     , ISDELIVERY = #{ISDELIVERY}
+		     , F_USER1 = #{F_USER1}
+		     , F_USER2 = #{F_USER2}
+		     , F_USER3 = #{F_USER3}
+		     , F_USER4 = #{F_USER4}
+		     , F_USER5 = #{F_USER5}
+		     , F_USER6 = #{F_USER6}
+		     , F_USER7 = #{F_USER7}
+		     , F_USER8 = #{F_USER8}
+		     , F_USER9 = #{F_USER9}
+		     , F_USER10 = #{F_USER10}
+		     , ISUSING = #{ISUSING}
+		     , REMARK = #{REMARK}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND CUSTCD = #{CUSTCD}
+	</update>
+
+	<!-- 삭제 (사용/미사용) -->
+	<update id="updateIsusing" parameterType="LDataMap">
+		/* alexcloud.p000.P000003.updateIsusing */
+		UPDATE P003 WITH (ROWLOCK)
+		   SET ISUSING = #{ISUSING}
+		     , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+		     , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND CUSTCD = #{CUSTCD}
+	</update>
+	
+</mapper>

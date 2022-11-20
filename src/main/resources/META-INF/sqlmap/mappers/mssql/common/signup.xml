@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="SignUpMapper">
+
+	<!-- 로그인 체크 -->
+	<select id="getIdCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* SignUpMapper.getIdCheck */
+		SELECT
+			USERCD
+		FROM S010 WHERE USERCD = #{id}
+	</select>
+	
+	<!-- 사용자 추가 -->
+	<insert id="insertUser" parameterType="LDataMap">
+		/* SignUpMapper.insertUser */
+		INSERT INTO S010 (
+			COMPCD
+			, USERCD
+			, NAME
+			, COMPANY_EN
+			, PASS
+			, ORGCD
+			, DEPTCD
+			, POSITION
+			, USERGROUP
+			, PHONENO
+			, ISDRT
+			, ISLOCK
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+		)
+			SELECT
+				#{COMPCD}
+				, #{userId}
+				, #{company}
+				, #{companyEn}
+				, dbo.UFX_Encryption2(dbo.UFX_Trim(LOWER(#{userId})), #{ENCKEY})
+				, ORGCD
+				, '20'
+				, 'seller'
+				, '40'
+				, #{tel1} +'-'+ #{tel2} +'-'+ #{tel3}
+				, 'N'
+				, 'N'
+				, 'N'
+				, 'SYSTEM'
+				, GETDATE()
+			FROM P002 
+			WHERE MEM_USERCD = #{userId}
+	</insert>
+	
+	<!-- 셀러 추가 -->
+	<insert id="insertSeller" parameterType="LDataMap">
+		/* SignUpMapper.insertSeller */
+		INSERT INTO P002 (
+			COMPCD
+			, ORGCD
+			, NAME
+			, SNAME
+			, TEL1
+			, TEL2
+			, POST
+			, ADDR
+			, ADDR2
+			, ENG_ADDR
+			, CEO
+			, ENG_CEO
+			, BIZNO1
+			, FILENAME
+			, MANAGER
+			, EMAIL
+			, WEBADDR
+			, NATION
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+			, PROD_MAP_YN
+			, MEMBER_FLG
+			, APPROVAL_FLG
+			, MEM_USERCD
+			, ORIGINFILENM
+			, COMPANY_EN
+		) VALUES (
+			#{COMPCD}
+			, 'M'+dbo.UFX_Lpad(NEXT VALUE FOR DBO.SEQ_XRT_SELLER OVER(ORDER BY (SELECT 1)),5, 0)
+			, #{company}
+			, #{company}
+			, #{tel1} +'-'+ #{tel2} +'-'+ #{tel3}
+			, #{phone1} +'-'+ #{phone2} +'-'+ #{phone3}
+			, #{postCode}
+			, #{address}
+			, #{addressDtl}
+			, #{addressEng}
+			, #{ceo}
+			, #{ceoEng}
+			, #{bizNo}
+			, #{fileNm}
+			, #{name}
+			, #{eMail}
+			, #{webAddress}
+			, #{nation}
+			, 'N'
+			, 'SYSTEM'
+			, GETDATE()
+			, 'Y'
+			, '1'
+			, '1'
+			, #{userId}
+			, #{realFileName}
+			, #{companyEn}
+		)
+	</insert>
+	
+	<!-- 거래처 추가 -->
+	<insert id="insertClient" parameterType="LDataMap">
+		/* SignUpMapper.insertClient */
+		INSERT INTO P003 (
+			COMPCD, CUSTCD
+			, ORGCD
+			, NAME
+			, SNAME
+			, COMPANY_EN
+			, ANAME
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+		)
+			SELECT
+				COMPCD
+				, '0100001001'
+				, ORGCD
+				, '0100001001'
+				, '0100001001'
+				, #{companyEn}
+				, '0100001001'
+				, 'N'
+				, 'SYSTEM'
+				, GETDATE() 
+			FROM S010
+			WHERE USERCD = #{userId}
+	</insert>
+	
+	<!-- 프린터 추가 -->
+	<insert id="insertPrint" parameterType="LDataMap">
+		/* SignUpMapper.insertPrint */
+		INSERT INTO S017 WITH (ROWLOCK) (
+			COMPCD
+			, USERCD
+			, NAME
+			, PRINT1
+			, ADDUSERCD
+			, ADDDATETIME
+		)
+			SELECT 
+				COMPCD
+				, USERCD
+				, NAME
+				, 'Microsoft Print to PDF'
+				, 'SYSTEM'
+				, GETDATE()
+			FROM S010
+			WHERE USERCD = #{userId}
+	</insert>
+	
+</mapper>

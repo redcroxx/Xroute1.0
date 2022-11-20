@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 로케이션재고팝업 - 단일 -->
+<mapper namespace="PopP81001Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP81001Mapper.getSearch */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , C.NAME AS ORGNM
+			 , A.WHCD
+			 , D.NAME AS WHNM
+			 , A.LOCCD
+			 , E.LOCNAME
+			 , A.ITEMCD
+			 , F.NAME AS ITEMNM
+			 , A.LOTKEY
+			 , G.LOT1
+			 , G.LOT2
+			 , G.LOT3
+			 , G.LOT4
+			 , G.LOT5
+			 , ISNULL(A.QTY, 0) AS QTY
+			 , ISNULL(A.ALLOCQTY, 0) AS ALLOCQTY
+			 , ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) AS AVAILQTY
+			 , F.ITEMSIZE
+			 , F.UNITCD
+			 , F.F_USER01
+			 , F.F_USER02
+			 , F.F_USER03
+			 , F.F_USER04
+			 , F.F_USER05
+			 , F.F_USER11
+			 , F.F_USER12
+			 , F.F_USER13
+			 , F.F_USER14
+			 , F.F_USER15
+		FROM P810 A WITH (NOLOCK)
+		JOIN P002 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD
+		JOIN P004 D WITH (NOLOCK)
+		  ON A.COMPCD = D.COMPCD AND A.WHCD = D.WHCD
+		JOIN P005 E WITH (NOLOCK)
+		  ON A.COMPCD = E.COMPCD AND A.WHCD = E.WHCD AND A.LOCCD = E.LOCCD AND E.ISUSING = 'Y'
+		JOIN P006 F WITH (NOLOCK)
+		  ON A.COMPCD = F.COMPCD AND A.ORGCD = F.ORGCD AND A.ITEMCD = F.ITEMCD
+		JOIN P007 G WITH (NOLOCK)
+		  ON A.LOTKEY = G.LOTKEY
+		WHERE ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) <![CDATA[ <> ]]> 0
+		  AND A.COMPCD = #{LOGIN_COMPCD}
+		  AND A.ORGCD = #{S_ORGCD}
+		  AND A.WHCD = #{S_WHCD}
+		  AND A.ITEMCD = #{S_ITEMCD}
+		  AND A.LOTKEY = CASE WHEN '1' = ISNULL(#{S_LOTRESERVEFLG},'0') THEN 
+									dbo.UFX_GetLotkey(A.COMPCD, A.ORGCD, A.ITEMCD,#{S_LOT1},#{S_LOT2},#{S_LOT3},#{S_LOT4},#{S_LOT5}) 
+								ELSE A.LOTKEY END
+		  AND NOT EXISTS (
+		       SELECT Y.LOTKEY 
+		         FROM P710 X WITH(NOLOCK)
+		         LEFT JOIN P711 Y WITH(NOLOCK) ON X.IMKEY = Y.IMKEY
+		        WHERE X.IMTYPE = 'LOC1'
+		          AND X.MVTYPE = 'INS'
+		          AND X.IMSTS != '99'
+		          <if test="S_WHCD != null and S_WHCD != ''">
+					AND X.IMWHCD = #{S_WHCD}
+				  </if>
+				  AND Y.IMDSTS = '100'
+				  AND Y.LOTKEY = A.LOTKEY 
+				GROUP BY Y.LOTKEY
+		   )
+		   AND NOT EXISTS(
+		       SELECT Y.LOTKEY 
+		         FROM P710 X WITH(NOLOCK)
+		         LEFT JOIN P711 Y WITH(NOLOCK) ON X.IMKEY = Y.IMKEY
+		        WHERE X.IMTYPE IN ('LOC1', 'LOC2', 'WH')
+		          AND X.MVTYPE = 'STD'
+		          AND X.IMSTS = '100'
+		          <if test="S_WHCD != null and S_WHCD != ''">
+					AND X.IMWHCD = #{S_WHCD}
+				  </if>
+				  AND Y.LOTKEY = A.LOTKEY 
+				GROUP BY Y.LOTKEY
+		   )		   
+		<if test="S_LOCCD != null and S_LOCCD != ''">
+			AND A.LOCCD = #{S_LOCCD}
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND (A.ITEMCD LIKE '%' + #{S_ITEM} + '%' OR B.NAME LIKE '%' + #{S_ITEM} + '%')
+		</if>
+		
+		<if test="S_NOTALLOCFLG != null and S_NOTALLOCFLG != ''">
+			AND E.NOTALLOCFLG = #{S_NOTALLOCFLG}
+		</if>
+		ORDER BY A.COMPCD, A.ORGCD, A.WHCD, A.ITEMCD, A.LOCCD, A.LOTKEY
+	</select>
+
+	<!-- 로케이션재고팝업 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP81001Mapper.getCheck */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , E.LOCNAME
+			 , A.ITEMCD
+			 , A.LOTKEY
+		FROM P810 A WITH (NOLOCK)
+		JOIN P005 E WITH (NOLOCK)
+		  ON A.COMPCD = E.COMPCD AND A.WHCD = E.WHCD AND A.LOCCD = E.LOCCD AND E.ISUSING = 'Y'
+		WHERE ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) <![CDATA[ <> ]]> 0
+		  AND A.COMPCD = #{S_COMPCD}
+		  AND A.ORGCD = #{S_ORGCD}
+		  AND A.WHCD = #{S_WHCD}
+		  AND A.ITEMCD = #{S_ITEMCD}
+		  AND A.LOCCD = #{S_LOCCD}
+		  AND A.LOTKEY =#{S_LOTKEY}
+	</select>
+</mapper>

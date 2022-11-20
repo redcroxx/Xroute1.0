@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopS010Mapper">
+
+	<!-- 사용자 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopS010Mapper.getSearch */
+		SELECT A.COMPCD
+			, A.USERCD
+			, A.NAME
+			, A.ORGCD
+			, C.NAME AS ORGNM
+			, A.CUSTCD
+			, A.DEPTCD
+			, B.NAME AS DEPTNM
+			, A.POSITION
+			, A.WHCD
+			, A.USERGROUP
+			, A.PHONENO
+			, A.FAX
+			, A.EMAIL
+			, A.SEX
+			, A.BIRTHDATE
+			, A.WORKTYPE
+			, A.EMPLOYTYPE
+			, A.EMPLOYDATE
+			, A.ATTACH_FILE_PATH
+			, A.ATTACH_FILE_REAL_NAME
+			, A.PWDCHGDATE
+			, A.ISLOCK
+			, A.ISUSING									
+		    , A.ADDUSERCD										
+		    , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+		    , A.UPDUSERCD										
+		    , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+		    , A.TERMINALCD										
+		  FROM S010 A WITH (NOLOCK)
+	      LEFT OUTER JOIN P016 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.DEPTCD = B.DEPTCD 																			
+	      LEFT OUTER JOIN P002 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD		
+		 WHERE A.COMPCD = #{LOGIN_COMPCD}
+		  AND A.ISUSING = 'Y'
+		<if test="S_USERCD != null and S_USERCD != ''">
+			AND ((A.USERCD LIKE #{S_USERCD} + '%')
+				OR (A.NAME LIKE '%' + #{S_USERCD} + '%'))
+		</if>
+		<if test="S_DEPTCD != null and S_DEPTCD != ''">
+			AND ((A.DEPTCD LIKE #{S_DEPTCD} + '%')
+				OR (B.NAME LIKE '%' + #{S_DEPTCD} + '%'))
+		</if>
+		ORDER BY A.USERCD
+	</select>
+
+	<!-- 사용자 팝업 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopS010Mapper.getCheck */
+		SELECT A.COMPCD
+			, A.USERCD
+			, A.NAME
+			, A.ORGCD
+			, C.NAME AS ORGNM
+			, A.CUSTCD
+			, A.DEPTCD
+			, B.NAME AS DEPTNM
+			, A.POSITION
+			, A.WHCD
+			, A.USERGROUP
+			, A.PHONENO
+			, A.FAX
+			, A.EMAIL
+			, A.SEX
+			, A.BIRTHDATE
+			, A.WORKTYPE
+			, A.EMPLOYTYPE
+			, A.EMPLOYDATE
+			, A.ATTACH_FILE_PATH
+			, A.ATTACH_FILE_REAL_NAME
+			, A.PWDCHGDATE
+			, A.ISLOCK
+			, A.ISUSING									
+		    , A.ADDUSERCD										
+		    , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+		    , A.UPDUSERCD										
+		    , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+		    , A.TERMINALCD										
+		  FROM S010 A WITH (NOLOCK)
+	      LEFT OUTER JOIN P016 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.DEPTCD = B.DEPTCD 																			
+	      LEFT OUTER JOIN P002 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD		
+		 WHERE A.COMPCD = #{LOGIN_COMPCD}
+		  AND A.ISUSING = 'Y'
+		  AND A.USERCD = #{S_USERCD}
+	</select>
+</mapper>

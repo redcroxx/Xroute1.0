@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="TrackingExcelUploadMapper">
+	<select id="getCountryList" parameterType="java.util.HashMap" resultType="java.lang.String">
+		/* TrackingExcelUploadMapper.getCountryList */
+		SELECT
+			CODE
+		FROM S002 WITH (NOLOCK)
+		WHERE 1 = 1
+		AND CODEKEY = 'COUNTRYLIST'
+		AND STATUS = 'Y'
+		ORDER BY SORTNO
+	</select>
+	
+	<select id="getXrtInvcSno" parameterType="xrt.fulfillment.tracking.StockHistoryVo" resultType="java.lang.String">
+		/* TrackingExcelUploadMapper.getXrtInvcSno */
+		SELECT
+			ISNULL(ORD_CD, '')	AS ordCd
+		FROM TORDER
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{invcSno}
+		AND DEL_FLG = 'N'
+	</select>
+	
+	<insert id="insertTStockHistory" parameterType="xrt.fulfillment.tracking.StockHistoryVo">
+		/* TrackingExcelUploadMapper.insertTStockHistory */
+		INSERT INTO TSTOCK_HISTORY (
+			ORD_CD
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, INVC_SNO
+			, STATUS_CD
+			, EVENT_CD
+			, NATION
+		) VALUES (
+			#{ordCd}
+			, #{addusercd}
+			, CONVERT(NVARCHAR, #{adddatetime}, 120)
+			, #{updusercd}
+			, getDate()
+			, #{terminalcd}
+			, #{invcSno}
+			, #{statusCd}
+			, 'CREATE'
+			, #{nation}
+		)
+	</insert>
+</mapper>

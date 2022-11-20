@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomySettlementMapper">
+	<select id="getSearch" parameterType="CommonSearchVo" resultType="xrt.alexcloud.api.atomy.AtomySettlementVO">
+	    /* AtomySettlementMapper.getSearch */
+		SELECT
+            t.ADDDATETIME                 AS orderDate,
+            t.UNIPASS_TKOFDT              AS unipassTkofdt,
+            ISNULL(t.EXP_NO, '')          AS expNo,
+            t.XRT_INVC_SNO                AS xrtInvcSno,
+            t.ORD_NO                      AS ordNo,
+            t.LOCAL_SHIPPER               AS localShipper,
+            ISNULL(t.INVC_SNO1, '')       AS invcSno1,
+            t.E_NATION                    AS eNation,
+            '1'                           AS quantity,
+            t.WGT                         AS kg,
+            (SELECT
+                CASE
+                    WHEN t.E_NATION = 'IT'             THEN ITALY
+                    WHEN t.E_NATION = 'AU'         THEN AUSTRALIA
+                    WHEN t.E_NATION = 'HK'          THEN HONGKONG
+                    WHEN t.E_NATION = 'JP'             THEN JAPAN
+                    WHEN t.E_NATION = 'MY'          THEN MALAYSIA
+                    WHEN t.E_NATION = 'MN'          THEN MONGOLIA
+                    WHEN t.E_NATION = 'NZ'        THEN NEWZEALAND
+                    WHEN t.E_NATION = 'SG'         THEN SINGAPORE
+                    WHEN t.E_NATION = 'TW'            THEN TAIWAN
+                    WHEN t.E_NATION = 'US'               THEN USA
+                    WHEN t.E_NATION = 'CA'            THEN CANADA
+                    WHEN t.E_NATION = 'FR'            THEN FRANCE
+                    WHEN t.E_NATION = 'DE'           THEN GERMANY
+                    WHEN t.E_NATION = 'CH'       THEN SWITZERLAND
+                    WHEN t.E_NATION = 'GU'       THEN GUAM
+                    WHEN t.E_NATION = 'MP'       THEN SAIPAN
+                    WHEN t.E_NATION = 'MP'       THEN UNITEDKINGDOM
+                    WHEN t.E_NATION = 'KH'       THEN CAMBODIA
+                    WHEN t.E_NATION = 'TH'       THEN THAILAND
+                    WHEN t.E_NATION = 'PH'       THEN PHILIPPINES
+                    WHEN t.E_NATION = 'ES'       THEN SPAIN
+                    WHEN t.E_NATION = 'PT'       THEN PORTUGAL
+                    WHEN t.E_NATION = 'RU'       THEN RUSSIA
+                END AS price
+            FROM
+                ATOMY_RATE_TOTAL
+            WHERE 1 = 1
+            AND CONVERT(DECIMAL(4,2), KG) = (
+                <![CDATA[
+                        CASE
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) <= 0.5 THEN 0.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 0.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.0 THEN 1.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.5 THEN 1.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.0 THEN 2.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.5 THEN 2.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.0 THEN 3.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.5 THEN 3.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.0 THEN 4.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.5 THEN 4.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.0 THEN 5.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.5 THEN 5.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.0 THEN 6.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.5 THEN 6.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.0 THEN 7.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.5 THEN 7.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.0 THEN 8.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.5 THEN 8.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.0 THEN 9.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.5 THEN 9.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 10.0 THEN 10.0
+                        ELSE 0.1
+                        END
+                ]]>
+            )) AS salesPrice1,
+            (SELECT
+                CASE
+                    WHEN t.E_NATION = 'IT'             THEN ITALY
+                    WHEN t.E_NATION = 'AU'         THEN AUSTRALIA
+                    WHEN t.E_NATION = 'HK'          THEN HONGKONG
+                    WHEN t.E_NATION = 'JP'             THEN JAPAN
+                    WHEN t.E_NATION = 'MY'          THEN MALAYSIA
+                    WHEN t.E_NATION = 'MN'          THEN MONGOLIA
+                    WHEN t.E_NATION = 'NZ'        THEN NEWZEALAND
+                    WHEN t.E_NATION = 'SG'         THEN SINGAPORE
+                    WHEN t.E_NATION = 'TW'            THEN TAIWAN
+                    WHEN t.E_NATION = 'US'               THEN USA
+                    WHEN t.E_NATION = 'CA'            THEN CANADA
+                    WHEN t.E_NATION = 'FR'            THEN FRANCE
+                    WHEN t.E_NATION = 'DE'           THEN GERMANY
+                    WHEN t.E_NATION = 'CH'       THEN SWITZERLAND
+                    WHEN t.E_NATION = 'GB'     THEN UNITEDKINGDOM
+                    WHEN t.E_NATION = 'GU'       THEN GUAM
+                    WHEN t.E_NATION = 'MP'       THEN SAIPAN
+                    WHEN t.E_NATION = 'KH'       THEN CAMBODIA
+                    WHEN t.E_NATION = 'TH'       THEN THAILAND
+                    WHEN t.E_NATION = 'PH'       THEN PHILIPPINES
+                    WHEN t.E_NATION = 'ES'       THEN SPAIN
+                    WHEN t.E_NATION = 'PT'       THEN PORTUGAL
+                    WHEN t.E_NATION = 'RU'       THEN RUSSIA
+                END AS price
+            FROM
+                ATOMY_RATE
+            WHERE 1 = 1
+            AND CONVERT(DECIMAL(4,2), KG) = (
+                <![CDATA[
+                        CASE
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) <= 0.5 THEN 0.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 0.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.0 THEN 1.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.5 THEN 1.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.0 THEN 2.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.5 THEN 2.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.0 THEN 3.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.5 THEN 3.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.0 THEN 4.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.5 THEN 4.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.0 THEN 5.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.5 THEN 5.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.0 THEN 6.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.5 THEN 6.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.0 THEN 7.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.5 THEN 7.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.0 THEN 8.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.5 THEN 8.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.0 THEN 9.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.5 THEN 9.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 10.0 THEN 10.0
+                        ELSE 0.1
+                        END
+                ]]>
+            )) AS salesPrice2,
+            ''                                                 AS salesPrice3,
+            ISNULL(t.PURCHASES_PRICE1 ,'0')                    AS purchasesPrice1,
+            ISNULL(t.PURCHASES_PRICE2 ,'0')                    AS purchasesPrice2,
+            ISNULL(t.PURCHASES_PRICE3 ,'0')                    AS purchasesPrice3,
+            CONVERT(INT, (SELECT
+                CASE
+                    WHEN t.E_NATION = 'IT'             THEN ITALY
+                    WHEN t.E_NATION = 'AU'         THEN AUSTRALIA
+                    WHEN t.E_NATION = 'HK'          THEN HONGKONG
+                    WHEN t.E_NATION = 'JP'             THEN JAPAN
+                    WHEN t.E_NATION = 'MY'          THEN MALAYSIA
+                    WHEN t.E_NATION = 'MN'          THEN MONGOLIA
+                    WHEN t.E_NATION = 'NZ'        THEN NEWZEALAND
+                    WHEN t.E_NATION = 'SG'         THEN SINGAPORE
+                    WHEN t.E_NATION = 'TW'            THEN TAIWAN
+                    WHEN t.E_NATION = 'US'               THEN USA
+                    WHEN t.E_NATION = 'CA'            THEN CANADA
+                    WHEN t.E_NATION = 'FR'            THEN FRANCE
+                    WHEN t.E_NATION = 'DE'           THEN GERMANY
+                    WHEN t.E_NATION = 'CH'       THEN SWITZERLAND
+                    WHEN t.E_NATION = 'GB'     THEN UNITEDKINGDOM
+                    WHEN t.E_NATION = 'GU'       THEN GUAM
+                    WHEN t.E_NATION = 'MP'       THEN SAIPAN
+                    WHEN t.E_NATION = 'KH'       THEN CAMBODIA
+                    WHEN t.E_NATION = 'TH'       THEN THAILAND
+                    WHEN t.E_NATION = 'PH'       THEN PHILIPPINES
+                    WHEN t.E_NATION = 'ES'       THEN SPAIN
+                    WHEN t.E_NATION = 'PT'       THEN PORTUGAL
+                    WHEN t.E_NATION = 'RU'       THEN RUSSIA
+                END AS price
+            FROM
+                ATOMY_RATE_TOTAL
+            WHERE 1 = 1
+            AND CONVERT(DECIMAL(4,2), KG) = (
+                <![CDATA[
+                        CASE
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) <= 0.5 THEN 0.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 0.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.0 THEN 1.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.5 THEN 1.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.0 THEN 2.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.5 THEN 2.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.0 THEN 3.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.5 THEN 3.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.0 THEN 4.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.5 THEN 4.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.0 THEN 5.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.5 THEN 5.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.0 THEN 6.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.5 THEN 6.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.0 THEN 7.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.5 THEN 7.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.0 THEN 8.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.5 THEN 8.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.0 THEN 9.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.5 THEN 9.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 10.0 THEN 10.0
+                        ELSE 0.1
+                        END
+                 ]]>
+            ))) - CONVERT(INT, ISNULL(t.PURCHASES_PRICE1 ,'0')) AS grossProfits1,
+            CONVERT(INT, (SELECT
+                CASE
+                    WHEN t.E_NATION = 'IT'             THEN ITALY
+                    WHEN t.E_NATION = 'AU'         THEN AUSTRALIA
+                    WHEN t.E_NATION = 'HK'          THEN HONGKONG
+                    WHEN t.E_NATION = 'JP'             THEN JAPAN
+                    WHEN t.E_NATION = 'MY'          THEN MALAYSIA
+                    WHEN t.E_NATION = 'MN'          THEN MONGOLIA
+                    WHEN t.E_NATION = 'NZ'        THEN NEWZEALAND
+                    WHEN t.E_NATION = 'SG'         THEN SINGAPORE
+                    WHEN t.E_NATION = 'TW'            THEN TAIWAN
+                    WHEN t.E_NATION = 'US'               THEN USA
+                    WHEN t.E_NATION = 'CA'            THEN CANADA
+                    WHEN t.E_NATION = 'FR'            THEN FRANCE
+                    WHEN t.E_NATION = 'DE'           THEN GERMANY
+                    WHEN t.E_NATION = 'CH'       THEN SWITZERLAND
+                    WHEN t.E_NATION = 'GB'     THEN UNITEDKINGDOM
+                    WHEN t.E_NATION = 'GU'       THEN GUAM
+                    WHEN t.E_NATION = 'MP'       THEN SAIPAN
+                    WHEN t.E_NATION = 'KH'       THEN CAMBODIA
+                    WHEN t.E_NATION = 'TH'       THEN THAILAND
+                    WHEN t.E_NATION = 'PH'       THEN PHILIPPINES
+                    WHEN t.E_NATION = 'ES'       THEN SPAIN
+                    WHEN t.E_NATION = 'PT'       THEN PORTUGAL
+                    WHEN t.E_NATION = 'RU'       THEN RUSSIA
+                END AS price
+            FROM
+                ATOMY_RATE
+            WHERE 1 = 1
+            AND CONVERT(DECIMAL(4,2), KG) = (
+                <![CDATA[
+                        CASE
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) <= 0.5 THEN 0.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 0.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.0 THEN 1.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 1.5 THEN 1.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 1.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.0 THEN 2.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 2.5 THEN 2.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 2.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.0 THEN 3.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 3.5 THEN 3.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 3.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.0 THEN 4.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 4.5 THEN 4.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 4.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.0 THEN 5.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 5.5 THEN 5.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 5.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.0 THEN 6.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 6.5 THEN 6.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 6.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.0 THEN 7.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 7.5 THEN 7.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 7.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.0 THEN 8.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 8.5 THEN 8.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 8.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.0 THEN 9.0
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.0 AND CONVERT(DECIMAL(4,2), t.WGT) <= 9.5 THEN 9.5
+                            WHEN CONVERT(DECIMAL(4,2), t.WGT) > 9.5 AND CONVERT(DECIMAL(4,2), t.WGT) <= 10.0 THEN 10.0
+                        ELSE 0.1
+                        END
+                 ]]>
+            ))) - CONVERT(INT, ISNULL(t.PURCHASES_PRICE1 ,'0')) AS grossProfits2,
+            ''                                                  AS grossProfits3,
+            ''                                                  AS memo
+        FROM TORDER t
+        WHERE 1 = 1
+		AND t.ORGCD = #{sOrgCd}
+		<choose>
+            <when test="sPeriodType == 'uploadDate'">
+                AND t.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+            </when>
+            <when test="sPeriodType == 'stockDate'">
+                AND t.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+            </when>
+            <when test="sPeriodType == 'shipmentDate'">
+                AND t.UNIPASS_TKOFDT BETWEEN #{sToDate} AND #{sFromDate}
+            </when>
+        </choose>
+		<if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+		    AND t.XRT_INVC_SNO = #{sXrtInvcSno}
+		</if>
+		ORDER BY t.ADDDATETIME ASC
+	</select>
+
+    <update id="updateAtomySettlement" parameterType="xrt.alexcloud.api.atomy.AtomySettlementVO">
+        UPDATE TORDER
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="localShipper != null and localShipper != ''">
+                LOCAL_SHIPPER = #{localShipper},
+            </if>
+            <if test="invcSno1 != null and invcSno1 != ''">
+                INVC_SNO1 = #{invcSno1},
+            </if>
+            <if test="purchasesPrice1 != null and purchasesPrice1 != ''">
+                PURCHASES_PRICE1 = #{purchasesPrice1},
+            </if>
+            <if test="purchasesPrice2 != null and purchasesPrice2 != ''">
+                PURCHASES_PRICE2 = #{purchasesPrice2},
+            </if>
+            <if test="purchasesPrice3 != null and purchasesPrice3 != ''">
+                PURCHASES_PRICE3 = #{purchasesPrice3}
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+</mapper>

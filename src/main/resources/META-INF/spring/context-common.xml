@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:util="http://www.springframework.org/schema/util"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+				http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+				http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd">
+
+	<context:component-scan base-package="xrt">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+
+	<util:properties id="db" location="classpath:/META-INF/property/db.properties" />
+	<util:properties id="config" location="classpath:/META-INF/property/config.properties" />
+	<!-- <context:property-placeholder location="classpath:/META-INF/property/db.properties"/> -->
+
+	<!-- Message Source-->
+	<bean id="localeResolver"
+		class="org.springframework.web.servlet.i18n.CookieLocaleResolver" >
+		<property name="cookieName" value="Language"/>
+		<property name="defaultLocale" value="kr" />
+		<property name="cookieMaxAge" value="100000" />
+	</bean>
+
+	<bean id="localeChangeInterceptor"
+		class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+		<property name="paramName" value="lang" />
+	</bean>
+
+	<bean id="urlMapping"
+		class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<ref bean="localeChangeInterceptor" />
+			</list>
+		</property>
+		<!--
+		<property name="mappings">
+			<value>**/*.do?setChangeLocale.do</value>
+		</property>
+		 -->
+	</bean>
+<!-- 메시지 제거
+	<bean id="messageSource" class="xrt.lingoframework.support.DatabaseMessageResourceController"/>
+ -->
+	<bean id="egovMessageSource" class="xrt.lingoframework.support.EgovMessageSource">
+	<!--
+		<property name="reloadableResourceBundleMessageSource">
+			<ref bean="messageSource" />
+		</property>
+ -->
+	</bean>
+
+	<bean id="leaveaTrace" class="egovframework.rte.fdl.cmmn.trace.LeaveaTrace">
+		<property name="traceHandlerServices">
+			<list>
+				<ref bean="traceHandlerService" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="traceHandlerService" class="egovframework.rte.fdl.cmmn.trace.manager.DefaultTraceHandleManager">
+		<property name="reqExpMatcher">
+			<ref bean="antPathMater" />
+		</property>
+		<property name="patterns">
+			<list>
+				<value>*</value>
+			</list>
+		</property>
+		<property name="handlers">
+			<list>
+				<ref bean="defaultTraceHandler" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="antPathMater" class="org.springframework.util.AntPathMatcher" />
+
+	<bean id="defaultTraceHandler" class="egovframework.rte.fdl.cmmn.trace.handler.DefaultTraceHandler" />
+
+</beans>

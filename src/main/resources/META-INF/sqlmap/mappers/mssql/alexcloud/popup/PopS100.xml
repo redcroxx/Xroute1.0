@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopS100Mapper">
+    <!-- 전자결재 : 결재요청 : 전자결재 마스터 생성 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.popup.PopS100.insertMst */
+		INSERT INTO S100 WITH (ROWLOCK)
+		  (DOCNO,
+		   DOCTITLE,
+		   DOCDT,
+		   DOCSTS,
+		   MENUID,
+		   REFNO1,
+		   REFNO2,
+		   REFNO3,
+		   ORGCD,
+		   COMPCD,
+		   REQDEPTCD,
+		   REQUSERCD,
+		   REQRMK,
+		   ADDUSERCD,
+		   UPDUSERCD,
+		   TERMINALCD)
+		VALUES
+		  (#{DOCNO},
+		   #{DOCTITLE},
+		   CONVERT(NVARCHAR(10), GETDATE(), 112),
+		   '100',
+		   #{MENUID},
+		   #{REFNO1},
+		   #{REFNO2},
+		   #{REFNO3},
+		   #{ORGCD},
+		   #{COMPCD},
+		   #{LOGIN_DEPTCD},
+		   #{LOGIN_USERCD},
+		   #{REQRMK},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_IP})
+	</insert>
+	
+	<!-- 전자결재 : 결재요청 : 전자결재 디테일 생성 -->
+	<insert id="insertDet" parameterType="LDataMap">
+		/* alexcloud.popup.PopS100.insertDet */
+		INSERT INTO S110 WITH (ROWLOCK)
+		  (DOCNO,
+		   DOCSEQ,
+		   DOCTYPE,
+		   ORGCD,
+		   COMPCD,
+		   APVDEPTCD,
+           APVUSERCD,
+		   DOCSTS,
+		   APVORDER,
+		   ADDUSERCD,
+		   UPDUSERCD,
+		   TERMINALCD)
+		VALUES
+		  (#{DOCNO},
+		   #{DOCSEQ},
+		   #{DOCTYPE},
+		   #{ORGCD},
+		   #{COMPCD},
+		   #{APVDEPTCD},
+           #{APVUSERCD},
+           NULLIF(#{DOCSTS},''), 
+		   #{DOCSEQ},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_IP})
+	</insert>
+	
+	<!-- 전자결재 : 결재요청 : 전자결재 문서내용 생성 -->
+	<insert id="insertBody" parameterType="LDataMap">
+		INSERT INTO S120 WITH (ROWLOCK)
+		  (DOCNO, DOCHTML, ADDUSERCD, UPDUSERCD, TERMINALCD)
+		VALUES
+		  (#{DOCNO}, #{DOCHTML}, #{LOGIN_USERCD}, #{LOGIN_USERCD}, #{LOGIN_IP})
+	</insert>
+	
+	<!-- 전자결재 : 전결 : 상태 및 전결자 update -->
+	<update id="updateMst" parameterType="LDataMap">
+		UPDATE S100 WITH (ROWLOCK)
+		   SET DOCSTS = '900',
+		   	   DRTUSERCD = #{LOGIN_USERCD},
+		   	   UPDUSERCD = #{LOGIN_USERCD},
+		   	   UPDDATETIME = GETDATE(),
+		   	   TERMINALCD = #{LOGIN_IP}
+		 WHERE DOCNO = #{DOCNO}
+		   
+	</update>
+	
+	<!-- 전자결재 번호 전표UPDATE 프로시저 -->
+	<select id="updateDocNo" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_UpdateDocNo(#{REFNO1, jdbcType = VARCHAR, mode = IN}
+		                  , #{REFNO2, jdbcType = VARCHAR, mode = IN}
+		                  , #{DOCNO, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>			
+	
+
+</mapper>

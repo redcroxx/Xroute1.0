@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommercialInvoiceMapper">
+	<select id="getSearch" parameterType="CommonSearchVo" resultType="xrt.alexcloud.api.atomy.CommercialInvoiceVO">
+	    /* CommercialInvoiceMapper.getSearch */
+		SELECT
+            t.XRT_INVC_SNO                AS xrtInvcSno,
+            (
+                SELECT BIZNO1
+                FROM P002
+                WHERE 1 = 1
+                AND ORGCD = t.ORGCD
+            )                             AS corporateRegistrationNo,
+            ao.DELI_NAME                  AS supplyNo,
+            t.RECV_NATION                 AS recvNation,
+            '07505'                       AS shipPost,
+            '서울특별시 강서구 하늘길 210 김포공항화물청사 8-1A,105호'   AS shipAddr,
+            t.WGT                         AS wgt,
+            'DAP'                         AS deliveryTerms,
+            t.RECV_CURRENCY               AS recvCurrency,
+            td.EXC_TAG_SUM                AS excTagSum,
+            td.EXC_TOT_SUM                AS excTotSum,
+            CONVERT(numeric(19, 2), CONVERT(FLOAT, ao.EXC_TOT_SUM) / CONVERT(INT, ao.SALE_QTY))              AS excAmt,
+            REPLACE(REPLACE(ap.HS_CODE, '-', ''), '.', '') AS hsCode,
+            ap.VOLUME_WEIGHT              AS volumeWeight,
+            ap.ORIGIN                     AS origin,
+            ap.EN_PRODUCT_NAME            AS enProductName,
+            td.GOODS_CNT                  AS goodsCnt,
+            'EA'                          AS each,
+            CONVERT(numeric(19, 2), CONVERT(FLOAT, td.SALE_TOT_SUM) / CONVERT(INT, ao.SALE_QTY)) AS price,
+            CONVERT(numeric(19, 2), ao.SALE_TOT_SUM)               AS amount,
+            CONVERT(numeric(19, 2), td.SALE_TAG_SUM)               AS saleTagSum,
+            CONVERT(numeric(19, 2), td.SALE_TOT_SUM)               AS saleTotSum,
+            '1'                           AS packingUnitCnt,
+            'CT'                          AS packingUnit,
+            'ICN'                         AS loadingPort,
+            'CT'                          AS packingUnitAll,
+            t.ORD_NO                      AS ordNo,
+            t.EXP_NO                      AS expNo
+        FROM TORDER t
+        LEFT JOIN TORDERDTL td 
+        ON t.ORD_NO = td.ORD_NO
+        LEFT JOIN ATOMY_PRODUCT ap
+        ON ap.ODP_CODE = td.GOODS_CD
+        LEFT JOIN API_ATOMY_ORDER ao
+        ON t.ORD_NO = ao.SALE_NUM AND ap.ODP_CODE = ao.MATERIAL_CODE
+        WHERE 1 = 1
+		AND t.ORGCD = #{sOrgCd}
+		<choose>
+            <when test="sPeriodType == 'uploadDate'">   
+                AND t.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+            </when>
+            <when test="sPeriodType == 'stockDate'">
+                AND t.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+            </when>
+        </choose>
+		<if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+		    AND t.XRT_INVC_SNO = #{sXrtInvcSno}
+		</if>
+	</select>
+
+    <update id="updateCommercialInvoice" parameterType="xrt.alexcloud.api.atomy.CommercialInvoiceVO">
+        UPDATE TORDER
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="expNo != null and expNo != ''">
+                EXP_NO = #{expNo},
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+</mapper>

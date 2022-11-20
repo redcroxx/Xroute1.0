@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 마이메뉴 -->
+<mapper namespace="S000012Mapper">
+	<!-- 전체메뉴 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000012.getSearch */
+		SELECT A.COMPCD, A.L1TITLE, B.L2TITLE, C.L3TITLE, C.APPKEY, F.APPKEY
+		  FROM S007 A WITH(NOLOCK)
+		  JOIN S008 B WITH(NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		   AND A.MENUL1KEY = B.MENUL1KEY
+		  JOIN S009 C WITH(NOLOCK)
+		    ON B.COMPCD = C.COMPCD
+		   AND B.MENUL1KEY = C.MENUL1KEY
+		   AND B.MENUL2KEY = C.MENUL2KEY
+		  JOIN S006 E WITH(NOLOCK)
+		    ON C.COMPCD = E.COMPCD
+		   AND C.MENUL1KEY = E.MENUL1KEY
+		   AND C.MENUL2KEY = E.MENUL2KEY
+		   AND C.APPKEY = E.APPKEY
+		  JOIN S005 D WITH(NOLOCK)
+		    ON C.APPKEY = D.APPKEY
+		  LEFT OUTER JOIN S012 F WITH(NOLOCK)
+		    ON E.COMPCD = F.COMPCD
+		   AND E.APPKEY = F.APPKEY
+           AND E.USERCD = F.USERCD
+		 WHERE E.COMPCD = #{S_COMPCD}
+           AND E.USERCD = #{LOGIN_USERCD} 
+           AND F.APPKEY IS NULL
+		   AND D.APPKEY != 'S000012'
+		   AND D.USEYN = 'Y'
+	  	<if test="S_L1TITLE != null and S_L1TITLE != ''">
+			AND A.L1TITLE LIKE CONCAT('%',dbo.UFX_TRIM(#{S_L1TITLE}),'%')
+		</if>
+		<if test="S_L2TITLE != null and S_L2TITLE != ''">
+			AND B.L2TITLE LIKE CONCAT('%',dbo.UFX_TRIM(#{S_L2TITLE}),'%')
+		</if>
+		<if test="S_L3TITLE != null and S_L3TITLE != ''">
+			AND C.L3TITLE LIKE CONCAT('%',dbo.UFX_TRIM(#{S_L3TITLE}),'%')
+		</if>
+		  ORDER BY A.SORTNO, B.SORTNO, C.SORTNO
+	</select>
+	
+	<!-- 마이메뉴  검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000012.getDetailList */                                
+		SELECT A.COMPCD, D.L1TITLE, A.L2TITLE, B.L3TITLE, A.APPKEY, A.SORTNO
+		  FROM S012 A WITH(NOLOCK)
+		  JOIN S009 B WITH(NOLOCK)
+		    ON B.APPKEY = A.APPKEY
+		   AND B.COMPCD = A.COMPCD
+		  JOIN S008 C WITH(NOLOCK)
+		    ON C.MENUL2KEY = B.MENUL2KEY
+		   AND C.MENUL1KEY = B.MENUL1KEY
+		   AND C.COMPCD = B.COMPCD
+		  JOIN S007 D WITH(NOLOCK)
+		    ON D.MENUL1KEY = B.MENUL1KEY
+		   AND D.COMPCD = C.COMPCD
+			<trim prefix="WHERE" prefixOverrides="AND">
+			  AND A.USERCD = #{LOGIN_USERCD}
+			  AND A.COMPCD = #{LOGIN_COMPCD}
+			</trim>
+			ORDER BY A.L2TITLE, A.SORTNO
+	</select>
+	
+	<!-- 마이메뉴 신규 등록 -->
+	<insert id="insertDtl" parameterType="LDataMap">
+		/* sys.S000012.insertDtl */
+		INSERT INTO S012
+		  (COMPCD
+		  ,USERCD
+		  ,APPKEY
+		  ,L2TITLE
+		  ,SORTNO
+		  ,ADDUSERCD
+		  ,ADDDATETIME
+		  ,UPDUSERCD
+		  ,UPDDATETIME
+		  ,TERMINALCD)
+		VALUES
+		  (#{COMPCD}
+		  ,#{LOGIN_USERCD}
+		  ,#{APPKEY}
+		  ,#{L2TITLE}
+		  ,0
+		  ,#{LOGIN_USERCD}
+		  ,GETDATE()
+		  ,#{LOGIN_USERCD}
+		  ,GETDATE()
+		  ,#{LOGIN_IP})
+	</insert>
+	
+	<!-- 마이메뉴 수정 -->
+	<update id="updateDtl" parameterType="LDataMap">
+		/* sys.S000012.updateDtl */
+		UPDATE S012 WITH (ROWLOCK)
+		   SET L2TITLE = #{L2TITLE},
+			   SORTNO = 1 * ISNULL(#{SORTNO}, 0),
+			   UPDUSERCD = #{LOGIN_USERCD},
+			   TERMINALCD = #{LOGIN_IP},
+			   UPDDATETIME = GETDATE()
+	     WHERE USERCD = #{LOGIN_USERCD}
+	       AND COMPCD = #{COMPCD}
+	       AND APPKEY = #{APPKEY}
+	</update>
+	
+	<!-- 마이메뉴 삭제 -->
+	<delete id="deleteDtl" parameterType="LDataMap">
+		/* sys.S000012.deleteMst */
+		DELETE FROM S012 WITH (ROWLOCK)
+		 WHERE USERCD = #{LOGIN_USERCD} 
+		   AND APPKEY = #{APPKEY}
+		   AND COMPCD = #{COMPCD}
+	</delete>
+	
+</mapper>

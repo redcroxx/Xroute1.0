@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SellerJoinReqListMapper">
+
+	<!-- 셀러(사업장) : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* SellerJoinReqListMapper.getSearch */
+		SELECT
+			A.COMPCD 				/*회사코드*/
+			, B.NAME	AS COMPNM	/*회사명*/ 
+			, A.ORGCD				/*셀러코드*/
+			, A.NAME				/*셀러명*/
+			, A.SNAME				/*셀러명(약칭)*/
+			, A.TEL1				/*전화번호1*/
+			, A.TEL2				/*전화번호2*/
+			, A.FAX1				/*팩스번호1*/
+			, A.FAX2				/*팩스번호2*/
+			, A.POST				/*우편번호*/
+			, A.ADDR				/*주소*/
+			, A.ADDR2				/*주소상세*/
+			, A.CEO					/*대표자*/
+			, A.BIZDATE				/*창립일*/
+			, A.BIZNO1				/*사업자번호2*/
+			, A.BIZNO2				/*사업자번호2*/
+			, A.BIZKIND				/*업종*/
+			, A.BIZTYPE				/*업태*/
+			, A.EMAIL				/*대표이메일*/
+			, A.WEBADDR				/*홈페이지*/
+			, A.NATION				/*국가*/
+			, A.REMARKS				/*비고*/
+			, A.ISUSING				/*사용여부*/
+			, A.ADDUSERCD			/*등록자*/
+			, CONVERT(CHAR(10), A.ADDDATETIME, 23) ADDDATETIME /*등록일시*/
+			, A.UPDUSERCD			/*수정자ID*/
+			, CONVERT(VARCHAR(50), A.UPDDATETIME, 10) UPDDATETIME /*수정일시*/
+			, A.TERMINALCD			/*IP*/
+			, A.PROD_MAP_YN			/*코드대입후 송장발행*/
+			, A.MEM_USERCD			/* 신청 사용자ID*/
+			, A.FILENAME			/*업로드파일명*/
+			, A.ORIGINFILENM		/*실제저장파일명*/
+		FROM P002 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		ON A.COMPCD = B.COMPCD
+		WHERE A.COMPCD = #{S_COMPCD}
+		AND A.MEMBER_FLG = '1'
+		AND A.APPROVAL_FLG = '1'
+		AND A.ISUSING = 'N'
+		ORDER BY A.COMPCD, A.ORGCD ASC
+	</select>
+	
+	<select id="orgcdChk" parameterType="LDataMap" resultType="int">
+		/* SellerJoinReqListMapper.orgcdChk */
+		SELECT
+			COUNT(1) AS CNT 
+		FROM P002 WITH(NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD  = #{ORGCD}
+	</select>
+	
+	<!-- 셀러 : 마스터 신규 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.insertMst */
+		INSERT INTO P002 WITH (ROWLOCK) (
+			COMPCD
+			, ORGCD
+			, NAME
+			, SNAME
+			, TEL1
+			, TEL2
+			, FAX1
+			, FAX2
+			, POST
+			, ADDR
+			, ADDR2
+			, CEO
+			, BIZDATE
+			, BIZNO1
+			, BIZNO2
+			, BIZKIND
+			, BIZTYPE
+			, EMAIL
+			, WEBADDR
+			, NATION
+			, REMARKS
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, PROD_MAP_YN
+            , PAYMENT_TYPE
+		) VALUES (
+			#{COMPCD}
+			, #{ORGCD}
+			, #{NAME}
+			, CASE
+				WHEN #{SNAME} IS NULL THEN #{NAME}
+				WHEN #{SNAME}= '' HEN #{NAME}
+				ELSE #{SNAME} 
+			 END
+			, #{TEL1}
+			, #{TEL2}
+			, #{FAX1}
+			, #{FAX2}
+			, #{POST}
+			, #{ADDR}
+			, #{ADDR2}
+			, #{CEO}
+			, #{BIZDATE}
+			, #{BIZNO1}
+			, #{BIZNO2}
+			, #{BIZKIND}
+			, #{BIZTYPE}
+			, #{EMAIL}
+			, #{WEBADDR}
+			, #{NATION}
+			, #{REMARKS}
+			, #{ISUSING}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+			, #{PROD_MAP_YN}
+            , '3'
+		)
+	</insert>
+	
+	<!-- 셀러 : 저장(마스터수정) -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.updateMst */
+		UPDATE P002 WITH (ROWLOCK)
+		SET 
+			NAME = #{NAME}
+			, SNAME = #{SNAME}
+			, TEL1 = #{TEL1}
+			, TEL2 = #{TEL2}
+			, FAX1 = #{FAX1}
+			, FAX2 = #{FAX2}
+			, POST = #{POST}
+			, ADDR = #{ADDR}
+			, ADDR2 = #{ADDR2}
+			, CEO = #{CEO}
+			, BIZDATE = #{BIZDATE}
+			, BIZNO1 = #{BIZNO1}
+			, BIZNO2 = #{BIZNO2}
+			, BIZKIND = #{BIZKIND}
+			, BIZTYPE = #{BIZTYPE}
+			, EMAIL = #{EMAIL}
+			, WEBADDR = #{WEBADDR}
+			, NATION = #{NATION}
+			, REMARKS = #{REMARKS}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+			, PROD_MAP_YN = #{PROD_MAP_YN}
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</update>
+	
+	<!-- 셀러 : 삭제(사용여부 체크) -->
+	<select id="getIsusingChk" parameterType="LDataMap" resultType="String">
+		/* SellerJoinReqListMapper.getIsusingChk */
+		SELECT
+			ISUSING 
+		FROM P002 WITH (NOLOCK) 
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</select>
+	
+	<!-- 셀러 : 삭제(미사용으로 변경) -->
+	<update id="updateMstSts" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.updateMstSts */
+		UPDATE P002 WITH (ROWLOCK)
+		SET
+			ISUSING = #{ISUSING}
+			, UPDUSERCD	= #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</update>	
+	
+	<!-- 셀러 : 승인완료 -->
+	<update id="setApproval_P002" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.setApproval_P002 */
+		UPDATE P002 WITH (ROWLOCK)
+		SET
+			APPROVAL_FLG = #{APPROVAL_FLG}
+			, ISUSING = #{ISUSING}
+			, APPROVAL_USERCD = #{LOGIN_USERCD}
+			, APPROVAL_DATE = GETDATE()
+			, SELLER_WHCD = #{WHCD}  
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+		 WHERE COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+	</update>		
+	
+	<!-- 사용자 : 사용여부(사용) -->
+	<update id="setApproval_S010" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.setApproval_S010 */
+		UPDATE S010 WITH (ROWLOCK)
+		SET
+			ISUSING = #{ISUSING}
+			, WHCD = #{WHCD}
+			, UPDUSERCD	= #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = (SELECT ORGCD FROM P002 WHERE COMPCD = #{COMPCD} AND MEM_USERCD = #{MEM_USERCD})
+	</update>	
+	
+	<!-- 거래처 : 사용여부(사용) -->
+	<update id="setApproval_P003" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.setApproval_P003 */
+		UPDATE P003 WITH (ROWLOCK)
+		SET
+			ISUSING = #{ISUSING}
+			, UPDUSERCD	= #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+		WHERE COMPCD = #{COMPCD}
+		AND ORGCD = (SELECT ORGCD FROM P002 WHERE COMPCD = #{COMPCD} AND MEM_USERCD = #{MEM_USERCD})
+		AND CUSTCD = '0100001001'
+	</update>
+	
+	
+	<select id="getWhcd" parameterType="LDataMap" resultType="String">
+		/* SellerJoinReqListMapper.getWhcd */
+		SELECT 'WH'+dbo.UFX_Lpad(NEXT VALUE FOR DBO.SEQ_SELLER_WHCD_KEY OVER(ORDER BY (SELECT 1)),4, 0)
+	</select>	
+	
+	<!-- 창고 추가 -->
+	<insert id="insertCago" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.insertCago */
+		INSERT INTO P004 WITH (ROWLOCK) (
+			COMPCD
+			, WHCD
+			, NAME
+			, WHTYPE
+			, ADDR1
+			, ADDR2
+			, POST
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, WHINVTYPE
+		) 
+		SELECT 
+			COMPCD
+			, #{WHCD}
+			, #{NAME}
+			, 'SELLER'
+			, ADDR
+			, ADDR2
+			, POST
+			, 'Y'
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+			, 'INV'
+		from P002 
+		where COMPCD = #{COMPCD}
+		and ORGCD = #{ORGCD}
+	</insert>
+	
+	<!-- 로케이션 추가 -->
+	<insert id="insertLocation" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.insertLocation */
+		INSERT INTO P005 WITH (ROWLOCK) (
+			COMPCD
+			, WHCD
+			, LOCCD
+			, LOCNAME
+			, LOCGROUP
+			, ISVIRTUAL
+			, LOCTYPE
+			, ISUSING
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			#{COMPCD}
+			, #{WHCD}
+			, dbo.UFX_Trim(#{LOCCD})
+			, #{LOCNAME}
+			, #{LOCGROUP}
+			, 'N'
+			, #{LOCTYPE}
+			, ISNULL(CONVERT(NVARCHAR, #{ISUSING}), 'Y')
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+	
+	<insert id="insertMenu" parameterType="LDataMap">
+		/* SellerJoinReqListMapper.insertMenu */
+		INSERT INTO S006 (
+			COMPCD
+			, USERCD
+			, MENUL1KEY
+			, MENUL2KEY
+			, APPKEY
+			, AUTHSEARCH
+			, AUTHUPD
+			, AUTHDEL
+			, AUTHEXEC
+			, AUTHPRINT
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			#{COMPCD}
+			, #{MEM_USERCD}
+			, #{MENUL1KEY}
+			, #{MENUL2KEY}
+			, #{APPKEY}
+			, 'C'
+			, 'Y'
+			<choose>
+				<when test='APPKEY == "P000002"'>
+				, 'N'
+				</when>
+				<otherwise>
+				, 'Y'
+				</otherwise>
+			</choose>
+			, 'Y'
+			<choose>
+				<when test='APPKEY == "P000002"'>
+				, 'N'
+				</when>
+				<otherwise>
+				, 'Y'
+				</otherwise>
+			</choose>
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+	
+</mapper>

@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100325Mapper">
+
+	<!-- 입고지시/실적 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100325.getSearch */
+		SELECT A.WIKEY									/*입고번호*/																									
+			 , A.WITYPE									/*입고유형*/																								
+			 , A.WISTS									/*입고상태*/																								
+			 , A.WISCHDT								/*입고요청일*/																								
+			 , A.WIDT									/*입고일*/																								
+			 , A.COMPCD									/*회사코드*/																								
+			 , MAX(B.NAME) AS COMPNM					/*회사명*/																								
+			 , A.WHCD									/*창고코드*/																								
+			 , MAX(C.NAME) AS WHNM						/*창고명*/																								
+			 , A.CUSTCD									/*거래처코드*/																								
+			 , MAX(D.NAME) AS CUSTNM					/*거래처명*/																								
+			 , A.ORGCD									/*사업장코드*/																								
+			 , MAX(E.NAME) AS ORGNM						/*사업장명*/																										
+			 , A.WDKEY									/*입고지시번호*/																								
+			 , MAX(A.REMARK) AS REMARK					/*비고*/																							
+			 , MAX(A.ADDUSERCD) AS ADDUSERCD			/*등록자ID*/
+		     , CONVERT(VARCHAR, MAX(A.ADDDATETIME), 20) AS ADDDATETIME	/*등록일시*/
+		     , MAX(A.UPDUSERCD) AS UPDUSERCD							/*수정자ID*/
+		     , CONVERT(VARCHAR, MAX(A.UPDDATETIME), 20) AS UPDDATETIME	/*수정일시*/
+		     , MAX(A.TERMINALCD) AS	TERMINALCD							/*IP*/	
+		     , COUNT(DISTINCT F.ITEMCD) AS ITEMCNT                  /*품목수*/		
+			 , ISNULL(SUM(F.WISCHQTY),0) AS WISCHQTY                /*총입고예정수량*/	
+			 , CASE WHEN A.WISTS = 400 THEN ISNULL(SUM(F.WIQTY),0) ELSE 0 END AS WIQTY     /*총입고수량*/   
+			 , CASE WHEN A.WISTS = '100' THEN 0
+			   		WHEN A.WISTS = '400' THEN 100
+					ELSE
+			 			 CASE WHEN SUM(ISNULL(F.WISCHQTY,0))  = 0 THEN 0 
+			        	 	  ELSE ROUND(SUM(ISNULL(F.WIQTY,0)) / SUM(ISNULL(F.WISCHQTY,0))*100,0,1) END 
+			        END AS PROGRESS_QTY  /*실적현황*/  
+		  FROM P130 A WITH (NOLOCK)																																	
+	      JOIN P001 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD 																																		
+	      JOIN P004 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.WHCD = C.WHCD																																		
+	      JOIN P003 D WITH (NOLOCK) ON A.COMPCD = D.COMPCD AND A.ORGCD = D.ORGCD AND A.CUSTCD = D.CUSTCD																																		
+	      JOIN P002 E WITH (NOLOCK) ON A.COMPCD = E.COMPCD AND A.ORGCD = E.ORGCD		
+	      JOIN P131 F WITH (NOLOCK) ON A.WIKEY = F.WIKEY
+	      LEFT OUTER JOIN P140 H WITH (NOLOCK) ON A.COMPCD = H.COMPCD AND A.WDKEY = H.WDKEY
+	     WHERE A.COMPCD = #{S_COMPCD}
+			<if test="S_WISTS != null and S_WISTS != ''">
+				<if test="S_WISTS == 0 ">
+				   AND A.WISTS IN ('100', '200', '300')
+				</if>
+				<if test="S_WISTS != 0 ">
+				   AND A.WISTS = #{S_WISTS}
+				</if>  
+			</if>
+			<if test="S_WHCD != null and S_WHCD != ''">
+				AND A.WHCD LIKE '%' + #{S_WHCD} + '%'
+			</if>
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+				AND A.ORGCD LIKE '%' + #{S_ORGCD} + '%'
+			</if>
+			<if test="S_WISCHDT_FROM != null and S_WISCHDT_FROM != ''">
+				AND A.WISCHDT <![CDATA[>=]]> REPLACE(#{S_WISCHDT_FROM},'-','')
+			</if>
+			<if test="S_WISCHDT_TO != null and S_WISCHDT_TO != ''">
+				AND A.WISCHDT <![CDATA[<=]]> REPLACE(#{S_WISCHDT_TO},'-','')
+			</if>
+			<if test="S_CUSTCD != null and S_CUSTCD != ''">
+				AND A.CUSTCD LIKE '%' + #{S_CUSTCD} + '%'
+			</if>
+			<if test="S_KEYBOX != null and S_KEYBOX != ''">
+				<if test="S_KEY == 'WI'">
+					AND A.WIKEY LIKE '%' + dbo.UFX_TRIM(#{S_KEYBOX}) + '%'
+				</if>
+				<if test="S_KEY == 'WD'">
+					AND A.WDKEY LIKE '%' + dbo.UFX_TRIM(#{S_KEYBOX}) + '%'
+				</if>
+			</if>
+				AND EXISTS (SELECT 1
+		                 FROM P006 C WITH (NOLOCK)
+		                WHERE F.COMPCD = C.COMPCD
+		                  AND F.ORGCD = C.ORGCD
+		                  AND F.ITEMCD = C.ITEMCD
+			<if test="S_ITEMCD != null and S_ITEMCD != ''">
+		                  AND (C.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%' 
+		                   OR C.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+			</if>
+			<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND C.F_USER01 = #{S_F_USER01}
+			</if>
+			<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND C.F_USER02 = #{S_F_USER02}
+			</if>
+			<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND C.F_USER03 = #{S_F_USER03}
+			</if>
+			<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND C.F_USER04 = #{S_F_USER04}
+			</if>
+			<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND C.F_USER05 = #{S_F_USER05}
+			</if>
+			<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND C.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+			</if>
+			<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND C.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+			</if>
+			<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND C.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+			</if>
+			<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND C.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+			</if>
+			<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND C.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+			</if>
+		                   )
+		  GROUP BY A.WIKEY, A.WITYPE, A.WISTS, A.WISCHDT, A.WIDT
+		         , A.COMPCD, A.WHCD, A.CUSTCD, A.ORGCD, A.WDKEY	
+		  ORDER BY A.WIKEY DESC
+	</select>
+	
+	<!-- 입고지시/실적 : 상세검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100325.getDetail */
+		SELECT A.WIKEY					/*입고번호*/
+			 , A.SEQ					/*순번*/
+			 , A.ITEMCD					/*품목코드*/
+		     , B.NAME AS ITEMNM			/*품명*/
+		     , dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'BOX', B.INBOXQTY, A.WISCHQTY)  AS WISCHQTY_BOX
+		     , dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'EA', B.INBOXQTY, A.WISCHQTY)  AS WISCHQTY_EA
+		     , A.WISCHQTY 				/*입고예정수량*/
+		     , dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'BOX', B.INBOXQTY, ISNULL(NULLIF(A.WIQTY,0),A.WISCHQTY)) AS WIQTY_BOX
+		     , dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'EA', B.INBOXQTY, ISNULL(NULLIF(A.WIQTY,0),A.WISCHQTY)) AS WIQTY_EA  
+		     , ISNULL(NULLIF(A.WIQTY,0),A.WISCHQTY) AS WIQTY /*입고수량*/
+		     , A.EXCHCD					/*화폐단위*/
+		     , A.EXCHRATE				/*환율*/
+		     , A.UNITPRICE				/*화폐단위단가*/
+		     , A.EXCHAMT				/*입고금액(화폐단위)*/
+		     , A.SUPPLYAMT				/*입고금액(원화환산)*/
+		     , A.LOT1					/*로트속성1*/
+		     , A.LOT2					/*로트속성2*/
+		     , A.LOT3					/*로트속성3*/
+		     , A.LOT4					/*로트속성4*/
+		     , A.LOT5					/*로트속성5*/
+		     , A.COMPCD					/*회사코드*/
+		     , A.ORGCD					/*셀러코드*/
+		     , A.WHCD					/*창고코드*/
+		     , A.POKEY					/*발주번호*/
+		     , A.POSEQ					/*발주순번*/
+		     , A.PREDISTAMT				/*배부전금액*/
+		     , A.DISTAMT				/*배부비용*/
+		     , A.REMARK					/*비고*/
+		     , A.ADDUSERCD											/*등록자ID*/
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME	/*등록일시*/
+		     , A.UPDUSERCD											/*수정자ID*/
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME	/*수정일시*/
+		     , A.TERMINALCD											/*IP*/
+		     , B.F_USER01
+		     , B.F_USER02
+		     , B.F_USER03
+		     , B.F_USER04
+		     , B.F_USER05
+		     , B.F_USER11
+		     , B.F_USER12
+		     , B.F_USER13
+		     , B.F_USER14
+		     , B.F_USER15
+		     , B.ITEMSIZE /* 규격 */
+		     , B.UNITCD   /* 단위 */
+		     , B.INBOXQTY /* 박스입수량 */
+		     , B.UNITTYPE /* 관리 단위 */
+		     , A.IFORDERNO
+		     , A.IFORDERSUBNO
+		     , A.IFORDERSEQ
+		     , A.IFPOQTY  
+		  FROM P131 A WITH (NOLOCK)										
+		  JOIN P006 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD  = B.ORGCD AND A.ITEMCD = B.ITEMCD										
+	     WHERE A.WIKEY = #{WIKEY}
+	     ORDER BY A.SEQ
+	</select>
+   
+   
+	<!-- 입고지시/실적 : 입고로케이션 가져오기 -->
+	<select id="getWiLoccd" parameterType="LDataMap" resultType="String">
+		/* alexcloud.p100.P100325.getWiLoccd */
+		SELECT WHINLOCCD
+		  FROM P004 WITH (NOLOCK)
+		 WHERE ISUSING = 'Y'
+		   AND COMPCD = #{COMPCD}
+		   AND WHCD = #{WHCD}
+	</select>	
+	
+	<!-- 입고지시/실적 : 디테일 수정 -->
+	<update id="updateDtl" parameterType="LDataMap">
+		/* alexcloud.p100.P100325.updateDtl */
+		UPDATE P131 WITH (ROWLOCK)
+		   SET WIQTY      	 = #{WIQTY}
+		     , SUPPLYAMT	 = ISNULL(#{WIQTY},0) * ISNULL(UNITPRICE, 0)	
+		     , REMARK		 = #{REMARK}	
+		     , LOT1		 	 = #{LOT1}	
+		     , LOT2		 	 = #{LOT2}	
+		     , LOT3		 	 = #{LOT3}	
+		     , LOT4		 	 = #{LOT4}	
+		     , LOT5		 	 = #{LOT5}	
+		     , UPDUSERCD     = #{LOGIN_USERCD}
+		     , UPDDATETIME   = GETDATE()
+		     , TERMINALCD    = #{LOGIN_IP}
+		 WHERE WIKEY = #{WIKEY}
+		   AND SEQ = #{SEQ}
+	</update>
+	
+	<!-- 입고지시/실적 : 입고전표에 입고지시번호 UPDATE -->
+	<update id="updateWDkey" parameterType="LDataMap">
+		/* alexcloud.p100.P100325.updateWDkey */
+		UPDATE P130 WITH (ROWLOCK)
+		   SET WDKEY = #{WDKEY}
+		   	 , UPDUSERCD = #{LOGIN_USERCD}
+		   	 , UPDDATETIME = GETDATE()
+		   	 , TERMINALCD = #{LOGIN_IP}
+		 WHERE WIKEY = #{WIKEY}
+		   AND WISTS = '100'
+	</update>
+	
+	<!-- 입고지시/실적 : 전표 회사,사업장,창고 체크 -->
+	<select id="getMstInfo" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100325.getMstInfo */
+		SELECT TOP 1 COUNT(1)OVER() AS CNT
+			 , COMPCD
+			 , ORGCD
+			 , WHCD
+		  FROM P130	WITH (NOLOCK)
+		 WHERE WDKEY = #{WDKEY}
+		 GROUP BY COMPCD, ORGCD, WHCD
+	</select>
+	
+	<!-- 입고지시/실적 : 마스터 상태, 입고일자  UPDATEE -->
+	<update id="updateWiSts" parameterType="LDataMap">
+		/* alexcloud.p100.P100325.updateWiSts */
+		UPDATE P130 WITH (ROWLOCK)
+		   SET WISTS = '200'
+		     , WIDT = ISNULL(#{WDDT}, CONVERT(VARCHAR(8), GETDATE(), 112))
+		   	 , UPDUSERCD = #{LOGIN_USERCD}
+		   	 , UPDDATETIME = GETDATE()
+		   	 , TERMINALCD = #{LOGIN_IP}
+		 WHERE WDKEY = #{WDKEY}
+		   AND WISTS = '100'
+	</update>
+	
+	<!-- 저장 : 마스터추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p100.P100325.insertMst */
+		INSERT INTO P140 WITH (ROWLOCK) (
+			WDKEY, WDDT, WDTYPE, COMPCD
+           	, WHCD, ORGCD, REMARK, WORKER
+			, ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{WDKEY}, ISNULL(#{WDDT}, CONVERT(VARCHAR(8), GETDATE(), 112)), 'INS', #{COMPCD}
+			, #{WHCD}, #{ORGCD}, #{REMARK_P}, #{USERCD}
+			, #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP})
+	</insert>
+	
+	<!-- 입고지시/실적 : 실적처리될 품목검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100325.getDetailList */
+		SELECT A.WIKEY
+			 , B.SEQ AS WISEQ
+			 , (SELECT WHINLOCCD FROM P004 WITH (NOLOCK) WHERE ISUSING = 'Y' AND COMPCD = A.COMPCD AND WHCD = A.WHCD) AS LOCCD
+			 , ISNULL(NULLIF(B.WIQTY,0),B.WISCHQTY) AS WDQTY 
+			 , B.LOT1
+			 , B.LOT2
+			 , B.LOT3
+			 , B.LOT4
+			 , B.LOT5  
+			 , B.REMARK
+	     FROM P130 A WITH (NOLOCK)	
+		 JOIN P131 B WITH (NOLOCK) ON A.WIKEY = B.WIKEY
+	    WHERE A.WDKEY = #{WDKEY}
+	    ORDER BY A.WIKEY, B.SEQ
+	</select>
+	
+	<!-- 입고지시/실적 프로시저 현재사용 X(18.06.14)-->
+	<select id="setInstructComb" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_WhInstructComb(#{WIKEY, jdbcType = VARCHAR, mode = IN}
+		                  , #{WISEQ, jdbcType = DECIMAL, mode = IN}
+		                  , #{LOCCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{WDQTY, jdbcType = DECIMAL, mode = IN}
+		                  , #{LOT1, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOT2, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOT3, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOT4, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOT5, jdbcType = VARCHAR, mode = IN}
+		                  , #{REMARK, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+	
+	
+	<!-- 입고지시/실적 : 프로시저xml 처리 -->
+	<select id="setInstructCombXml" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_WhInstructCombXml(
+						    #{XML, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+	
+</mapper>

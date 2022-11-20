@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 부서 팝업 -->
+<mapper namespace="PopP016Mapper">
+	<!-- 트리 검색 -->
+	<select id="getSearchTree" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP016Mapper.getSearchTree */
+		WITH T1 (
+			COMPCD, ORGCD, DEPTCD, NAME, PDEPTCD
+		  , SORTNO, REMARK, LVL, LVLNAME, DEPTTREE, SORTTREE
+		) AS (
+			SELECT A.COMPCD
+				 , A.ORGCD
+				 , A.DEPTCD
+				 , A.NAME
+				 , A.PDEPTCD
+			     , A.SORTNO
+			     , A.REMARK
+			     , 1 AS LVL
+			     , CONVERT(NVARCHAR, '1') AS LVLNAME
+			     , CONVERT(NVARCHAR(200), A.DEPTCD) AS DEPTTREE
+			     , CONVERT(NVARCHAR(200), dbo.UFX_Lpad(A.SORTNO, 10, '0') + A.DEPTCD) AS SORTTREE
+			FROM P016 A WITH (NOLOCK)
+			JOIN P001 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD
+			JOIN P002 C WITH (NOLOCK)
+			  ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD
+			WHERE A.PDEPTCD = '*'
+			  AND B.ISUSING = 'Y' 
+			  AND C.ISUSING = 'Y'
+			UNION ALL
+			SELECT T2.COMPCD
+				 , T2.ORGCD
+				 , T2.DEPTCD
+				 , T2.NAME
+			     , T2.PDEPTCD
+			     , T2.SORTNO
+			     , T2.REMARK
+			     , T1.LVL + 1 AS LVL
+			     , CONVERT(NVARCHAR, T1.LVL + 1) AS LVLNAME
+			     , CONVERT(NVARCHAR(200), T1.DEPTTREE + '.' + T2.DEPTCD) AS DEPTTREE
+			     , CONVERT(NVARCHAR(200), T1.SORTTREE + '.' + CONVERT(NVARCHAR(200), dbo.UFX_Lpad(T2.SORTNO, 10, '0')) + T2.DEPTCD) AS SORTTREE
+			FROM P016 T2 WITH (NOLOCK)
+			JOIN T1 WITH (NOLOCK)
+			  ON T1.COMPCD = T2.COMPCD AND T1.ORGCD = T2.ORGCD AND T1.DEPTCD = T2.PDEPTCD
+		)
+		SELECT T1.COMPCD
+			 , C.NAME AS COMPNM
+			 , T1.ORGCD
+			 , B.NAME AS ORGNM
+			 , T1.DEPTCD
+			 , T1.NAME
+			 , T1.NAME AS DEPTINFO
+			 , T1.PDEPTCD
+			 , T1.SORTNO
+			 , T1.REMARK
+			 , T1.LVL
+			 , T1.LVLNAME
+			 , T1.ORGCD + '.' + T1.DEPTTREE AS DEPTTREE
+			 , T1.SORTTREE AS SORTTREE
+		FROM T1 WITH (NOLOCK)
+		JOIN P002 B WITH (NOLOCK)
+		  ON T1.COMPCD = B.COMPCD AND T1.ORGCD = B.ORGCD
+		JOIN P001 C WITH (NOLOCK)
+		  ON T1.COMPCD = C.COMPCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+				AND T1.COMPCD = #{S_COMPCD}
+			</if>
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+				AND T1.ORGCD = #{S_ORGCD}
+			</if>
+		</trim>
+		UNION ALL
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , A.ORGCD
+			 , A.NAME AS ORGNM
+			 , NULL AS DEPTNM
+			 , NULL AS DEPTCD
+			 , A.NAME AS DEPTINFO
+			 , NULL AS PDEPTCD
+			 , 0 AS SORTNO
+			 , NULL AS REMARK
+			 , 0 AS LVL
+			 , '사업장' AS LVLNAME
+			 , A.ORGCD + '.' AS DEPTTREE
+			 , NULL AS SORTTREE
+		FROM P002 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD
+		WHERE A.ISUSING = 'Y'
+		  AND B.ISUSING = 'Y'
+		<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND A.COMPCD = #{S_COMPCD}
+		</if>
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		ORDER BY COMPCD, ORGCD, SORTTREE, DEPTTREE
+	</select>
+
+	<!-- 부서 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP016Mapper.getCheck */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , C.NAME AS ORGNM
+			 , A.DEPTCD
+			 , A.NAME
+			 , A.PDEPTCD
+			 , B.NAME AS PDEPTNM
+			 , A.LVL
+			 , A.ISUSING
+			 , A.REMARK
+			 , A.ADDUSERCD										
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+		     , A.UPDUSERCD										
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+			 , CASE WHEN A.NAME IS NOT NULL AND B.NAME IS NOT NULL AND C.NAME IS NOT NULL THEN														
+				 		 C.NAME + ' > ' + B.NAME  + ' > ' + A.NAME														
+					WHEN A.NAME IS NOT NULL AND C.NAME IS NOT NULL THEN														
+				 		 C.NAME + ' > '  + A.NAME											
+			        ELSE														
+			             '*'														
+			    END AS DEPTINFO
+		  FROM P016 A WITH (NOLOCK)
+		  LEFT OUTER JOIN P016 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.PDEPTCD = B.DEPTCD		
+		  JOIN P002 C WITH (NOLOCK)
+		    ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD		
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.DEPTCD = #{S_DEPTCD}
+	</select>
+
+</mapper>

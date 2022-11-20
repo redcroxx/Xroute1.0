@@ -1,0 +1,62 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:p="http://www.springframework.org/schema/p"
+		xmlns:context="http://www.springframework.org/schema/context"
+		xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+		xmlns:aop="http://www.springframework.org/schema/aop"
+		xsi:schemaLocation="
+			http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context
+			http://www.springframework.org/schema/context/spring-context.xsd
+			http://www.springframework.org/schema/jdbc
+			http://www.springframework.org/schema/jdbc/spring-jdbc.xsd"	>
+
+	<bean id="dataSourceActual" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="#{db['db.driver']}"/>
+		<property name="url" value="#{db['db.url']}"/>
+		<property name="username" value="#{db['db.username']}"/>
+		<property name="password" value="#{db['db.password']}"/>
+		<property name="defaultAutoCommit" value="#{db['db.autoCommit']}"/>
+	</bean>
+	
+	<!-- <bean id="dataSourceActual2" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="#{db['db.mssql2.driver']}"/>
+		<property name="url" value="#{db['db.mssql2.url']}"/>
+		<property name="username" value="#{db['db.mssql2.username']}"/>
+		<property name="password" value="#{db['db.mssql2.password']}"/>
+		<property name="defaultAutoCommit" value="#{db['db.autoCommit']}"/>
+	</bean> -->
+
+	
+	<bean id="dataSource" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+		<constructor-arg ref="dataSourceActual" />
+		<property name="logFormatter">
+		<bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+			<property name="loggingType" value="MULTI_LINE" />
+			<property name="sqlPrefix" value="&#xD;&#xA;                " />
+		</bean>
+		</property>
+	</bean>
+	
+	<!-- <bean id="dataSource2" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+		<constructor-arg ref="dataSourceActual2" />
+		<property name="logFormatter">
+		<bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+			<property name="loggingType" value="MULTI_LINE" />
+			<property name="sqlPrefix" value="" />
+		</bean>
+		</property>
+	</bean> -->
+	
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	   <property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<!-- <bean id="transactionManager2"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	   <property name="dataSource" ref="dataSource2"/>
+	</bean> -->
+
+</beans>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PremiumRateMapper">
+
+    <select id="getSearch" parameterType="xrt.fulfillment.system.PremiumRateVO" resultType="xrt.fulfillment.system.PremiumRateVO">
+        SELECT
+            WGT AS wgt
+            , PREMIUM1 AS premium1
+            , PREMIUM2 AS premium2
+            , PREMIUM3 AS premium3
+            , PREMIUM4 AS premium4
+            , PREMIUM5 AS premium5
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            <choose>
+                <when test='country == "JP"'>
+                    PRICE_JP
+                </when>
+                <when test='country == "SG"'>
+                    PRICE_SG
+                </when>
+                <when test='country == "HK"'>
+                    PRICE_HK
+                </when>
+                <when test='country == "MY"'>
+                    PRICE_MY
+                </when>
+                <when test='country == "TW"'>
+                    PRICE_TW
+                </when>
+                <when test='country == "US"'>
+                    PRICE_US
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        WHERE 1 = 1
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <insert id="insertRate" parameterType="xrt.fulfillment.system.PremiumRateVO">
+        INSERT INTO 
+            <choose>
+                <when test='country == "JP"'>
+                    PRICE_JP
+                </when>
+                <when test='country == "SG"'>
+                    PRICE_SG
+                </when>
+                <when test='country == "HK"'>
+                    PRICE_HK
+                </when>
+                <when test='country == "MY"'>
+                    PRICE_MY
+                </when>
+                <when test='country == "TW"'>
+                    PRICE_TW
+                </when>
+                <when test='country == "US"'>
+                    PRICE_US
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        (
+            WGT
+            , PREMIUM1
+            , PREMIUM2
+            , PREMIUM3
+            , PREMIUM4
+            , PREMIUM5
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{wgt}
+            , #{premium1}
+            , #{premium2}
+            , #{premium3}
+            , #{premium4}
+            , #{premium5}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+     <update id="updateRate" parameterType="xrt.fulfillment.system.PremiumRateVO">
+        UPDATE
+            <choose>
+                <when test='country == "JP"'>
+                    PRICE_JP
+                </when>
+                <when test='country == "SG"'>
+                    PRICE_SG
+                </when>
+                <when test='country == "HK"'>
+                    PRICE_HK
+                </when>
+                <when test='country == "MY"'>
+                    PRICE_MY
+                </when>
+                <when test='country == "TW"'>
+                    PRICE_TW
+                </when>
+                <when test='country == "US"'>
+                    PRICE_US
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+         <trim prefix="SET" suffixOverrides=",">
+            <if test="premium1 != null and premium1 !=''">
+                PREMIUM1 = #{premium1},
+            </if>
+            <if test="premium2 != null and premium2 !=''">
+                PREMIUM2 = #{premium2},
+            </if>
+            <if test="premium3 != null and premium3 !=''">
+                PREMIUM3 = #{premium3},
+            </if>
+            <if test="premium4 != null and premium4 !=''">
+                PREMIUM4 = #{premium4},
+            </if>
+            <if test="premium5 != null and premium5 !=''">
+                PREMIUM5 = #{premium5},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+         </trim>
+         WHERE 1 = 1
+         AND WGT = #{wgt}
+     </update>
+     
+    <delete id="deleteRate" parameterType="LDataMap">
+        DELETE FROM
+            <choose>
+                <when test='country == "JP"'>
+                    PRICE_JP
+                </when>
+                <when test='country == "SG"'>
+                    PRICE_SG
+                </when>
+                <when test='country == "HK"'>
+                    PRICE_HK
+                </when>
+                <when test='country == "MY"'>
+                    PRICE_MY
+                </when>
+                <when test='country == "TW"'>
+                    PRICE_TW
+                </when>
+                <when test='country == "US"'>
+                    PRICE_US
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+            WHERE 1 = 1
+    </delete>
+
+</mapper>

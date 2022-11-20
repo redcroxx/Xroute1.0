@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PopC00024Mapper">
+	<!-- 품목 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopC00024Mapper.getSearch */
+		SELECT A.COMPCD
+			 , A.ITEMCD
+			 , A.NAME
+			 , A.SNAME
+			 , A.FNAME
+			 , A.ITEMTYPE
+			 , A.UNITCD
+			 , A.UNITTYPE
+			 , A.ITEMSIZE
+			 , A.CATEGORYCD
+			 , C.NAME AS ITEMCAT3NM
+			 , D.NAME AS ITEMCAT2NM
+			 , E.NAME AS ITEMCAT1NM
+			 , A.SETYN
+			 , A.INBOXQTY
+			 , A.INPLTQTY
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.CAPACITY
+			 , A.MANUFACTURE
+			 , A.MANUCOUNTRY
+			 , A.CUSTCD
+			 , B.NAME AS CUSTNM
+			 , A.F_USER01
+			 , A.F_USER02
+			 , A.F_USER03
+			 , A.F_USER04
+			 , A.F_USER05
+			 , A.F_USER11
+			 , A.F_USER12
+			 , A.F_USER13
+			 , A.F_USER14
+			 , A.F_USER15
+			 , A.IMG1_PATH
+			 , A.IMG1_REAL_PATH
+			 , A.REMARK
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD           
+			 , DBO.UFX_GetUnitCost(A.COMPCD, A.ORGCD, #{CUSTCD}, A.ITEMCD, CONVERT(NVARCHAR, GETDATE(), 112)) AS UNITCOST 
+			 , DBO.UFX_GetUnitPrice(A.COMPCD, A.ORGCD, #{CUSTCD}, A.ITEMCD, CONVERT(NVARCHAR, GETDATE(), 112)) AS UNITPRICE
+			 , DBO.UFX_GetAllocInvQty(A.COMPCD, #{WHCD}, A.ORGCD, A.ITEMCD, NULL, NULL, NULL, NULL, NULL, 0) AS INVQTY
+		FROM P006 A WITH (NOLOCK)
+		LEFT OUTER JOIN P003 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.CUSTCD = B.CUSTCD AND A.ORGCD = B.ORGCD
+		LEFT OUTER JOIN P017 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.CATEGORYCD = C.CATEGORYCD
+		LEFT OUTER JOIN P017 D WITH (NOLOCK)
+		  ON C.COMPCD = D.COMPCD AND C.PCATEGORYCD = D.CATEGORYCD
+		LEFT OUTER JOIN P017 E WITH (NOLOCK)
+		  ON D.COMPCD = E.COMPCD AND D.PCATEGORYCD = E.CATEGORYCD
+		WHERE A.ISUSING = 'Y'
+		  AND A.COMPCD = #{S_COMPCD}
+		  AND A.ORGCD = #{S_ORGCD}
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+			AND (A.ITEMCD LIKE #{S_ITEMCD} + '%' OR A.NAME LIKE '%' + #{S_ITEMCD} + '%')
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+			AND (A.CUSTCD LIKE #{S_CUSTCD} + '%' OR B.NAME LIKE '%' + #{S_CUSTCD} + '%')
+		</if>
+
+		ORDER BY A.COMPCD, A.ITEMCD
+	</select>
+
+	<!-- 품목 팝업 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP00601Mapper.getCheck */
+		SELECT A.COMPCD
+			 , A.ITEMCD
+			 , A.NAME
+			 , A.SNAME
+			 , A.FNAME
+			 , A.ITEMTYPE
+			 , A.UNITCD
+			 , A.ITEMSIZE
+			 , A.CATEGORYCD
+			 , A.SETYN
+			 , A.INBOXQTY
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.CAPACITY
+			 , A.MANUFACTURE
+			 , A.MANUCOUNTRY
+			 , A.CUSTCD
+			 , A.F_USER01
+			 , A.F_USER02
+			 , A.F_USER03
+			 , A.F_USER04
+			 , A.F_USER05
+			 , A.F_USER11
+			 , A.F_USER12
+			 , A.F_USER13
+			 , A.F_USER14
+			 , A.F_USER15
+			 , A.IMG1_PATH
+			 , A.IMG1_REAL_PATH
+			 , A.REMARK
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM P006 A WITH (NOLOCK)
+		 WHERE A.ISUSING = 'Y'
+	       AND A.COMPCD = #{S_COMPCD}
+	       AND A.ORGCD  = #{S_ORGCD}
+	       AND A.ITEMCD = #{S_ITEMCD}
+		ORDER BY A.COMPCD, A.ITEMCD
+	</select>
+</mapper>

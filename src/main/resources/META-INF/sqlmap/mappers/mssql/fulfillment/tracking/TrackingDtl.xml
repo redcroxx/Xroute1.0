@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="TrackingDtlMapper">
+	<select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.tracking.StockHistoryVo">
+		/* TrackingDtlMapper.getSearch */
+		SELECT
+			A.IDX			AS idx
+			, A.INVC_SNO	AS invcSno
+			, A.ORD_CD		AS ordCd
+			, A.ADDUSERCD	AS addusercd
+			, CONVERT(NVARCHAR, A.ADDDATETIME, 120)	AS checkPointDate
+			, A.STATUS_CD	AS statusCd
+			, CASE
+				WHEN A.STATUS_CD = '10' THEN 'Wating'
+				WHEN A.STATUS_CD = '30' THEN 'InfoReceived'
+				WHEN A.STATUS_CD = '40' THEN 'Pending'
+				WHEN A.STATUS_CD = '50' THEN 'InTransit'
+				WHEN A.STATUS_CD = '60' THEN 'Delivered'
+				WHEN A.STATUS_CD = '80' THEN 'API Error'
+				ELSE 'Error'
+			 END AS tag
+			, CASE
+				WHEN A.STATUS_CD = '10' THEN '대기'
+				WHEN A.STATUS_CD = '30' THEN '입고'
+				WHEN A.STATUS_CD = '40' THEN '대기 중'
+				WHEN A.STATUS_CD = '50' THEN '운송 중'
+				WHEN A.STATUS_CD = '60' THEN '배송 완료'
+				WHEN A.STATUS_CD = '80' THEN 'API오류'
+				ELSE '오류'
+			 END AS tagKr 
+			, B.LOCAL_SHIPPER AS localShipper
+			, B.SLUG1 AS slug1
+			, B.SLUG2 AS slug2
+			, A.API_INVC_SNO AS apiInvcSno
+			, B.INVC_SNO2 AS invcSno2
+			, B.INVC_SNO3 AS invcSno3
+			, CASE
+				WHEN A.NATION IS NULL THEN B.S_NATION
+				ELSE A.NATION
+			END AS nation
+			, 'U'	AS rowStatusCd
+		FROM TSTOCK_HISTORY A
+		LEFT JOIN TORDER B
+		ON A.ORD_CD = B.ORD_CD
+		WHERE 1 = 1
+		AND A.STATUS_CD IN ('10', '30', '40', '50', '60', '80', '99')
+		AND A.INVC_SNO = #{xrtInvcSno}
+		ORDER BY A.adddatetime ASC
+	</select>
+	
+	<select id="getOrderDtl" parameterType="commonSearchVo" resultType="xrt.fulfillment.interfaces.vo.TOrderVo">
+		/* TrackingDtlMapper.getOrderDtl */
+		SELECT
+			A.ORD_CD			AS ordCd
+			, A.XRT_INVC_SNO	AS xrtInvcSno
+			, A.LOCAL_SHIPPER	AS localShipper
+			, A.SLUG1			AS slug1
+			, A.SLUG2			AS slug2
+			, A.INVC_SNO1		AS invcSno1
+			, A.INVC_SNO2		AS invcSno2
+			, A.INVC_SNO3		AS invcSno3
+		FROM TORDER A
+		WHERE 1 = 1
+		AND A.XRT_INVC_SNO = #{xrtInvcSno}
+	</select>
+	
+	<insert id="insertTStockHistory" parameterType="xrt.fulfillment.tracking.StockHistoryVo">
+		/* TrackingDtlMapper.insertTStockHistory */
+		INSERT INTO TSTOCK_HISTORY (
+			ORD_CD
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, INVC_SNO
+			, STATUS_CD
+			, EVENT_CD
+			, NATION
+		) VALUES (
+			#{ordCd}
+			, #{addusercd}
+			, CONVERT(NVARCHAR, #{adddatetime}, 120)
+			, #{updusercd}
+			, getDate()
+			, #{terminalcd}
+			, #{invcSno}
+			, #{statusCd}
+			, 'CREATE'
+			, #{nation}
+		)
+	</insert>
+	
+	<delete id="deleteTStockHistory" parameterType="xrt.fulfillment.tracking.StockHistoryVo">
+		/* TrackingDtlMapper.deleteTStockHistory */
+		DELETE FROM TSTOCK_HISTORY
+		WHERE 1 = 1
+		AND INVC_SNO = #{invcSno}
+		AND CONVERT(NVARCHAR, ADDDATETIME, 120) = #{adddatetime}
+	</delete>
+</mapper>

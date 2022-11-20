@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 복합품목 관리 -->
+<mapper namespace="P000026Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000026.getSearch */
+		SELECT A.COMPCD
+		     , A.ORGCD
+			 , B.NAME AS ORGNM
+			 , A.PROD_CD
+			 , A.PROD_NM
+			 , A.PROD_TYPE_CD
+			 , ISNULL(A.MAX_CLGO_QTY, 0) AS MAX_CLGO_QTY
+			 , ISNULL(A.SMALL_YN, 0) AS SMALL_YN
+			 , ISNULL(A.SEVENTY, 0) AS SEVENTY
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 120) AS ADDDATETIME
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 120) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM PRODUCT A WITH(NOLOCK)
+		  JOIN P002 B WITH(NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		   AND A.ORGCD  = B.ORGCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.PROD_TYPE_CD = '00002'
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND (A.PROD_CD LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%' OR A.PROD_NM LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%')
+		</if>
+		<!-- <if test="S_MAX_CLGO_QTY != null and S_MAX_CLGO_QTY != ''">
+			AND A.MAX_CLGO_QTY = #{S_MAX_CLGO_QTY} 
+		</if>
+		<if test="S_SMALL_YN != null and S_SMALL_YN != ''">
+			AND A.SMALL_YN = #{S_SMALL_YN}
+		</if>
+		<if test="S_SEVENTY != null and S_SEVENTY != ''">
+			AND A.SEVENTY = #{S_SEVENTY}
+		</if> -->
+		ORDER BY A.COMPCD, A.ORGCD, A.PROD_CD
+	</select>
+	
+	
+	<select id="getExcelSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000026.getExcelSearch */
+		SELECT A.COMPCD
+		     , A.ORGCD
+			 , D.NAME AS ORGNM
+			 , A.PROD_CD
+			 , A.PROD_NM
+			 --, A.PROD_TYPE_CD
+			 --, C.PROD_CD
+			 , C.ITEMCD
+			 , B.NAME
+			 , C.SPROD_QTY
+		  FROM PRODUCT A WITH(NOLOCK)
+		   JOIN P002 D WITH(NOLOCK)
+		    ON A.COMPCD = D.COMPCD
+		   AND A.ORGCD  = D.ORGCD
+		  JOIN PRODSPROD C WITH(NOLOCK)
+		    ON A.COMPCD = C.COMPCD
+		   AND A.ORGCD = C.ORGCD
+		   AND A.PROD_CD = C.PROD_CD
+		  JOIN P006 B WITH(NOLOCK)
+		    ON C.COMPCD = B.COMPCD
+		   AND C.ORGCD = B.ORGCD
+		   AND C.ITEMCD = B.ITEMCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.PROD_TYPE_CD = '00002'   
+			
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>	
+		
+		ORDER BY A.COMPCD, A.ORGCD, A.PROD_CD
+	</select>
+	
+	
+	<!-- 상세리스트 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000026.getDetailList */
+		SELECT A.COMPCD
+		     , A.ORGCD
+			 , A.PROD_CD
+			 , A.ITEMCD
+			 , B.NAME
+			 , A.SPROD_QTY
+			 , A.SET_QTY
+			 , A.REMARKS
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 120) AS ADDDATETIME
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 120) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM PRODSPROD A WITH(NOLOCK)
+		  JOIN P006 B WITH(NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		   AND A.ORGCD = B.ORGCD
+		   AND A.ITEMCD = B.ITEMCD
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.ORGCD = #{ORGCD}
+		   AND A.PROD_CD = #{PROD_CD}
+		 ORDER BY A.ITEMCD
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetailPRODUCTMAP" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000026.getDetailPRODUCTMAP */
+		SELECT A.COMPCD, A.ORGCD, A.MAP_PROD_CD, A.PROD_TYPE_CD
+		  FROM PRODUCTMAP A WITH (NOLOCK)
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.ORGCD = #{ORGCD} 
+		   AND A.MAP_PROD_CD = #{PROD_CD}
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetailPRODSPROD" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000026.getDetailSPROD */
+		SELECT A.COMPCD, A.ORGCD, A.ITEMCD, B.NAME
+		  FROM PRODSPROD A
+ 	      JOIN P006 B ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.ITEMCD = B.ITEMCD
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.ORGCD = #{ORGCD} 
+		   AND A.PROD_CD = #{PROD_CD}
+		   AND A.ITEMCD = #{ITEMCD}
+	</select>
+
+	<!-- 추가  PRODUCTMAP -->
+	<insert id="insertPRODUCTMAP" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.insertPRODUCTMAP */
+		INSERT INTO PRODUCTMAP(
+			COMPCD, ORGCD, MAP_PROD_CD, PROD_CD, PROD_TYPE_CD
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{PROD_CD}), dbo.UFX_Trim(#{PROD_CD}), #{PROD_TYPE_CD}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 추가  PRODUCT -->
+	<insert id="insertPRODUCT" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.insertPRODUCT */
+		INSERT INTO PRODUCT(
+			COMPCD, ORGCD, PROD_CD, PROD_NM, PROD_TYPE_CD, MAX_CLGO_QTY, SMALL_YN, SEVENTY
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{PROD_CD}), #{PROD_NM}, #{PROD_TYPE_CD}, #{MAX_CLGO_QTY}, #{SMALL_YN}, #{SEVENTY} 
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 수정 PRODUCT -->
+	<update id="updatePRODUCT" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.updatePRODUCT */
+		UPDATE PRODUCT
+		   SET PROD_NM = #{PROD_NM}
+		     , MAX_CLGO_QTY = #{MAX_CLGO_QTY}
+		     , SMALL_YN = #{SMALL_YN}
+		     , SEVENTY = #{SEVENTY}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND ORGCD = #{ORGCD}
+		  AND PROD_CD = #{PROD_CD}
+	</update>
+
+	<!-- 추가  PRODSPROD -->
+	<insert id="insertPRODSPROD" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.insertPRODSPROD */
+		INSERT INTO PRODSPROD(
+			COMPCD, ORGCD, PROD_CD, ITEMCD, SPROD_QTY, SET_QTY, REMARKS
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{PROD_CD}), dbo.UFX_Trim(#{ITEMCD}), #{SPROD_QTY}, #{SET_QTY}, #{REMARKS}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 수정 PRODSPROD -->
+	<update id="updatePRODSPROD" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.updatePRODSPROD */
+		UPDATE PRODSPROD
+		   SET SPROD_QTY = #{SPROD_QTY}
+		     , SET_QTY = #{SET_QTY}
+		     , REMARKS = #{REMARKS}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		   AND PROD_CD = #{PROD_CD}
+		   AND ITEMCD = #{ITEMCD}
+	</update>
+
+	<!-- 삭제 PRODSPROD -->
+	<delete id="deletePRODSPROD" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.deletePRODSPROD */
+		DELETE FROM PRODSPROD
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		   AND PROD_CD = #{PROD_CD}
+		   AND ITEMCD = #{ITEMCD}
+	</delete>
+	
+	<!-- 삭제 PRODUCTMAP -->
+	<delete id="deletePRODUCTMAP" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.deletePRODUCTMAP */
+		DELETE FROM PRODUCTMAP
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		   AND MAP_PROD_CD = #{PROD_CD}
+	</delete>
+	
+	<!-- 삭제 PRODUCT -->
+	<delete id="deletePRODUCT" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.deletePRODUCT */
+		DELETE FROM PRODUCT
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		   AND PROD_CD = #{PROD_CD}
+	</delete>
+	
+	<!-- 삭제 All PRODSPROD -->
+	<delete id="deleteAllPRODSPROD" parameterType="LDataMap">
+		/* alexcloud.p000.P000026.deleteAllPRODSPROD */
+		DELETE FROM PRODSPROD
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		   AND PROD_CD = #{PROD_CD}
+	</delete>
+	
+</mapper>

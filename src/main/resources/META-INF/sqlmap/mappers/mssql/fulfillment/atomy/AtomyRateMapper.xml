@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyRateMapper">
+
+    <select id="getSearch" parameterType="xrt.fulfillment.atomy.AtomyRateVO" resultType="xrt.fulfillment.atomy.AtomyRateVO">
+        SELECT
+            KG AS kg
+            , ITALY              AS italy
+			, AUSTRALIA          AS australia
+			, HONGKONG           AS hongKong
+			, JAPAN              AS japan
+			, MALAYSIA           AS malaysia
+			, MONGOLIA           AS mongolia
+			, NEWZEALAND         AS newZealand
+			, SINGAPORE          AS singapore
+			, TAIWAN             AS taiwan
+			, USA                AS usa
+			, CANADA             AS canada
+			, FRANCE             AS france
+			, GERMANY            AS germany
+			, SWITZERLAND        AS switzerland
+			, UNITEDKINGDOM      AS unitedKingdom
+			, GUAM               AS guam
+			, SAIPAN             AS saipan
+			, CAMBODIA           AS cambodia
+			, THAILAND           AS thailand
+			, PHILIPPINES        AS philippines
+			, SPAIN              AS spain
+			, PORTUGAL           AS portugal
+			, RUSSIA             AS russia
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            ATOMY_RATE
+        WHERE 1 = 1
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <select id="getTotalSearch" parameterType="xrt.fulfillment.atomy.AtomyRateVO" resultType="xrt.fulfillment.atomy.AtomyRateVO">
+        SELECT
+            KG AS kg
+            , ITALY              AS italy
+            , AUSTRALIA          AS australia
+            , HONGKONG           AS hongKong
+            , JAPAN              AS japan
+            , MALAYSIA           AS malaysia
+            , MONGOLIA           AS mongolia
+            , NEWZEALAND         AS newZealand
+            , SINGAPORE          AS singapore
+            , TAIWAN             AS taiwan
+            , USA                AS usa
+            , CANADA             AS canada
+            , FRANCE             AS france
+            , GERMANY            AS germany
+            , SWITZERLAND        AS switzerland
+            , UNITEDKINGDOM      AS unitedKingdom
+            , GUAM               AS guam
+            , SAIPAN             AS saipan
+            , CAMBODIA           AS cambodia
+            , THAILAND           AS thailand
+            , PHILIPPINES        AS philippines
+            , SPAIN              AS spain
+            , PORTUGAL           AS portugal
+            , RUSSIA             AS russia
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            ATOMY_RATE_TOTAL
+        WHERE 1 = 1
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <insert id="insertAtomyRate" parameterType="xrt.fulfillment.atomy.AtomyRateVO">
+    	<selectKey resultType="java.util.HashMap" keyProperty="atomyRateSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR ATOMY_RATE_SEQ), 20) AS atomyRateSeq
+        </selectKey>
+        INSERT INTO ATOMY_RATE
+        (
+        	ATOMY_RATE_SEQ
+            , KG
+            , ITALY
+			, AUSTRALIA
+			, HONGKONG
+			, JAPAN
+			, MALAYSIA
+			, MONGOLIA
+			, NEWZEALAND
+			, SINGAPORE
+			, TAIWAN
+			, USA
+			, CANADA
+			, FRANCE
+			, GERMANY
+			, SWITZERLAND
+			, UNITEDKINGDOM
+			, GUAM
+			, SAIPAN
+			, CAMBODIA
+            , THAILAND
+            , PHILIPPINES
+            , SPAIN
+            , PORTUGAL
+            , RUSSIA
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+        	#{atomyRateSeq}
+            , #{kg}
+            , #{italy}
+            , #{australia}
+            , #{hongKong}
+            , #{japan}
+            , #{malaysia}
+            , #{mongolia}
+            , #{newZealand}
+            , #{singapore}
+            , #{taiwan}
+            , #{usa}
+            , #{canada}
+            , #{france}
+            , #{germany}
+            , #{switzerland}
+            , #{unitedKingdom}
+            , #{guam}
+            , #{saipan}
+            , #{cambodia}
+			, #{thailand}
+			, #{philippines}
+			, #{spain}
+			, #{portugal}
+			, #{russia}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+    <insert id="insertAtomyTotalRate" parameterType="xrt.fulfillment.atomy.AtomyRateVO">
+        <selectKey resultType="java.util.HashMap" keyProperty="atomyRateTotalSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR ATOMY_RATE_TOTAL_SEQ), 20) AS atomyRateTotalSeq
+        </selectKey>
+        INSERT INTO ATOMY_RATE_TOTAL
+        (
+            ATOMY_RATE_TOTAL_SEQ
+            , KG
+            , ITALY
+            , AUSTRALIA
+            , HONGKONG
+            , JAPAN
+            , MALAYSIA
+            , MONGOLIA
+            , NEWZEALAND
+            , SINGAPORE
+            , TAIWAN
+            , USA
+            , CANADA
+            , FRANCE
+            , GERMANY
+            , SWITZERLAND
+            , UNITEDKINGDOM
+            , GUAM
+            , SAIPAN
+            , CAMBODIA
+            , THAILAND
+            , PHILIPPINES
+            , SPAIN
+            , PORTUGAL
+            , RUSSIA
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{atomyRateTotalSeq}
+            , #{kg}
+            , #{italy}
+            , #{australia}
+            , #{hongKong}
+            , #{japan}
+            , #{malaysia}
+            , #{mongolia}
+            , #{newZealand}
+            , #{singapore}
+            , #{taiwan}
+            , #{usa}
+            , #{canada}
+            , #{france}
+            , #{germany}
+            , #{switzerland}
+            , #{unitedKingdom}
+            , #{guam}
+            , #{saipan}
+            , #{cambodia}
+            , #{thailand}
+            , #{philippines}
+            , #{spain}
+            , #{portugal}
+            , #{russia}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+     <update id="updateAtomyRate" parameterType="xrt.fulfillment.atomy.AtomyRateVO">
+        UPDATE
+            ATOMY_RATE
+         <trim prefix="SET" suffixOverrides=",">
+            <if test="italy != null and italy !=''">
+                ITALY = #{italy},
+            </if>
+            <if test="australia != null and australia !=''">
+                AUSTRALIA = #{australia},
+            </if>
+            <if test="hongKong != null and hongKong !=''">
+                HONGKONG = #{hongKong},
+            </if>
+            <if test="japan != null and japan !=''">
+                JAPAN = #{japan},
+            </if>
+            <if test="malaysia != null and malaysia !=''">
+                MALAYSIA = #{malaysia},
+            </if>
+            <if test="mongolia != null and mongolia !=''">
+                MONGOLIA = #{mongolia},
+            </if>
+            <if test="newZealand != null and newZealand !=''">
+                NEWZEALAND = #{newZealand},
+            </if>
+            <if test="singapore != null and singapore !=''">
+                SINGAPORE = #{singapore},
+            </if>
+            <if test="taiwan != null and taiwan !=''">
+                TAIWAN = #{taiwan},
+            </if>
+            <if test="usa != null and usa !=''">
+                USA = #{usa},
+            </if>
+            <if test="canada != null and canada !=''">
+                CANADA = #{canada},
+            </if>
+            <if test="france != null and france !=''">
+                FRANCE = #{france},
+            </if>
+            <if test="germany != null and germany !=''">
+                GERMANY = #{germany},
+            </if>
+            <if test="switzerland != null and switzerland !=''">
+                SWITZERLAND = #{switzerland},
+            </if>
+            <if test="unitedKingdom != null and unitedKingdom !=''">
+                UNITEDKINGDOM = #{unitedKingdom},
+            </if>
+            <if test="guam != null and guam !=''">
+                GUAM = #{guam},
+            </if>
+            <if test="saipan != null and saipan !=''">
+                SAIPAN = #{saipan},
+            </if>
+            <if test="cambodia != null and cambodia !=''">
+                CAMBODIA = #{cambodia},
+            </if>
+            <if test="thailand != null and thailand !=''">
+                THAILAND = #{thailand},
+            </if>
+            <if test="philippines != null and philippines !=''">
+                PHILIPPINES = #{philippines},
+            </if>
+            <if test="spain != null and spain !=''">
+                SPAIN = #{spain},
+            </if>
+            <if test="portugal != null and portugal !=''">
+                PORTUGAL = #{portugal},
+            </if>
+            <if test="russia != null and russia !=''">
+                RUSSIA = #{russia},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+         </trim>
+         WHERE 1 = 1
+         AND KG = #{kg}
+     </update>
+     
+     <update id="updateAtomyTotalRate" parameterType="xrt.fulfillment.atomy.AtomyRateVO">
+        UPDATE
+            ATOMY_RATE_TOTAL
+         <trim prefix="SET" suffixOverrides=",">
+            <if test="italy != null and italy !=''">
+                ITALY = #{italy},
+            </if>
+            <if test="australia != null and australia !=''">
+                AUSTRALIA = #{australia},
+            </if>
+            <if test="hongKong != null and hongKong !=''">
+                HONGKONG = #{hongKong},
+            </if>
+            <if test="japan != null and japan !=''">
+                JAPAN = #{japan},
+            </if>
+            <if test="malaysia != null and malaysia !=''">
+                MALAYSIA = #{malaysia},
+            </if>
+            <if test="mongolia != null and mongolia !=''">
+                MONGOLIA = #{mongolia},
+            </if>
+            <if test="newZealand != null and newZealand !=''">
+                NEWZEALAND = #{newZealand},
+            </if>
+            <if test="singapore != null and singapore !=''">
+                SINGAPORE = #{singapore},
+            </if>
+            <if test="taiwan != null and taiwan !=''">
+                TAIWAN = #{taiwan},
+            </if>
+            <if test="usa != null and usa !=''">
+                USA = #{usa},
+            </if>
+            <if test="canada != null and canada !=''">
+                CANADA = #{canada},
+            </if>
+            <if test="france != null and france !=''">
+                FRANCE = #{france},
+            </if>
+            <if test="germany != null and germany !=''">
+                GERMANY = #{germany},
+            </if>
+            <if test="switzerland != null and switzerland !=''">
+                SWITZERLAND = #{switzerland},
+            </if>
+            <if test="unitedKingdom != null and unitedKingdom !=''">
+                UNITEDKINGDOM = #{unitedKingdom},
+            </if>
+            <if test="guam != null and guam !=''">
+                GUAM = #{guam},
+            </if>
+            <if test="saipan != null and saipan !=''">
+                SAIPAN = #{saipan},
+            </if>
+            <if test="cambodia != null and cambodia !=''">
+                CAMBODIA = #{cambodia},
+            </if>
+            <if test="thailand != null and thailand !=''">
+                THAILAND = #{thailand},
+            </if>
+            <if test="philippines != null and philippines !=''">
+                PHILIPPINES = #{philippines},
+            </if>
+            <if test="spain != null and spain !=''">
+                SPAIN = #{spain},
+            </if>
+            <if test="portugal != null and portugal !=''">
+                PORTUGAL = #{portugal},
+            </if>
+            <if test="russia != null and russia !=''">
+                RUSSIA = #{russia},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+         </trim>
+         WHERE 1 = 1
+         AND KG = #{kg}
+     </update>
+     
+    <delete id="deleteAtomyRate" parameterType="LDataMap">
+        DELETE FROM ATOMY_RATE
+        WHERE 1 = 1
+    </delete>
+    
+    <delete id="deleteAtomyTotalRate" parameterType="LDataMap">
+        DELETE FROM ATOMY_RATE_TOTAL
+        WHERE 1 = 1
+    </delete>
+
+</mapper>

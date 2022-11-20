@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EfsMapper">
+	<select id="getSearch" parameterType="CommonSearchVo" resultType="xrt.fulfillment.order.efs.EfsVO">
+		SELECT
+		    'logifocus'                   AS customerId
+		    , 'other'                     AS customerShoppingMall
+		    , o.XRT_INVC_SNO              AS orderNo
+		    , o.XRT_INVC_SNO              AS cartNo
+		    , ''                          AS refNo1
+		    , ''                          AS refNo2
+		    , o.SHIP_METHOD_CD            AS serviceType
+		    , ''                          AS goodsCd
+		    , (SELECT REPLACE(od.GOODS_NM, ' ','')
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = o.ORD_CD
+                 AND od.ORD_NO = o.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) AS goodsName
+            , (SELECT GOODS_CNT
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = o.ORD_CD
+                 AND od.ORD_NO = o.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) AS goodsCnt
+            , ''                          AS goodsOption
+		    , o.SHIP_NAME                 AS shipName
+		    , o.RECV_NAME                 AS recvName
+		    , o.RECV_TEL                  AS recvTel
+		    , ''                          AS recvMobile
+		    , o.RECV_ADDR1                AS recvAddr1
+		    , CASE
+		          WHEN o.RECV_ADDR2 != '' THEN o.RECV_ADDR2
+		          ELSE '.'
+		    END                           AS recvAddr2
+		    , CASE
+                  WHEN o.RECV_POST = '-' THEN ''
+                  WHEN o.RECV_POST = '0' THEN ''
+                  WHEN o.RECV_POST = '.' THEN ''
+                  ELSE o.RECV_POST
+            END AS recvPost
+            , o.E_NATION                  AS eNation
+		    , o.RECV_CURRENCY             AS currency
+		    , o.TOT_PAYMENT_PRICE         AS totPaymentPrice
+		    , CASE
+		          WHEN o.E_NATION = 'US' THEN o.RECV_CITY + ',' + o.RECV_STATE
+		          ELSE '.'
+		    END AS cityState
+	    FROM TORDER o
+	    WHERE 1 = 1
+	    AND o.DEL_FLG = 'N'
+		<if test="sOrgCd != null and sOrgCd != ''">
+		    AND o.ORGCD = #{sOrgCd}
+		</if>
+		<if test="sWhcd != null and sWhcd != ''">
+		    AND o.WHCD = #{sWhcd}
+		</if>
+		<choose>
+		    <when test="sPeriodType == 'uploadDate'">
+		        AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+		    </when>
+		    <when test="sPeriodType == 'stockDate'">
+		        AND o.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+		    </when>
+		</choose>
+		<if test="sStatusCd != null and sStatusCd != ''">
+		    AND o.STATUS_CD = #{sStatusCd}
+		</if>
+		<if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+            AND o.XRT_INVC_SNO = #{sXrtInvcSno}
+        </if>
+		ORDER BY orderNo ASC
+	</select>
+
+</mapper>

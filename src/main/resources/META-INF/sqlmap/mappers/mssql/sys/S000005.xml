@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="S000005Mapper">
+	<!-- 회사 : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000005.getSearch */
+		/* 프로그램 MASTER SELECT */
+		SELECT  A.APPKEY
+		      , A.APPNM
+		      , A.APPURL
+		      , A.USEYN
+		      , A.BTNSEARCH
+		      , A.BTNNEW
+		      , A.BTNSAVE
+		      , A.BTNDELETE
+		      , A.BTNEXECUTE
+		      , A.BTNPRINT
+		      , A.BTNEXCELDOWN
+		      , A.BTNEXCELUP
+		      , A.BTNCANCEL
+		      , A.BTNCOPY
+		      , A.BTNLIST
+		      , A.BTNINIT
+		      , A.BTNUSER1
+		      , A.BTNUSER2
+		      , A.BTNUSER3
+		      , A.BTNUSER4
+		      , A.BTNUSER5
+		      , A.REMARK
+		      , A.ADDUSERCD
+		      , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+		      , A.UPDUSERCD
+		      , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+		      , A.TERMINALCD
+		  FROM S005 A WITH (NOLOCK)
+		  <trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_APPKEY != null and S_APPKEY != ''">
+	            AND APPKEY LIKE UPPER(#{S_APPKEY}) + '%'
+			</if>
+			<if test="S_APPNM != null and S_APPNM != ''">
+				AND APPNM LIKE '%' + #{S_APPNM} + '%'
+			</if>
+		  </trim>
+	     ORDER BY A.APPKEY ASC
+	</select>
+	
+	<!-- 회사 : 마스터 신규 저장 중복 체크-->
+	<select id="getAppChk" parameterType="LDataMap" resultType="int">
+		/* sys.S000005.getAppChk */		
+		SELECT COUNT(1) AS CNT
+		  FROM S005 WITH (NOLOCK)
+		 WHERE APPKEY = #{APPKEY}
+	</select>	
+		
+	<!-- 프로그램 : 마스터 신규 저장 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* sys.S000005.insertMst */
+INSERT INTO S005 WITH (ROWLOCK)
+           (APPKEY
+           , APPNM
+           , APPURL
+           , USEYN
+           , BTNSEARCH
+           , BTNNEW
+           , BTNSAVE
+           , BTNDELETE
+           , BTNEXECUTE
+           , BTNPRINT
+           , BTNEXCELDOWN
+           , BTNEXCELUP
+           , BTNCANCEL
+           , BTNCOPY
+           , BTNLIST
+           , BTNINIT
+           , BTNUSER1
+           , BTNUSER2
+           , BTNUSER3
+           , BTNUSER4
+           , BTNUSER5
+           , REMARK
+           , ADDUSERCD
+           , ADDDATETIME
+           , UPDUSERCD
+           , UPDDATETIME
+           , TERMINALCD)
+     VALUES
+           (#{APPKEY}
+           , #{APPNM}
+           , #{APPURL}
+           , ISNULL(#{USEYN}, 'N')
+           , ISNULL(#{BTNSEARCH}, 0.0)
+           , ISNULL(#{BTNNEW}, 0.0)
+           , ISNULL(#{BTNSAVE}, 0.0)
+           , ISNULL(#{BTNDELETE}, 0.0)
+           , ISNULL(#{BTNEXECUTE}, 0.0)
+           , ISNULL(#{BTNPRINT}, 0.0)
+           , ISNULL(#{BTNEXCELDOWN}, 0.0)
+           , ISNULL(#{BTNEXCELUP}, 0.0)
+           , ISNULL(#{BTNCANCEL}, 0.0)
+           , ISNULL(#{BTNCOPY}, 0.0)
+           , ISNULL(#{BTNLIST}, 0.0)
+           , ISNULL(#{BTNINIT}, 0.0)
+           , ISNULL(#{BTNUSER1}, 0.0)
+           , ISNULL(#{BTNUSER2}, 0.0)
+           , ISNULL(#{BTNUSER3}, 0.0)
+           , ISNULL(#{BTNUSER4}, 0.0)
+           , ISNULL(#{BTNUSER5}, 0.0)
+           , #{REMARK}
+           , #{LOGIN_USERCD}
+           , GETDATE()
+           , #{LOGIN_USERCD}
+           , GETDATE()
+           , #{LOGIN_IP})
+	</insert>
+	
+	<!-- 프로그램 : 마스터 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		 /* sys.S000005.updateMst */
+		 UPDATE S005 WITH (ROWLOCK)
+			SET  APPKEY 	 = #{APPKEY}
+		      , APPNM 		 = #{APPNM} 		 
+		      , APPURL 		 = #{APPURL} 	
+		      , USEYN        = ISNULL(#{USEYN}, 'N')  	  
+		      , BTNSEARCH 	 = ISNULL(#{BTNSEARCH} 	 ,'0')
+		      , BTNNEW 		 = ISNULL(#{BTNNEW} 	 ,'0') 
+		      , BTNSAVE 	 = ISNULL(#{BTNSAVE} 	 ,'0')
+		      , BTNDELETE 	 = ISNULL(#{BTNDELETE} 	 ,'0')
+		      , BTNEXECUTE 	 = ISNULL(#{BTNEXECUTE}  ,'0')
+		      , BTNPRINT 	 = ISNULL(#{BTNPRINT} 	 ,'0')
+		      , BTNEXCELDOWN = ISNULL(#{BTNEXCELDOWN},'0')
+		      , BTNEXCELUP 	 = ISNULL(#{BTNEXCELUP}  ,'0')
+		      , BTNCANCEL 	 = ISNULL(#{BTNCANCEL} 	 ,'0')
+		      , BTNCOPY 	 = ISNULL(#{BTNCOPY} 	 ,'0')
+		      , BTNLIST 	 = ISNULL(#{BTNLIST} 	 ,'0')
+		      , BTNINIT 	 = ISNULL(#{BTNINIT} 	 ,'0')
+		      , BTNUSER1 	 = ISNULL(#{BTNUSER1} 	 ,'0')
+		      , BTNUSER2 	 = ISNULL(#{BTNUSER2} 	 ,'0')
+		      , BTNUSER3 	 = ISNULL(#{BTNUSER3} 	 ,'0')
+		      , BTNUSER4 	 = ISNULL(#{BTNUSER4} 	 ,'0')
+		      , BTNUSER5 	 = ISNULL(#{BTNUSER5} 	 ,'0')
+		      , REMARK 		 = #{REMARK} 		 
+		      , UPDUSERCD 	 = #{LOGIN_USERCD} 	 
+		      , UPDDATETIME  = GETDATE()  
+		      , TERMINALCD   = #{LOGIN_IP}  
+		 WHERE APPKEY = #{APPKEY}
+	</update>
+	
+	<!-- 프로그램 : 프로그램 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/* sys.S000005.deleteMst */
+		DELETE FROM S005 WITH (ROWLOCK)
+     	 WHERE APPKEY = #{APPKEY}
+	</delete>
+	
+	<!-- 프로그램 : 소메뉴 삭제 -->
+	<delete id="deleteMenu" parameterType="LDataMap">
+		/* sys.S000005.deleteMenu */
+		DELETE FROM S009 WITH (ROWLOCK)
+     	 WHERE APPKEY = #{APPKEY}
+	</delete>
+	
+	<!-- 프로그램 : 프로그램권한 삭제 -->
+	<delete id="deleteAuth" parameterType="LDataMap">
+		 /* sys.S000005.deleteAuth */
+		DELETE FROM S006  WITH (ROWLOCK)
+     	 WHERE APPKEY = #{APPKEY}
+	</delete>
+	
+</mapper>

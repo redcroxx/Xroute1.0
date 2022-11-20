@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyOrderProductMapper">
+
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+        /* AtomyOrderProductMapper.getSearch */
+        SELECT
+            (SELECT KR_PRODUCT_CODE FROM ATOMY_PRODUCT WHERE ODP_CODE = B.GOODS_CD) AS goodsCd,
+            B.GOODS_NM                      AS goodsNm,
+            SUM(CONVERT(INT, B.GOODS_CNT))  AS goodsCnt
+        FROM TORDER A
+        LEFT JOIN TORDERDTL B
+        ON A.ORD_CD = B.ORD_CD
+        WHERE 1 = 1
+        AND A.ORGCD = #{sOrgCd}
+        AND A.ADDDATETIME BETWEEN #{sToDate} + ' 00:00:00' AND #{sFromDate} + ' 23:59:59'
+        GROUP BY B.GOODS_CD, B.GOODS_NM
+        ORDER BY GOODS_CD
+    </select>
+</mapper>

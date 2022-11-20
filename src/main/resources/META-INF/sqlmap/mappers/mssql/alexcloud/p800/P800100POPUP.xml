@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P800100POPUPMapper">
+	<!-- 재고이력 조회 팝업 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p800.p800100_popup.getSearch */
+		SELECT TOP 100 A.SHKEY
+		     , A.TYPE
+			 , A.IOTYPE
+			 , A.IOFLG
+			 , A.IOKEY
+			 , A.IOSEQ
+			 , A.QTY
+			 , A.BEFOREQTY
+			 , A.AFTERQTY
+			 , A.WORKKEY
+			 , A.COMPCD
+			 , A.ORGCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.ITEMCD
+			 , B.NAME AS ITEMNM
+			 , A.LOTKEY
+			 , A.REMARK
+			 , CONVERT(NVARCHAR, A.ADDDATETIME, 120) AS ADDDATETIME
+			 , A.ADDUSERCD
+		  FROM P811 A
+		  JOIN P006 B
+		    ON A.COMPCD = B.COMPCD
+		   AND A.ORGCD = B.ORGCD
+		   AND A.ITEMCD = B.ITEMCD 
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.ORGCD = #{S_ORGCD}
+		   AND A.WHCD = #{S_WHCD}
+		   AND A.LOCCD = #{S_LOCCD}
+		   AND A.ITEMCD = #{S_ITEMCD}
+		   AND A.LOTKEY = #{S_LOTKEY}
+		 ORDER BY A.ADDDATETIME DESC
+	</select>	
+</mapper>

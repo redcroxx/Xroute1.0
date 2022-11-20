@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyOrderListMapper">
+    <select id="getSearch" parameterType="commonSearchVo" resultType="orderVo">
+        /* AtomyOrderListMapper.getSearch */
+        SELECT
+            A.ORD_CD          AS ordCd,
+            A.ORGCD           AS orgcd,
+            A.RELAY_SEQ       AS relaySeq,
+            A.FILE_NM         AS fileNm,
+            A.MALL_NM         AS mallNm,
+            A.XRT_INVC_SNO    AS xrtInvcSno,
+            A.UPLOAD_DATE     AS uploadDate,
+            A.SHIP_METHOD_CD  AS shipMethodCd,
+            CASE
+                WHEN A.LOCAL_SHIPPER  = 'UPS' THEN 'UPS'
+                ELSE 'UPS 불가'
+            END               AS localShipper,
+            A.S_NATION        AS sNation,
+            A.E_NATION        AS eNation,
+            A.RECV_NAME       AS recvName,
+            A.RECV_TEL        AS recvTel,
+            A.RECV_MOBILE     AS recvMobile,
+            A.RECV_ADDR1      AS recvAddr1,
+            A.RECV_ADDR2      AS recvAddr2,
+            A.RECV_POST       AS recvPost,
+            A.RECV_CURRENCY   AS recvCurrency,
+            A.ORD_NO          AS ordNo,
+            A.ORD_CNT         AS ordCnt,
+            A.CART_NO         AS cartNo,
+            (SELECT GOODS_CD
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = A.ORD_CD
+                 AND od.ORD_NO = A.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) AS goodsCd,
+            (SELECT GOODS_NM
+                 FROM TORDERDTL od
+                 WHERE 1 = 1
+                 AND od.ORD_CD = A.ORD_CD
+                 AND od.ORD_NO = A.ORD_NO
+                 AND od.ORD_SEQ = 1
+            ) + '외 ' + CONVERT(NVARCHAR, (CONVERT(INT, ORD_CNT) - 1)) + '건' AS goodsNm,
+            A.ORD_CNT      AS goodsCnt,
+            A.TOT_PAYMENT_PRICE     AS totPaymentPrice,
+            A.SHIP_NAME       AS shipName,
+            A.SHIP_TEL        AS shipTel,
+            A.SHIP_ADDR       AS shipAddr,
+            A.STATUS_CD       AS statusCd,
+            CASE
+                WHEN A.STATUS_CD = '10' THEN '주문등록'
+                WHEN A.STATUS_CD = '11' THEN '발송대기'
+                WHEN A.STATUS_CD = '12' THEN '발송완료'
+                WHEN A.STATUS_CD = '20' THEN '입금대기'
+                WHEN A.STATUS_CD = '21' THEN '결제완료'
+                WHEN A.STATUS_CD = '22' THEN '결제대기'
+                WHEN A.STATUS_CD = '23' THEN '결제실패'
+                WHEN A.STATUS_CD = '30' THEN '입고완료'
+                WHEN A.STATUS_CD = '31' THEN '창고보관'
+                WHEN A.STATUS_CD = '32' THEN '출고대기'
+                WHEN A.STATUS_CD = '33' THEN '검수완료'
+                WHEN A.STATUS_CD = '34' THEN '검수취소'
+                WHEN A.STATUS_CD = '35' THEN '선적대기'
+                WHEN A.STATUS_CD = '40' THEN '출고완료'
+                WHEN A.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN A.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN A.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN A.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN A.STATUS_CD = '54' THEN '통관대기'
+                WHEN A.STATUS_CD = '55' THEN '통관완료'
+                WHEN A.STATUS_CD = '56' THEN '배송시작'
+                WHEN A.STATUS_CD = '57' THEN '배송중'
+                WHEN A.STATUS_CD = '60' THEN '배송완료'
+                WHEN A.STATUS_CD = '80' THEN 'API오류'
+                WHEN A.STATUS_CD = '98' THEN '입금취소'
+                WHEN A.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END               AS statusCdKr,
+            A.RECV_CITY       AS recvCity,
+            A.RECV_STATE      AS recvState,
+            CASE
+                WHEN A.PAYMENT_TYPE = '1' THEN '건당결제'
+                WHEN A.PAYMENT_TYPE = '2' THEN '월말결제'
+                WHEN A.PAYMENT_TYPE = '3' THEN '정기결제'
+                WHEN A.PAYMENT_TYPE = '4' THEN '신용결제'
+                ELSE '-'
+            END               AS paymentType,
+            CASE
+                WHEN A.GRAPHIC_IMAGE IS NOT NULL THEN '송장발번 완료'
+                ELSE '송장발번 실패'
+            END               AS upsError
+        FROM TORDER A WITH (NOLOCK)
+        WHERE 1 = 1
+        AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+        <if test="sCompCd != null and sCompCd != ''">
+            AND A.COMPCD = #{sCompCd}
+        </if>
+        <if test="sOrgCd != null and sOrgCd != ''">
+            AND A.ORGCD = #{sOrgCd}
+        </if>
+        <if test="sKeyword != null and sKeyword != ''">
+            AND (A.XRT_INVC_SNO = #{sKeyword} OR A.ORD_NO = #{sKeyword})
+        </if>
+        <if test="sFromNation != null and sFromNation != ''">
+            AND A.E_NATION = #{sFromNation}
+        </if>
+        <if test="sShipCompany != null and sShipCompany !=''">
+            <choose>
+                <when test="sShipCompany == 'ups'">
+                    AND A.LOCAL_SHIPPER = 'UPS'
+                </when>
+                <when test="sShipCompany == 'other'">
+                    AND A.LOCAL_SHIPPER != 'UPS'
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+        </if>
+        ORDER BY A.ORD_CD
+    </select>
+    
+    <select id="checkXrtInvcSno" parameterType="LDataMap" resultType="java.lang.String">
+        SELECT
+            CASE
+                WHEN COUNT(1) != 0 THEN 'true'
+                ELSE 'false'
+            END AS checked
+        FROM TORDER
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </select>
+    
+    <select id="checkExpNo" parameterType="LDataMap" resultType="java.lang.String">
+        SELECT
+            CASE
+                WHEN COUNT(1) != 0 THEN 'true'
+                ELSE 'false'
+            END AS checked
+        FROM TORDER
+        WHERE 1 = 1
+        AND EXP_NO IS NULL
+    </select>
+    
+    <select id="getAtomyOrderResult" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            T.ORD_NO AS ordNo,
+            T.INVC_SNO1 AS invcSno1,
+            T.LOCAL_SHIPPER AS localShipper,
+            T.EXP_NO AS expNo,
+            D.ORD_SEQ AS ordSeq
+        FROM TORDER T
+        LEFT JOIN TORDERDTL D
+        ON T.ORD_CD = D.ORD_CD
+        WHERE 1 = 1
+        AND T.XRT_INVC_SNO IN 
+            <foreach collection="dataList" item="item" open="(" close=")" separator=",">
+                #{item.xrtInvcSno}
+            </foreach>
+        AND T.ORGCD = #{orgCd}
+        AND T.INVC_SNO1 IS NOT NULL
+        AND T.EXP_NO IS NOT NULL
+    </select>
+    
+    
+    <update id="updateInvoiceYn" parameterType="LDataMap">
+        UPDATE
+            API_ATOMY_ORDER
+        SET
+            INVOICE_YN = 'Y',
+            UPDUSERCD = 'SYSTEM',
+            UPDDATETIME = GETDATE()
+        WHERE 1 = 1
+        AND SALE_NUM = #{ordNo}
+    </update>
+    
+</mapper>

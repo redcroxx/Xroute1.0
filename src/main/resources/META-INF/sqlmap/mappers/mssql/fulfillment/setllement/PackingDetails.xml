@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PackingDetailsMapper">
+    <select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+        /* PackingDetailsMapper.getSearch */
+            SELECT *
+            FROM(
+                SELECT
+                    A.XRT_INVC_SNO
+                    , A.SHIPMENT_BL_NO
+                    , A.ORD_CNT
+                    , ISNULL(A.INVC_SNO1, '')   AS INVC_SNO
+                    , A.WGT
+                    , (SELECT TOP 1 STUFF(
+                        (SELECT
+                            ', '+ od.GOODS_NM +
+                            CASE
+                                WHEN od.GOODS_OPTION IS NULL THEN ''
+                                WHEN od.GOODS_OPTION = '' THEN ''
+                                ELSE '/' + od.GOODS_OPTION
+                            END GOODS_OPTION
+                         FROM TORDERDTL od
+                         WHERE 1 = 1
+                         AND A.ORD_CD = od.ORD_CD
+                         FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+                      FROM TORDERDTL)               AS GOODS
+                    , (SELECT P02.ENG_CEO
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_CEO
+                    , (SELECT P02.NAME
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_NAME
+                    , (SELECT P02.ENG_ADDR
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_ADDR
+                    , (SELECT P02.TEL1
+                       FROM P002 P02
+                      WHERE A.ORGCD = P02.ORGCD)    AS SELLER_TEL
+                    , A.RECV_NAME
+                    , A.RECV_ADDR1
+                    , A.RECV_ADDR2
+                    , A.RECV_CITY
+                    , A.RECV_TEL
+                    , A.RECV_STATE
+                    , A.RECV_POST
+                    , 'WEST' AS ZONE
+                    , A.SHIPPING_COMPANY
+                    , (SELECT CODEKEY FROM S002 WHERE CODE = A.RECV_STATE AND CODEKEY IN('US_STATE_EAST', 'US_STATE_WEST')) AS stateGubun
+                FROM TORDER A
+                WHERE 1 = 1
+                AND A.E_NATION = #{country}
+                <choose>
+		            <when test="sKeywordType =='PREMIUM'">
+		                AND A.SHIP_METHOD_CD = 'PREMIUM'
+		            </when>
+		            <when test="sKeywordType =='DHL'">
+		                AND A.SHIP_METHOD_CD = 'DHL'
+		            </when>
+		            <otherwise>
+		                AND A.SHIP_METHOD_CD = 'PREMIUM'
+		            </otherwise>
+		        </choose>
+                AND A.DEL_FLG = 'N'
+                AND A.STATUS_CD BETWEEN '30' AND '60'
+                AND A.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{DATE_TO}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{DATE_FROM}))) + ' 23:59:59'
+                <if test="dataList != null and dataList.size != 0">
+                    AND A.SHIPMENT_BL_NO IN
+                    <foreach collection="dataList" item="item" open="(" close=")" separator=",">
+                        #{item.shipmentBlNos}
+                    </foreach>
+                </if>
+           ) B
+           WHERE 1 = 1
+           <choose>
+               <when test='usState == "TOTAL"'>
+               </when>
+               <otherwise>
+                   AND B.stateGubun = #{usState}
+               </otherwise>
+           </choose>
+           ORDER BY XRT_INVC_SNO, SHIPMENT_BL_NO ASC
+    </select>
+    
+    <select id="getSblNoSearch" parameterType="LDataMap" resultType="xrt.fulfillment.bol.ShipmentBLVO">
+        /* PackingDetailsMapper.getSearch */
+        SELECT
+            SHIPMENT_BL_NO      AS shipmentBlNo,
+            COUNTRY             AS country,
+            CASE
+                WHEN CUSTOMS_CLEARANCE = 'G' THEN '일반'
+                WHEN CUSTOMS_CLEARANCE = 'L' THEN '목록'
+                ELSE ''
+            END                 AS customsClearanceNm,
+            CONVERT(CHAR(19), ADDDATETIME, 20) AS adddatetime
+        FROM SHIPMENT_BL WITH (NOLOCK)
+        <choose>
+            <when test="sKeywordType =='PREMIUM'">
+                WHERE SHIPMENT_BL_NO IN(
+                    SELECT SHIPMENT_BL_NO
+                    FROM TORDER
+                    WHERE SHIP_METHOD_CD = 'PREMIUM'
+                )
+            </when>
+            <when test="sKeywordType =='DHL'">
+                WHERE SHIPMENT_BL_NO IN(
+                    SELECT SHIPMENT_BL_NO
+                    FROM TORDER
+                    WHERE SHIP_METHOD_CD = 'DHL'
+                )
+            </when>
+            <otherwise>
+                WHERE SHIPMENT_BL_NO IN(
+                    SELECT SHIPMENT_BL_NO
+                    FROM TORDER
+                    WHERE SHIP_METHOD_CD = 'PREMIUM'
+                )
+            </otherwise>
+        </choose>
+        <if test="shipmentBlNo != null and shipmentBlNo != ''">
+            AND SHIPMENT_BL_NO = #{shipmentBlNo}
+        </if>
+        <if test="country != null and country != ''">
+            AND COUNTRY = #{country}
+        </if>
+        AND CLOSE_YN = 'Y' 
+        AND ADDDATETIME BETWEEN #{DATE_TO} + ' 00:00:00' AND #{DATE_FROM} + ' 23:59:59'
+        ORDER BY ADDDATETIME ASC
+    </select>
+</mapper>

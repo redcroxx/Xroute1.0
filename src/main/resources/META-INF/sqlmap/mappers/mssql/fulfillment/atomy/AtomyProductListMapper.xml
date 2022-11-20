@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyProductListMapper">
+
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.atomy.AtomyProductVO">
+        SELECT
+            ATOMY_PRODUCT_SEQ AS atomyProductSeq
+            , TYPE AS type
+            , KR_PRODUCT_NAME AS krProductName
+            , KR_PRODUCT_CODE AS krProductCode
+            , EN_PRODUCT_NAME AS enProductName
+            , ODP_CODE AS odpCode
+            , USA_FDA_PRODUCT_NO AS usaFdaProductNo
+            , CANADA_FDA_PRODUCT_NO AS canadaFdaProductNo
+            , PRICE AS price
+            , LENGTH AS length
+            , WIDTH AS width
+            , HEIGHT AS height
+            , KG AS kg
+            , CBM AS cbm
+            , VOLUME_WEIGHT AS volumeWeight
+            , HS_CODE AS hsCode
+            , ORIGIN AS origin
+            , ZONE AS zone
+            , RACK AS rack
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            ATOMY_PRODUCT
+        WHERE 1 = 1
+        <if test='sKeyword != null and sKeyword != ""'>
+            AND KR_PRODUCT_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+        </if>
+        <if test='sKrProductCode != null and sKrProductCode != ""'>
+            AND KR_PRODUCT_CODE = #{sKrProductCode} OR ODP_CODE = #{sKrProductCode}
+        </if>
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <insert id="insertAtomyProductList" parameterType="xrt.fulfillment.atomy.AtomyProductVO">
+        <selectKey resultType="java.lang.String" keyProperty="atomyProductSeq" order="BEFORE">
+            SELECT
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR ATOMY_PRODUCT_SEQ), 20) AS atomyProductSeq
+        </selectKey>
+        INSERT INTO ATOMY_PRODUCT
+        (
+            ATOMY_PRODUCT_SEQ
+            , TYPE
+            , KR_PRODUCT_NAME
+            , KR_PRODUCT_CODE
+            , EN_PRODUCT_NAME
+            , ODP_CODE
+            , USA_FDA_PRODUCT_NO
+            , CANADA_FDA_PRODUCT_NO
+            , PRICE
+            , LENGTH
+            , WIDTH
+            , HEIGHT
+            , KG
+            , CBM
+            , VOLUME_WEIGHT
+            , HS_CODE
+            , ORIGIN
+            , ZONE
+            , RACK
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{atomyProductSeq}
+            , #{type}
+            , #{krProductName}
+            , #{krProductCode}
+            , #{enProductName}
+            , #{odpCode}
+            , #{usaFdaProductNo}
+            , #{canadaFdaProductNo}
+            , #{price}
+            , #{length}
+            , #{width}
+            , #{height}
+            , #{kg}
+            , #{cbm}
+            , #{volumeWeight}
+            , #{hsCode}
+            , #{origin}
+            , #{zone}
+            , #{rack}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+     <update id="updateAtomyProductList" parameterType="xrt.fulfillment.atomy.AtomyProductVO">
+        UPDATE ATOMY_PRODUCT
+        SET
+            TYPE = #{type}
+            , KR_PRODUCT_NAME = #{krProductName}
+			, KR_PRODUCT_CODE = #{krProductCode}
+			, ODP_CODE = #{odpCode}
+            , EN_PRODUCT_NAME = #{enProductName}
+            , USA_FDA_PRODUCT_NO = #{usaFdaProductNo}
+            , CANADA_FDA_PRODUCT_NO = #{canadaFdaProductNo}
+			, PRICE = #{price}
+			, LENGTH = #{length}
+			, WIDTH = #{width}
+			, HEIGHT = #{height}
+			, KG = #{kg}
+			, CBM = #{cbm}
+			, VOLUME_WEIGHT = #{volumeWeight}
+			, HS_CODE = #{hsCode}
+			, ORIGIN = #{origin}
+			, ZONE = #{zone}
+			, RACK = #{rack}
+            , UPDUSERCD = #{updusercd}
+            , UPDDATETIME = getDate()
+            , TERMINALCD = #{terminalcd}
+         WHERE 1 = 1
+         AND ATOMY_PRODUCT_SEQ = #{atomyProductSeq}
+     </update>
+     
+    <delete id="deleteAtomyProductList" parameterType="LDataMap">
+        DELETE FROM ATOMY_PRODUCT
+        WHERE 1 = 1
+    </delete>
+
+</mapper>

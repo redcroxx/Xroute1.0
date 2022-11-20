@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P000021Mapper">
+
+	<!-- 회사별 품목속성 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000020.getSearch */
+		SELECT A.COMPCD
+		      ,A.ORGCD
+		      ,A.ENV_CD
+		      ,A.ENV_VAL 							
+		  FROM ENVMY A WITH (NOLOCK)
+	     WHERE 1 = 1
+				AND A.COMPCD = #{COMPCD}
+				AND A.ORGCD = #{S_ORGCD}
+				
+	
+	</select>
+	
+	<!-- 변수설정 : 저장 및 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+	/* alexcloud.p000.P000020.updateMst */
+	MERGE ENVMY WITH (ROWLOCK) AS A 
+			USING (SELECT #{COMPCD} AS COMPCD, #{ORGCD} AS ORGCD, #{LOGIN_USERCD} AS ADDUSERCD, #{ENV_CD} AS ENV_CD) AS B
+			ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.ENV_CD = B.ENV_CD  
+        WHEN MATCHED THEN
+			UPDATE SET COMPCD        = #{COMPCD}
+					 , ORGCD     	 = #{ORGCD}
+					 , ENV_CD        = #{ENV_CD}
+					 , ENV_VAL       = #{ENV_VAL}
+					 , UPDUSERCD = #{LOGIN_USERCD}
+		   			 , UPDDATETIME = GETDATE()
+		   			 , TERMINALCD = #{LOGIN_IP}
+        WHEN NOT MATCHED THEN
+			INSERT (COMPCD
+		           ,ORGCD
+		           ,ENV_CD
+		           ,ENV_VAL
+		           ,ADDUSERCD
+		           ,ADDDATETIME
+		           ,UPDUSERCD
+		           ,UPDDATETIME
+		           ,TERMINALCD)
+			VALUES (#{COMPCD}
+		           ,#{ORGCD}
+		           ,#{ENV_CD}
+		           ,#{ENV_VAL}
+		           ,#{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP});
+	</update>
+	
+	<!-- 입고등록 : 디테일  삭제 -->
+	<delete id="deleteDet" parameterType="LDataMap">
+	/* alexcloud.p000.P000020.deleteDet */
+	DELETE FROM ENVMY WITH (ROWLOCK) WHERE COMPCD = #{COMPCD} AND ORGCD = #{S_ORGCD}
+	</delete>
+	
+	 	<!-- 공통코드 가져오기 -->
+	<select id="getVariableCode" parameterType="LDataMap" resultType="LDataMap"> 
+		/* sys.CodeCache.getVariableCode */
+		SELECT
+ 			  ENV_CD,
+ 			  ENV_NM,
+ 			  DFLT_VAL,
+ 			  ALLOW_VALS,
+ 		      ENV_DESC
+ 		 FROM ENVDFLT 
+ 		WHERE ENV_CD =#{ENV_CD}   
+ 		ORDER BY IDX 
+	</select>
+	
+</mapper>

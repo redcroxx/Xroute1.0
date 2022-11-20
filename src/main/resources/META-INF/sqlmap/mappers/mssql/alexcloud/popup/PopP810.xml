@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopP810Mapper">
+	<!-- 품목재고팝업 - 다중 : 검색 -->
+	<select id="search" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP810Mapper.search */
+		SELECT A.COMPCD /*회사코드*/,
+			   (SELECT NAME FROM P001 WITH (NOLOCK) WHERE COMPCD = A.COMPCD) COMPNM /*회사명 */,
+		       A.WHCD /*창고코드*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.WHCD) WHNM /*창고명 */,
+		       A.ORGCD /*셀러코드*/,
+		       (SELECT NAME FROM P002 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM /*셀러명 */,
+		       A.LOCCD /*로케이션코드*/,
+		       A.ITEMCD /*품목코드*/,
+		       B.NAME ITEMNM /* 품목명 */,
+		       B.INBOXQTY /*박스입수량*/,
+		       A.LOTKEY /*로트키*/,
+		       A.QTY /*재고수량*/,
+		       ISNULL(A.ALLOCQTY, 0) ALLOCQTY /*할당수량*/,
+		       (A.QTY - ISNULL(A.ALLOCQTY, 0)) AVAILQTY /* 가용수량 */,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD /*IP*/,
+		       B.ITEMSIZE /* 규격 */,
+		       B.UNITCD /* 단위 */,
+		       B.UNITTYPE /*관리단위*/,
+		       B.F_USER01,
+		       B.F_USER02,
+		       B.F_USER03,
+		       B.F_USER04,
+		       B.F_USER05,
+		       B.F_USER11,
+		       B.F_USER12,
+		       B.F_USER13,
+		       B.F_USER14,
+		       B.F_USER15,
+		       C.LOT1,
+		       C.LOT2,
+		       C.LOT3,
+		       C.LOT4,
+		       C.LOT5,
+		       SUM(ISNULL(QTY, 0) - ISNULL(ALLOCQTY, 0)) OVER(PARTITION BY A.WHCD, A.ITEMCD) TOTAVAILQTY /* 총가용수량 */,
+		       ISNULL((SELECT ISNULL(QTY, 0) - ISNULL(ALLOCQTY, 0)
+				         FROM P810 WITH (NOLOCK) 
+				        WHERE COMPCD = A.COMPCD
+				          AND ORGCD = A.ORGCD
+				          AND WHCD = #{S_AFTERWHCD}
+				          AND LOCCD = #{S_AFTERLOCCD}
+				          AND LOTKEY = A.LOTKEY),0) AFTAVAILQTY /* 이동후가용수량 */
+		  FROM P810 A WITH (NOLOCK) 
+		  JOIN P006 B WITH (NOLOCK) 
+		    ON B.COMPCD = A.COMPCD
+		   AND B.ORGCD = A.ORGCD 
+		   AND B.ITEMCD = A.ITEMCD
+		  JOIN P007 C WITH (NOLOCK) 
+		    ON C.COMPCD = A.COMPCD
+		   AND C.ORGCD = A.ORGCD 
+		   AND C.ITEMCD = A.ITEMCD
+		   AND C.LOTKEY = A.LOTKEY
+		 WHERE ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) <![CDATA[ <> ]]> 0
+		   AND A.COMPCD = #{S_COMPCD}
+		   AND A.ORGCD = #{S_ORGCD}
+		   AND NOT EXISTS(
+		       SELECT Y.LOTKEY 
+		         FROM P710 X WITH(NOLOCK)
+		         LEFT JOIN P711 Y WITH(NOLOCK) ON X.IMKEY = Y.IMKEY
+		        WHERE X.IMTYPE = 'LOC1'
+		          AND X.MVTYPE = 'INS'
+		          AND X.IMSTS != '99'
+		          <if test="S_WHCD != null and S_WHCD != ''">
+					AND X.IMWHCD = #{S_WHCD}
+				  </if>
+				  AND Y.IMDSTS = '100'
+				  AND Y.LOTKEY = A.LOTKEY 
+				GROUP BY Y.LOTKEY
+		   )
+		   AND NOT EXISTS(
+		       SELECT Y.LOTKEY 
+		         FROM P710 X WITH(NOLOCK)
+		         LEFT JOIN P711 Y WITH(NOLOCK) ON X.IMKEY = Y.IMKEY
+		        WHERE X.IMTYPE IN ('LOC1', 'LOC2', 'WH')
+		          AND X.MVTYPE = 'STD'
+		          AND X.IMSTS = '100'
+		          <if test="S_WHCD != null and S_WHCD != ''">
+					AND X.IMWHCD = #{S_WHCD}
+				  </if>
+				  AND Y.LOTKEY = A.LOTKEY 
+				GROUP BY Y.LOTKEY
+		   )
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.WHCD = #{S_WHCD}
+		</if>
+		<if test="S_LOCCD != null and S_LOCCD != ''">
+			AND A.LOCCD LIKE '%' + dbo.UFX_TRIM(#{S_LOCCD}) + '%'
+		</if>
+		<if test="S_LOTKEY != null and S_LOTKEY != ''">
+			AND A.LOTKEY LIKE '%' + dbo.UFX_TRIM(#{S_LOTKEY}) + '%'
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+			AND ((A.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+				  OR (B.NAME LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%'))
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND B.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND B.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND B.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND B.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND B.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND B.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND B.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND B.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND B.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND B.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		ORDER BY A.WHCD, A.ORGCD, A.ITEMCD, A.LOCCD, A.LOTKEY
+	</select>
+
+	<!-- 품목재고팝업 - 다중 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP810Mapper.getCheck */
+		SELECT A.COMPCD /*회사코드*/,
+		       A.ORGCD /*사업장코드*/,
+		       A.WHCD /*창고코드*/,
+		       D.NAME WHNM /* 창고명 */,
+		       A.LOCCD /*로케이션코드*/,
+		       A.ITEMCD /*품목코드*/,
+		       B.NAME ITEMNM /* 품목명 */,
+		       A.LOTKEY /*로트키*/,
+		       A.QTY /*재고수량*/,
+		       ISNULL(A.ALLOCQTY, 0) ALLOCQTY /*할당수량*/,
+		       (A.QTY - ISNULL(A.ALLOCQTY, 0)) AVAILQTY /* 가용수량 */,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD /*IP*/,
+		       B.ITEMSIZE /* 규격 */,
+		       B.UNITCD /* 단위 */,
+		       B.F_USER01,
+		       B.F_USER02,
+		       B.F_USER03,
+		       B.F_USER04,
+		       B.F_USER05,
+		       B.F_USER11,
+		       B.F_USER12,
+		       B.F_USER13,
+		       B.F_USER14,
+		       B.F_USER15,
+		       C.LOT1,
+		       C.LOT2,
+		       C.LOT3,
+		       C.LOT4,
+		       C.LOT5,
+		       SUM(ISNULL(QTY, 0) - ISNULL(ALLOCQTY, 0)) OVER(PARTITION BY A.WHCD, A.ITEMCD) TOTAVAILQTY /* 총가용수량 */,
+		       ISNULL((SELECT ISNULL(QTY, 0) - ISNULL(ALLOCQTY, 0)
+				         FROM P810 WITH (NOLOCK) 
+				        WHERE COMPCD = A.COMPCD
+				          AND ORGCD = A.ORGCD
+				          AND WHCD = #{S_AFTERWHCD}
+				          AND LOCCD = #{S_AFTERLOCCD}
+				          AND LOTKEY = A.LOTKEY),0) AFTAVAILQTY /* 이동후가용수량 */
+		  FROM P810 A WITH (NOLOCK) 
+		  JOIN P006 B WITH (NOLOCK) 
+		    ON B.COMPCD = A.COMPCD
+		   AND B.ORGCD = A.ORGCD 
+		   AND B.ORGCD  = A.ORGCD
+		   AND B.ITEMCD = A.ITEMCD
+		  JOIN P007 C WITH (NOLOCK) 
+		    ON C.COMPCD = A.COMPCD
+		   AND C.ORGCD = A.ORGCD 
+		   AND C.ITEMCD = A.ITEMCD
+		   AND C.LOTKEY = A.LOTKEY
+		  JOIN P004 D WITH (NOLOCK) 
+		    ON D.COMPCD = A.COMPCD
+		   AND D.WHCD = A.WHCD
+		 WHERE ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) <![CDATA[ <> ]]> 0
+		   AND A.COMPCD = #{S_COMPCD}
+		   AND A.ORGCD = #{S_ORGCD}
+		   AND A.WHCD = #{S_WHCD}
+		   AND A.LOCCD = #{S_LOCCD}
+		   AND A.ITEMCD = #{S_ITEM}		   
+		   AND A.LOTKEY = #{S_LOTKEY}
+	</select>
+</mapper>

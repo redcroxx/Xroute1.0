@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="E000001Mapper">
+
+	<!-- 등록정보 : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.e000001.E000001.getSearch */
+		SELECT	A.PGMID			/*프로그램ID*/
+				, A.PGMNM		/*프로그램명*/
+				, A.URL			/*URL*/
+				, A.USEORGCD	/*셀러사용여부*/
+				, A.USEWHCD		/*창고사용여부*/
+				, A.REMARK		/*비고*/
+				, A.ADDUSERCD	/*등록자ID*/
+				, CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/
+				, A.UPDUSERCD	/*수정자ID*/
+				, CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME/*수정일시*/
+				, A.TERMINALCD	/*IP*/					
+		FROM E001 A WITH (NOLOCK)
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_PGM != null and S_PGM != ''">
+				AND A.PGMID LIKE '%' + dbo.UFX_Trim(#{S_PGM}) + '%'		
+			</if>
+		</trim>		
+		ORDER BY A.PGMID	
+	</select>
+	
+	<!-- 상세정보 : 디테일 그리드 검색 -->
+	<select id="getDetailSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.e000001.E000001.getDetailSearch */
+		SELECT	B.PGMID, 
+				B.COL_ID,
+		        B.COL_NM, 
+		        A.ISCHECK, 
+		        A.CHECKTYPE, 
+		        A.CODEKEY,
+		        A.MAXLEN, 
+		        A.REF1, 
+		        A.REF2, 
+		        A.REF3, 
+		        A.REF4, 
+		        A.REF5 
+		 FROM (
+		   		SELECT PGMID, PGMNM, COL_ID, COL_NM
+				  FROM (SELECT PGMID, PGMNM
+				                , COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+								, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+								, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+								, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+								, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+								, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+								, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+								, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+								, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+								, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+								, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+								, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+								, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+								, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+								, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+								, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+								, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+								, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+								, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+								, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+				          FROM E001 WITH (NOLOCK)
+						 WHERE PGMID = #{PGMID}) AS T UNPIVOT(COL_NM FOR COL_ID IN(
+						          COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+								, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+								, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+								, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+								, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+								, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+								, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+								, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+								, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+								, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+								, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+								, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+								, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+								, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+								, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+								, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+								, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+								, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+								, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+								, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ)) AS UNPVT ) B
+								LEFT OUTER JOIN E002 A WITH (NOLOCK)
+		  ON A.PGMID = B.PGMID
+		  AND A.COL_ID = B.COL_ID
+	</select>
+	
+	<!-- 마스터 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/* sys.e000001.E000001.deleteMst*/
+		DELETE FROM E001 WITH (ROWLOCK)
+		 WHERE PGMID = #{PGMID}		
+	</delete>
+	
+	<!-- 등록정보 추가  -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* sys.e000001.E000001.insertMst*/
+		INSERT INTO E001 WITH (ROWLOCK) (PGMID,	PGMNM, URL, REMARK, USEORGCD, USEWHCD
+					, COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+					, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+					, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+					, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+					, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+					, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+					, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+					, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+					, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+					, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+					, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+					, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+					, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+					, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+					, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+					, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+					, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+					, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+					, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+					, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+					, ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD)
+			VALUES(#{PGMID}, #{PGMNM}, #{URL}, #{REMARK}, #{USEORGCD}, #{USEWHCD}
+					, #{COL_0A}, #{COL_0B}, #{COL_0C}, #{COL_0D}, #{COL_0E}
+					, #{COL_0F}, #{COL_0G}, #{COL_0H}, #{COL_0I}, #{COL_0J}
+					, #{COL_0K}, #{COL_0L}, #{COL_0M}, #{COL_0N}, #{COL_0O}
+					, #{COL_0P}, #{COL_0Q}, #{COL_0R}, #{COL_0S}, #{COL_0T}
+					, #{COL_0U}, #{COL_0V}, #{COL_0W}, #{COL_0X}, #{COL_0Y}, #{COL_0Z}
+					, #{COL_AA}, #{COL_AB}, #{COL_AC}, #{COL_AD}, #{COL_AE}
+					, #{COL_AF}, #{COL_AG}, #{COL_AH}, #{COL_AI}, #{COL_AJ}
+					, #{COL_AK}, #{COL_AL}, #{COL_AM}, #{COL_AN}, #{COL_AO}
+					, #{COL_AP}, #{COL_AQ}, #{COL_AR}, #{COL_AS}, #{COL_AT}
+					, #{COL_AU}, #{COL_AV}, #{COL_AW}, #{COL_AX}, #{COL_AY}, #{COL_AZ}
+					, #{COL_BA}, #{COL_BB}, #{COL_BC}, #{COL_BD}, #{COL_BE}
+					, #{COL_BF}, #{COL_BG}, #{COL_BH}, #{COL_BI}, #{COL_BJ}
+					, #{COL_BK}, #{COL_BL}, #{COL_BM}, #{COL_BN}, #{COL_BO}
+					, #{COL_BP}, #{COL_BQ}, #{COL_BR}, #{COL_BS}, #{COL_BT}
+					, #{COL_BU}, #{COL_BV}, #{COL_BW}, #{COL_BX}, #{COL_BY}, #{COL_BZ}
+					, #{COL_CA}, #{COL_CB}, #{COL_CC}, #{COL_CD}, #{COL_CE}
+					, #{COL_CF}, #{COL_CG}, #{COL_CH}, #{COL_CI}, #{COL_CJ}
+					, #{COL_CK}, #{COL_CL}, #{COL_CM}, #{COL_CN}, #{COL_CO}
+					, #{COL_CP}, #{COL_CQ}, #{COL_CR}, #{COL_CS}, #{COL_CT}
+					, #{COL_CU}, #{COL_CV}, #{COL_CW}, #{COL_CX}, #{COL_CY}, #{COL_CZ}
+					, #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}) 
+	
+	</insert>
+	
+	<!-- 상세정보 삭제 -->
+	<delete id="deleteDet" parameterType="LDataMap">
+		/* sys.e000001.E000001.deleteDet*/
+		DELETE FROM E002 WITH (ROWLOCK)
+		 WHERE PGMID = #{PGMID}		
+	</delete>
+
+	<!-- 상세정보 추가 -->
+	<insert id="insertDet" parameterType="LDataMap">
+		/* sys.e000001.E000001.insertDet*/
+		INSERT INTO E002 WITH (ROWLOCK)
+			(PGMID
+			,COL_ID
+			,ISCHECK
+			,CHECKTYPE
+			,CODEKEY
+			,MAXLEN
+			,REF1
+			,REF2
+			,REF3
+			,REF4
+			,REF5
+			,ADDUSERCD
+			,ADDDATETIME
+			,UPDUSERCD
+			,UPDDATETIME
+			,TERMINALCD)
+		VALUES
+			(#{PGMID}
+			,#{COL_ID}
+			,#{ISCHECK}
+			,#{CHECKTYPE}
+			,#{CODEKEY}
+			,#{MAXLEN}
+			,#{REF1}
+			,#{REF2}
+			,#{REF3}
+			,#{REF4}
+			,#{REF5}
+			,#{LOGIN_USERCD}
+			,GETDATE()
+			,#{LOGIN_USERCD}
+			,GETDATE()
+			,#{LOGIN_IP})		
+	</insert>
+</mapper>

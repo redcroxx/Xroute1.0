@@ -1,0 +1,407 @@
+
+/*15.09.18 repeat변경 normal추가 컨텐츠 기본 높이 지정 bjh*/
+/*파란색계열*/
+.b01_h {
+font-size:12px; 
+font-weight:bold; 
+color:#2e6e9e; 
+background: #dfeffc url(./images_theme/blue02.png) 50% 50% repeat;
+border-color: #c5dbec;
+}
+
+.b01 {
+background-color:#ffffff;
+color:#2e6e9e; 
+border-color: #a6c9e2;
+height:22px;
+}
+
+.b02_h {
+font-size:12px; 
+font-weight:bold; 
+color:#2779b4; 
+background: #dfeffc url(./images_theme/blue08.png) 50% 50% repeat;
+border-color: #aed0ea;
+}
+
+.b02 {
+background-color:#fafbfc;
+color:#3b3b3b; 
+border-color: #dddddd;
+height:22px;
+}
+
+.b03_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue03.png) 50% 50% repeat;
+border-color: #81b6c1;
+}
+
+.b03 {
+background-color:#DFEFFC;
+color:#2c4359; 
+border-color: #aaaaaa;
+height:22px;
+}
+
+.b04_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue06.png) 50% 50% repeat;
+border-color: #4b92d7;
+}
+
+.b04 {
+background-color:#448CD1;
+color:#ffffff; 
+border-color: #004281;
+height:22px;
+}
+
+.b05_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue07.png) 50% 50% repeat;
+border-color: #2694e8;
+}
+
+.b05 {
+background-color:#f2f5f7;
+color:#353535; 
+border-color: #dddddd;
+height:22px;
+}
+
+.b06_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue01.png) 50% 50% repeat;
+border-color: #77d5f7;
+}
+
+.b06 {
+background-color:#72b9d7;
+color:#333333; 
+border-color: #a6c9e2;
+height:22px;
+}
+
+.b07_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue05.png) 50% 50% repeat;
+border-color: #3a70a5;
+}
+
+.b07 {
+background-color:#282828;
+color:#ffffff; 
+border-color: #0b3e6f;
+height:22px;
+}
+
+.b07_1_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue05.png) 50% 50% repeat;
+border-color: #3a70a5;
+}
+
+.b07_1 {
+background-color:#0B3E6F;
+color:#ffffff; 
+border-color: #0b3e6f;
+height:22px;
+}
+
+.b08_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black02_1.png) 50% 50% repeat;
+border-color: #3d3d3d;
+}
+
+.b08 {
+background-color:#d8e2f5;
+color:#535353; 
+border-color: #9d9d9d;
+height:22px;
+}
+
+.b09_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue04.png) 50% 50% repeat;
+border-color: #000000;
+}
+
+.b09 {
+background-color:#00212f;
+color:#ffffff; 
+border-color: #000000;
+height:22px;
+}
+
+
+/*회색계열*/
+.g01_h {
+font-size:12px; 
+font-weight:bold; 
+color:#1e1e1e; 
+background: #dfeffc url(./images_theme/black09.png) 50% 50% repeat;
+border-color: #dedede;
+}
+
+.g01 {
+background-color:#ffffff;
+color:#1e1e1e; 
+border-color: #dedede;
+height:22px;
+}
+
+.g02_h {
+font-size:12px; 
+font-weight:bold; 
+color:#424242; 
+background: #dfeffc url(./images_theme/black04.png) 50% 50% repeat;
+border-color: #c2c2c2;
+}
+
+.g02 {
+background-color:#f7f7f7;
+color:#424242; 
+border-color: #c2c2c2;
+height:22px;
+}
+
+.g03_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black08.png) 50% 50% repeat;
+border-color: #929292;
+}
+
+.g03 {
+background-color:#efefef;
+color:#000000; 
+border-color: #929292;
+height:22px;
+}
+
+.g04_h {
+font-size:20px;
+font-weight:bold; 
+color:#f00; 
+background: #dfeffc url(./images_theme/black03.png) 50% 50% repeat;
+border-color: #00f;
+border-width:1px;
+border-radius:0;
+}
+
+.g04 {
+background-color:#f5f5f5;
+color:#00f; 
+border-color: red;
+height:35px;
+font-size:12px;
+font-family:"맑은 고딕";
+height:22px;
+}
+
+.g05_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black06.png) 50% 50% repeat;
+border-color: #2d2d2d;
+}
+
+.g05 {
+background-color:#f7f7f7;
+color:#000000; 
+border-color: #2d2d2d;
+height:22px;
+}
+
+.g06_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black07.png) 50% 50% repeat;
+border-color: #777777;
+}
+
+.g06 {
+background-color:#f9f9f9;
+color:#333333; 
+border-color: #777777;
+height:22px;
+}
+
+.g07_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black02.png) 50% 50% repeat;
+border-color: #3d3d3d;
+border-radius:0;
+}
+
+.g07 {
+background-color:#eaeaea;
+color:#535353; 
+border-color: #9d9d9d;
+border-radius:0;
+height:22px;
+}
+
+.b07_1_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/blue05.png) 50% 50% repeat;
+border-color: #3a70a5;
+}
+
+.b07_1 {
+background-color:#0B3E6F;
+color:#ffffff; 
+border-color: #0b3e6f;
+height:22px;
+}
+
+.g08_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black05.png) 50% 50% repeat;
+border-color: #777777;
+}
+
+.g08 {
+background-color:#777777;
+color:#eaeaea; 
+border-color: #777777;
+height:22px;
+}
+
+.g09_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black10.png) 50% 50% repeat;
+border-color: #000000;
+}
+
+.g09 {
+background-color:#272727;
+color:#eeeeee; 
+border-color: #000000;
+height:22px;
+}
+
+.g10_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/black01.png) 50% 50% repeat;
+border-color: #535353;
+}
+
+.g10 {
+background-color:#eaeaea;
+color:#000000; 
+border-color: #a535353;
+height:22px;
+}
+
+.g10_1 {
+background-color:#cfcfcf;
+border-color: #535353;
+}
+
+
+/*붉은색계열*/
+.r01_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/red01.png) 50% 50% repeat;
+border-color: #e3a1a1;
+}
+
+.r01 {
+background-color:#ffffff;
+color:#333333; 
+border-color: #eeeeee;
+height:22px;
+}
+
+.r02_h {
+font-size:12px; 
+font-weight:bold; 
+color:#4a1a1a; 
+background: #dfeffc url(./images_theme/red02.png) 50% 50% repeat;
+border-color: #c0c0c0;
+}
+
+.r02 {
+background-color:#ffffff;
+color:#333333; 
+border-color: #cc0000;
+height:22px;
+}
+
+.r03_h {
+font-size:12px; 
+font-weight:bold; 
+color:#4a1a1a; 
+background: #dfeffc url(./images_theme/red03.png) 50% 50% repeat;
+border-color: #ff6545;
+}
+
+.r03 {
+background-color:#f4f4f4;
+color:#333333; 
+border-color: #fe7d62;
+height:22px;
+}
+
+.r04_h {
+font-size:12px; 
+font-weight:bold; 
+color:#ffffff; 
+background: #dfeffc url(./images_theme/red04.png) 50% 50% repeat;
+border-color: #960c01;
+}
+
+.r04 {
+background-color:#f4f4f4;
+color:#333333; 
+border-color: #b6b6b6;
+height:22px;
+}
+
+.normal_h{
+font-size:12px; 
+font-weight:bold; 
+color:#424242; 
+background: linear-gradient( to bottom, rgba(255,255,255,1), rgba(226,226,226,1) );
+border-color:#b3b3b3;
+}
+.normal{
+background-color:#ffffff;
+color:#424242; 
+border-color: #b3b3b3;
+height:22px;
+}

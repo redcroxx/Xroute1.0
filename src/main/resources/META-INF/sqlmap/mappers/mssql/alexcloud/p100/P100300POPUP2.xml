@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100300POPUP2Mapper">
+	<!-- 애터미 입고  : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100300_popup2.getSearch */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , A.IDX
+			 , A.ORDERNO
+			 , A.ORDERSUBNO
+			 , A.ORDERSEQ
+			 , A.ORDERDATE
+			 , A.TYPE
+			 , A.MATERIALCODE
+			 , ISNULL(A.MATERIALNAME, B.NAME) AS MATERIALNAME
+			 , A.PLANTCODE
+			 , A.PLANTNAME	
+			 , CASE WHEN A.STORAGECODE = '1100' THEN '2000'
+			 		WHEN A.STORAGECODE = '1180' THEN '2180'
+			 		WHEN A.STORAGECODE = '1190' THEN '2190'
+			 		WHEN A.STORAGECODE = '1200' THEN '4000'
+			 		WHEN A.STORAGECODE = '1280' THEN '4280'
+			 		WHEN A.STORAGECODE = '1290' THEN '4290'
+			   END AS WH
+			 , A.STORAGENAME
+			 , A.STOCKCOUNT
+			 , A.STOCKDATE
+			 , A.COMPANYCODE
+			 , A.COMPANYNAME
+			 , A.MEINS
+			 , A.ORDERPRICE
+			 , A.TOTALPRICE
+			 , A.STATUS
+			 , A.OPERATEDATE
+			 , A.OPERATETIME
+			 , A.OPERATEID
+			 , A.LOGINO
+			 , A.LOGISUBNO
+			 , A.TYPETEXT
+			 , A.RETURNNO
+			 , A.RETURNSUBNO
+			 , A.RETURNMONTH
+			 , A.BUYNUM
+			 , A.BUYSEQ
+			 , A.QTY
+			 , A.RMK
+			 , A.VALID_DATE
+			 , A.LOT
+			 , A.INTF_YN
+			 , A.INTF_DATE
+			 , A.TRS_DATE
+			 , A.INTF_RETURN_YN
+			 , A.INTF_RETURN_DATE
+			 , A.IN_SNO
+			 , A.LOGIFLAG
+			 , A.LOGISEQ
+			 , A.LOGICOUNT
+			 , A.OUT_SNO
+			 , A.ADDUSERCD
+			 , A.ADDDATETIME
+			 , A.UPDUSERCD
+			 , A.UPDDATETIME
+			 , A.TERMINALCD
+			 , A.IF_YN
+			 , B.UNITCD
+			 , B.ITEMSIZE
+			 , B.INBOXQTY
+			 , B.UNITTYPE
+		  FROM INTF_ORDERSTOCK A WITH (NOLOCK)
+		  JOIN P006 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.MATERIALCODE = B.ITEMCD
+		 WHERE A.INTF_YN = ''
+		   AND A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>	
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.COMPANYCODE = #{S_CUSTCD}
+		</if>	
+		<if test="S_WISCHDT_FROM != null and S_WISCHDT_FROM != ''">
+		   AND A.STOCKDATE >= REPLACE(#{S_WISCHDT_FROM},'-','')
+		</if>
+		<if test="S_WISCHDT_TO != null and S_WISCHDT_TO != ''">
+		   AND A.STOCKDATE <![CDATA[ <= ]]> REPLACE(#{S_WISCHDT_TO},'-','')
+		</if> 
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+		   AND A.MATERIALCODE = #{S_ITEMCD}
+		</if>	
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND CASE WHEN A.STORAGECODE = '1100' THEN '2000'
+			 		WHEN A.STORAGECODE = '1180' THEN '2180'
+			 		WHEN A.STORAGECODE = '1190' THEN '2190'
+			 		WHEN A.STORAGECODE = '1200' THEN '4000'
+			 		WHEN A.STORAGECODE = '1280' THEN '4280'
+			 		WHEN A.STORAGECODE = '1290' THEN '4290'
+			   END = #{S_WHCD}
+		</if>	
+		 ORDER BY A.ORDERNO, A.ORDERSUBNO, A.ORDERSEQ
+	</select>
+	
+</mapper>

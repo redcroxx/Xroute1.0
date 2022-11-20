@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="TrackingListMapper">
+	<select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.interfaces.vo.TOrderVo">
+		/* TrackingListMapper.getSearch */
+		SELECT
+			o.ORGCD				AS orgcd
+			, o.MALL_NM			AS mallNm
+			, o.XRT_INVC_SNO	AS xrtInvcSno
+			, o.ORD_CD			AS ordCd
+			, CASE
+				WHEN o.INVC_SNO2 IS NOT NULL THEN '****' + SUBSTRING(o.INVC_SNO2, 4, LEN(o.INVC_SNO1))
+				ELSE o.INVC_SNO1
+			 END				AS invcSno1
+			, CASE
+				WHEN o.INVC_SNO2 IS NOT NULL THEN INVC_SNO2
+				ELSE ''
+			  END				AS invcSno2
+			, o.UPLOAD_DATE		AS uploadDate
+			, o.SHIP_METHOD_CD	AS shipMethodCd
+			, o.LOCAL_SHIPPER	AS localShipper
+			, o.S_NATION		AS sNation
+			, o.E_NATION		AS eNation
+			, o.RECV_NAME		AS recvName
+			, o.RECV_TEL		AS recvTel
+			, o.RECV_MOBILE		AS recvMobile
+			, o.RECV_ADDR1		AS recvAddr1
+			, o.RECV_ADDR2		AS recvAddr2
+			, o.RECV_POST		AS recvPost
+			, o.RECV_CURRENCY	AS recvCurrency
+			, o.TOT_PAYMENT_PRICE   AS totPaymentPrice
+			, CASE
+                WHEN o.STATUS_CD = '10' THEN '주문등록'
+                WHEN o.STATUS_CD = '11' THEN '발송대기'
+                WHEN o.STATUS_CD = '12' THEN '발송완료'
+                WHEN o.STATUS_CD = '20' THEN '입금대기'
+                WHEN o.STATUS_CD = '21' THEN '결제완료'
+                WHEN o.STATUS_CD = '22' THEN '결제대기'
+                WHEN o.STATUS_CD = '23' THEN '결제실패'
+                WHEN o.STATUS_CD = '30' THEN '입고완료'
+                WHEN o.STATUS_CD = '31' THEN '창고보관'
+                WHEN o.STATUS_CD = '32' THEN '출고대기'
+                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                WHEN o.STATUS_CD = '34' THEN '검수취소'
+                WHEN o.STATUS_CD = '35' THEN '선적대기'
+                WHEN o.STATUS_CD = '40' THEN '출고완료'
+                WHEN o.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN o.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN o.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN o.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN o.STATUS_CD = '54' THEN '통관대기'
+                WHEN o.STATUS_CD = '55' THEN '통관완료'
+                WHEN o.STATUS_CD = '56' THEN '배송시작'
+                WHEN o.STATUS_CD = '57' THEN '배송중'
+                WHEN o.STATUS_CD = '60' THEN '배송완료'
+                WHEN o.STATUS_CD = '80' THEN 'API오류'
+                WHEN o.STATUS_CD = '98' THEN '입금취소'
+                WHEN o.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END               AS statusCdKr
+			, o.SHIP_NAME			AS shipName
+			, o.SHIP_TEL			AS shipTel
+			, o.SHIP_ADDR			AS shipAddr
+			, o.RECV_CITY			AS recvCity
+			, o.RECV_STATE			AS recvState
+		FROM TORDER o WITH (NOLOCK)
+		WHERE 1 = 1
+		AND o.DEL_FLG = 'N'
+		<if test="sOrgCd != null and sOrgCd != ''">
+		AND o.ORGCD = #{sOrgCd}
+		</if>
+		<choose>
+			<when test="sPeriodType == 'uploadDate'">
+			AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+			</when>
+			<when test="sPeriodType == 'stockDate'">
+			AND o.STOCK_DATE BETWEEN CONVERT(CHAR(19), #{sToDate}, 20) AND CONVERT(CHAR(19), #{sFromDate}, 20)
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="sKeywordType == 'total'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.XRT_INVC_SNO = #{sKeyword}
+				OR o.CART_NO = #{sKeyword}
+				OR o.ORD_NO = #{sKeyword}
+				OR o.SELLER_REF_NO1 = #{sKeyword}
+				OR o.SELLER_REF_NO2 = #{sKeyword}
+				OR o.INVC_SNO1 = #{sKeyword}
+				OR o.INVC_SNO2 = #{sKeyword}
+				OR o.SHIP_METHOD_CD = #{sKeyword}
+				OR o.LOCAL_SHIPPER = #{sKeyword}
+				OR o.RECV_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+				OR o.ORD_CD IN (SELECT ORD_CD FROM TORDERDTL WHERE 1 = 1 
+								<if test="sOrgCd != null and sOrgCd != ''">
+								AND ORGCD = #{sOrgCd}
+								</if>
+								AND GOODS_NM LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%')
+				</if>
+			</when>
+			<when test="sKeywordType == 'xrtInvcSno'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.XRT_INVC_SNO = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'cartNo'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.CART_NO = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'orderNo'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.ORD_NO = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'sellerRefNo'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.SELLER_REF_NO1 = #{sKeyword}
+				OR o.SELLER_REF_NO2 = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'invcSno'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.INVC_SNO1 = #{sKeyword}
+				OR o.INVC_SNO2 = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'shipMethodCd'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.SHIP_METHOD_CD = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'localShipper'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.LOCAL_SHIPPER = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'recvName'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.RECV_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+				</if>
+			</when>
+			<when test="sKeywordType == 'goodsNm'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.ORD_CD IN (SELECT ORD_CD FROM TORDERDTL WHERE 1 = 1 
+								<if test="sOrgCd != null and sOrgCd != ''">
+								AND ORGCD = #{sOrgCd}
+								</if>
+								AND GOODS_NM LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%')
+				</if>
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<if test="sToNation != null and sToNation != ''">
+		AND o.S_NATION = #{sToNation}
+		</if>
+		<if test="sFromNation != null and sFromNation != ''">
+		AND o.E_NATION = #{sFromNation}
+		</if>
+		ORDER BY o.XRT_INVC_SNO ASC
+	</select>
+</mapper>

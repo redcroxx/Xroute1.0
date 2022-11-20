@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P700400Mapper">
+
+	<!-- 로트속성변경 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p700.p700400.getSearch */
+		SELECT A.CLKEY 		/*변경번호*/
+		      ,A.CLDT 		/*변경날짜*/
+		      ,A.REMARK 	/*전표비고*/
+		      ,A.COMPCD 	/*회사코드*/			  
+			  ,(SELECT NAME FROM P001 WITH (NOLOCK) WHERE COMPCD = A.COMPCD) COMPNM /*회사명 */
+			  ,A.WHCD 		/*창고코드*/
+			  ,(SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.WHCD) WHNM /*창고명 */
+		      ,A.ORGCD 		/*화주코드*/
+			  ,(SELECT NAME FROM P002 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM /*화주명 */
+		      ,A.ADDUSERCD 	/*등록자ID*/
+		      ,CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/
+		      ,A.UPDUSERCD 	/*수정자ID*/
+		      ,CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/
+		      ,A.TERMINALCD /*IP*/
+		      ,(SELECT COUNT(DISTINCT ITEMCD) FROM P721 WITH (NOLOCK) WHERE CLKEY = A.CLKEY) ITEMCNT /* 품목수 */
+		      ,(SELECT SUM(CLQTY)
+		          FROM P721 WITH(NOLOCK)
+		         WHERE CLKEY = A.CLKEY) TOTQTY /* 총수량 */
+		  FROM P720 A WITH (NOLOCK) 
+		 WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_CLDT_FROM != null and S_CLDT_FROM != ''">
+			AND A.CLDT >= REPLACE(#{S_CLDT_FROM},'-','')
+		</if>
+		<if test="S_CLDT_TO != null and S_CLDT_TO != ''">
+			AND A.CLDT <![CDATA[ <= ]]> REPLACE(#{S_CLDT_TO},'-','')
+		</if>
+		
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.WHCD = #{S_WHCD}
+		</if>
+		<if test="S_BEFORELOCCD != null and S_BEFORELOCCD != ''"> 
+			AND EXISTS (SELECT 1
+						  FROM P721 D WITH (NOLOCK)
+						 WHERE D.CLKEY = A.CLKEY
+						   AND D.BEFLOCCD LIKE '%' + dbo.UFX_TRIM(#{S_BEFORELOCCD}) + '%')
+		</if>
+		<if test="S_AFTERLOCCD != null and S_AFTERLOCCD != ''">
+			AND EXISTS (SELECT 1
+						  FROM P721 D WITH (NOLOCK)
+						 WHERE D.CLKEY = A.CLKEY
+						   AND D.AFTLOCCD LIKE '%' + dbo.UFX_TRIM(#{S_AFTERLOCCD}) + '%')
+		</if>
+		AND EXISTS (SELECT 1
+		                 FROM P721 F WITH (NOLOCK) 
+		                 JOIN P006 G WITH (NOLOCK) 
+		                   ON G.COMPCD = F.COMPCD
+		                  AND G.ORGCD = F.ORGCD
+		                  AND G.ITEMCD = F.ITEMCD                   
+		                WHERE F.CLKEY = A.CLKEY
+		<if test="S_ITEM != null and S_ITEM != ''">
+		                  AND (G.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		                   OR G.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND G.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND G.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND G.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND G.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND G.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND G.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND G.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND G.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND G.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND G.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		                   )
+		<if test="S_SEARCH != null and S_SEARCH != ''">
+		   	AND A.CLKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH}) + '%'
+		</if>
+			ORDER BY A.CLKEY DESC
+	</select>
+	
+	<!-- 로트속성변경 : 디테일 그리드 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p700.p700400.getDetailList */
+		SELECT A.CLKEY 			/*변경번호*/
+		      ,A.SEQ 			/*SEQ*/
+		      ,A.BEFLOCCD 		/*변경전 로케이션*/
+		      ,A.AFTLOCCD 		/*변경후 로케이션*/
+		      ,A.ITEMCD 		/*변경할 품목코드*/
+		      ,B.NAME ITEMNM 	/* 품목명 */
+		      ,A.BEFLOTKEY 		/*변경전 로트키*/
+		      ,A.AFTLOTKEY 		/*변경후 로트키*/
+		      ,A.CLQTY 			/*변경할 수량*/
+		      ,A.BEFLOT1 		/*변경전 로트1*/
+		      ,A.BEFLOT2 		/*변경전 로트2*/
+		      ,A.BEFLOT3 		/*변경전 로트3*/
+		      ,A.BEFLOT4 		/*변경전 로트4*/
+		      ,A.BEFLOT5 		/*변경전 로트5*/
+		      ,A.AFTLOT1 LOT1 	/*변경전 로트1*/
+		      ,A.AFTLOT2 LOT2 	/*변경후 로트2*/
+		      ,A.AFTLOT3 LOT3 	/*변경후 로트3*/
+		      ,A.AFTLOT4 LOT4 	/*변경후 로트4*/
+		      ,A.AFTLOT5 LOT5 	/*변경후 로트5*/
+		      ,A.COMPCD 		/*회사코드*/
+		      ,(SELECT NAME FROM P001 WITH (NOLOCK) WHERE COMPCD = A.COMPCD) COMPNM /*회사명 */
+		      ,A.WHCD 			/*창고코드*/
+		      ,(SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.WHCD) WHNM /*창고명 */
+		      ,A.ORGCD 			/*화주코드*/
+		      ,(SELECT NAME FROM P002 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM /*화주명 */
+		      ,A.REMARK 		/*품목비고*/
+		      ,A.ADDUSERCD 		/*등록자ID*/
+		      ,CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/
+		      ,A.UPDUSERCD 		/*수정자ID*/
+		      ,CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/
+		      ,A.TERMINALCD 	/*IP*/
+		      ,B.UNITCD 		/* 단위 */
+		      ,B.ITEMSIZE 		/* 규격 */
+		      ,B.UNITTYPE 		/*관리단위*/
+		      ,B.INBOXQTY       /*박스입수량*/
+		      ,dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'BOX', B.INBOXQTY, A.CLQTY)  AS CLQTY_BOX 	/*변경BOX*/
+		      ,dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'EA', B.INBOXQTY, A.CLQTY)  AS CLQTY_EA 		/*변경EX*/
+		      ,B.F_USER01
+		      ,B.F_USER02
+		      ,B.F_USER03
+		      ,B.F_USER04
+		      ,B.F_USER05
+		      ,B.F_USER11
+		      ,B.F_USER12
+		      ,B.F_USER13
+		      ,B.F_USER14
+		      ,B.F_USER15
+		      ,(SELECT SUM(ISNULL(QTY, 0) - ISNULL(ALLOCQTY, 0))
+		          FROM P810 WITH (NOLOCK) 
+		         WHERE COMPCD = A.COMPCD
+		           AND ORGCD = A.ORGCD
+		           AND WHCD = A.WHCD
+		           AND ITEMCD = A.ITEMCD) TOTAVAILQTY /* 이동전총가용수량 */
+		      ,ISNULL(C.QTY, 0) - ISNULL(C.ALLOCQTY, 0) BEFAVAILQTY /* 이동전가용수량 */
+		  FROM P721 A WITH (NOLOCK) 
+		  JOIN P006 B WITH (NOLOCK) 
+		    ON B.COMPCD = A.COMPCD
+		   AND B.ORGCD = A.ORGCD 
+		   AND B.ITEMCD = A.ITEMCD
+		  LEFT OUTER JOIN P810 C WITH (NOLOCK) 
+		    ON C.COMPCD = A.COMPCD
+		   AND C.ORGCD = A.ORGCD
+		   AND C.WHCD = A.WHCD
+		   AND C.LOCCD = A.BEFLOCCD
+		   AND C.LOTKEY = A.BEFLOTKEY
+		   AND C.ITEMCD = A.ITEMCD
+		 WHERE A.CLKEY = #{CLKEY}
+	</select>
+	
+	<!-- 로트속성변경 : 마스터 신규 저장 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p700.p700400.getDetailList */
+		INSERT INTO P720 WITH (ROWLOCK)
+		  (CLKEY
+		  ,CLDT
+		  ,COMPCD
+		  ,ORGCD
+		  ,WHCD
+		  ,USERCD
+		  ,REMARK
+		  ,ADDUSERCD
+		  ,UPDUSERCD
+		  ,TERMINALCD)
+		VALUES
+		  (#{CLKEY}
+		  ,REPLACE(#{CLDT},'-','')
+		  ,#{COMPCD}
+		  ,#{ORGCD}
+		  ,#{WHCD}
+		  ,#{USERCD}
+		  ,#{REMARK}
+		  ,#{LOGIN_USERCD}
+		  ,#{LOGIN_USERCD}
+		  ,#{LOGIN_IP})
+	</insert>
+	
+	
+	<!-- 로트속성변경 : 디테일 신규 저장 -->
+	<insert id="insertDet" parameterType="LDataMap">
+		/* alexcloud.p700.p700400.getDetailList */
+		INSERT INTO P721 WITH (ROWLOCK)
+		  (CLKEY
+		  ,SEQ
+		  ,WHCD
+		  ,BEFLOCCD
+		  ,AFTLOCCD
+		  ,ITEMCD
+		  ,BEFLOTKEY
+		  ,AFTLOTKEY
+		  ,CLQTY
+		  ,BEFLOT1
+		  ,BEFLOT2
+		  ,BEFLOT3
+		  ,BEFLOT4
+		  ,BEFLOT5
+		  ,AFTLOT1
+		  ,AFTLOT2
+		  ,AFTLOT3
+		  ,AFTLOT4
+		  ,AFTLOT5
+		  ,COMPCD
+		  ,ORGCD
+		  ,REMARK
+		  ,ADDUSERCD
+		  ,UPDUSERCD
+		  ,TERMINALCD)
+		VALUES
+		  (#{CLKEY}
+		  ,(SELECT ISNULL(MAX(SEQ), 0) + 1 FROM P721 WHERE CLKEY = #{CLKEY})
+		  ,#{WHCD}
+		  ,#{BEFLOCCD}
+		  ,#{AFTLOCCD}
+		  ,#{ITEMCD}
+		  ,#{BEFLOTKEY}
+		  ,#{AFTLOTKEY}
+		  ,#{CLQTY}
+		  ,NULLIF(#{BEFLOT1},'')
+		  ,NULLIF(#{BEFLOT2},'')
+		  ,NULLIF(#{BEFLOT3},'')
+		  ,NULLIF(#{BEFLOT4},'')
+		  ,NULLIF(#{BEFLOT5},'')
+		  ,NULLIF(#{LOT1},'')
+		  ,NULLIF(#{LOT2},'')
+		  ,NULLIF(#{LOT3},'')
+		  ,NULLIF(#{LOT4},'')
+		  ,NULLIF(#{LOT5},'')
+		  ,#{COMPCD}
+		  ,#{ORGCD}
+		  ,#{REMARK}
+		  ,#{LOGIN_USERCD}
+		  ,#{LOGIN_USERCD}
+		  ,#{LOGIN_IP})
+	</insert>
+	
+	<!-- 로트속성변경 : 확정  -->
+	<select id="setExecute" parameterType="LDataMap" statementType="CALLABLE" resultType="LDataMap">
+	     EXEC USX_WhLocChangeLot #{CLKEY}, 'P700400', #{LOGIN_USERCD}, #{LOGIN_IP}, 
+	     #{MSGID, mode=OUT, jdbcType=VARCHAR}, #{MSG, mode=OUT, jdbcType=VARCHAR}
+    </select>
+
+</mapper>

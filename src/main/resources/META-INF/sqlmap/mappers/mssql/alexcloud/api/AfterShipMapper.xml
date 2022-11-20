@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 박스 관리 -->
+<mapper namespace="AfterShipMapper">
+	
+	<select id="getOrderData" parameterType="LDataMap" resultType="LDataMap">
+		SELECT
+			ISNULL(o.ORD_CD          , '') AS "ordCd"
+			, ISNULL(o.ORD_NO        , '') AS "ordNo"
+			, ISNULL(o.XRT_INVC_SNO  , '') AS "xrtInvcSno"
+			, ISNULL(o.S_NATION      , '') AS "sNation"
+			, ISNULL(o.E_NATION      , '') AS "eNation"
+			, ISNULL(o.LOCAL_SHIPPER , '') AS "localShipper"
+			, ISNULL(o.INVC_SNO1     , '') AS "invcSno1"
+			, ISNULL(o.INVC_SNO2     , '') AS "invcSno2"
+			, ISNULL(o.SLUG1         , '') AS "slug1"
+			, ISNULL(o.SLUG2         , '') AS "slug2"
+			, (SELECT TOP 1 STUFF(
+					(SELECT ', ' + od.GOODS_NM + ' ' + od.GOODS_CNT +'ea'
+					 FROM TORDERDTL od
+					 WHERE 1 = 1
+					 AND o.ORD_CD = od.ORD_CD
+					 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			   FROM TORDERDTL
+			) AS "goodsNm"
+			, (SELECT TOP 1 STUFF(
+					(SELECT ', ' + od.PAYMENT_PRICE
+					 FROM TORDERDTL od
+					 WHERE 1 = 1
+					 AND o.ORD_CD = od.ORD_CD
+					 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			   FROM TORDERDTL
+			) AS "price"
+		FROM TORDER o
+		WHERE 1 = 1
+		AND o.XRT_INVC_SNO = #{xrtInvcSno}
+		GROUP BY o.ORD_CD, o.ORD_NO, o.XRT_INVC_SNO, o.S_NATION, o.E_NATION, o.LOCAL_SHIPPER, o.INVC_SNO1, o.INVC_SNO2, o.SLUG1, o.SLUG2
+	</select>
+	
+</mapper>

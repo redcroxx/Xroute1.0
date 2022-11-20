@@ -1,0 +1,25 @@
+#UbiDaemon global property
+port=6996
+taskResId=UBIAJAX
+taskPeriod=1
+#MINUTE,HOUR,DAY,WEEK,MONTH,YEAR
+taskPeriodType=DAY
+delPeriod=1
+#MINUTE,HOUR,DAY,WEEK,MONTH,YEAR
+delPeriodType=DAY
+
+#Resource property
+UBIAJAX.jrfDir=http://localhost:8080/ubireport/work
+UBIAJAX.resultDir=
+UBIAJAX.resUrl=http://localhost:8080/ubireport
+UBIAJAX.servletRoot=http://localhost:8080
+UBIAJAX.dataUrl=http://localhost:8080/UbiData
+UBIAJAX.dataSource=
+UBIAJAX.resource=true
+UBIAJAX.isDeflater=false
+UBIAJAX.isUnicode=true
+UBIAJAX.isBase64=false
+UBIAJAX.utfData=true
+UBIAJAX.coldim=^t
+UBIAJAX.rowdim=^n
+UBIAJAX.useLog=true

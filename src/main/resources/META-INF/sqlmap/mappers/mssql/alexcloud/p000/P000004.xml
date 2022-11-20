@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 창고 관리 -->
+<mapper namespace="P000004Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000004.getSearch */
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , A.WHCD
+			 , A.NAME
+			 , A.WHTYPE
+			 , A.POST
+			 , A.ADDR1
+			 , A.ADDR2
+			 , A.CUSTCD
+			 , C.NAME AS CUSTNM
+			 , A.WHINLOCCD
+			 , A.WHOUTLOCCD
+			 , A.DPSLOCCD
+			 , A.RETURNLOCCD
+			 , A.ASSYLOCCD
+			 , A.CANCELLOCCD
+			 , A.WHINVTYPE
+		     , A.REMARK
+		     , A.ISUSING
+			 , A.ADDUSERCD
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.UPDUSERCD
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		FROM P004 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD
+		LEFT OUTER JOIN P003 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.CUSTCD = C.CUSTCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+				AND A.COMPCD = #{S_COMPCD}
+			</if>
+			<if test="S_WH != null and S_WH != ''">
+				AND ((A.WHCD LIKE '%' + dbo.UFX_Trim(#{S_WH}) + '%')
+					OR (A.NAME LIKE '%' + dbo.UFX_Trim(#{S_WH}) + '%'))
+			</if>
+			<if test="S_WHCD != null and S_WHCD != ''">
+				AND ((A.WHCD LIKE '%' + dbo.UFX_Trim(#{S_WHCD}) + '%')
+					OR (A.NAME LIKE '%' + dbo.UFX_Trim(#{S_WHCD}) + '%'))
+			</if>
+			<if test="S_ISUSING != null and S_ISUSING != ''">
+				AND A.ISUSING = #{S_ISUSING}
+			</if>
+		</trim>
+		ORDER BY A.COMPCD, A.WHCD
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000004.getDetail */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.NAME
+			 , A.WHTYPE
+			 , A.POST
+			 , A.ADDR1
+			 , A.ADDR2
+			 , A.CUSTCD
+			 , A.WHINLOCCD
+			 , A.WHOUTLOCCD
+			 , A.DPSLOCCD
+			 , A.RETURNLOCCD
+			 , A.ASSYLOCCD
+			 , A.CANCELLOCCD
+		     , A.REMARK
+		     , A.ISUSING
+		FROM P004 A WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		  AND WHCD = #{WHCD}
+	</select>
+
+	<!-- 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000004.insertMst */
+		INSERT INTO P004 WITH (ROWLOCK)(
+			COMPCD, WHCD, NAME, WHTYPE, ADDR1
+		  , ADDR2, POST, CUSTCD, WHINLOCCD, WHOUTLOCCD
+		  , RETURNLOCCD, ASSYLOCCD, CANCELLOCCD
+		  , REMARK, ISUSING
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		  , DPSLOCCD, WHINVTYPE
+		) VALUES (
+			#{COMPCD}, dbo.UFX_Trim(#{WHCD}), #{NAME}, #{WHTYPE}, #{ADDR1}
+		  , #{ADDR2}, #{POST}, #{CUSTCD}, #{WHINLOCCD}, #{WHOUTLOCCD}
+		  , #{RETURNLOCCD}, #{ASSYLOCCD}, #{CANCELLOCCD}
+		  , #{REMARK}, ISNULL(CONVERT(NVARCHAR, #{ISUSING}), 'Y')
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		  , #{DPSLOCCD}, #{WHINVTYPE}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000004.updateMst */
+		UPDATE P004 WITH (ROWLOCK)
+		   SET NAME = #{NAME}
+			 , WHTYPE = #{WHTYPE}
+			 , ADDR1 = #{ADDR1}
+			 , ADDR2 = #{ADDR2}
+			 , POST = #{POST}
+			 , CUSTCD = #{CUSTCD}
+			 , WHINLOCCD = #{WHINLOCCD}
+			 , WHOUTLOCCD = #{WHOUTLOCCD}
+			 , DPSLOCCD = #{DPSLOCCD}
+			 , RETURNLOCCD = #{RETURNLOCCD}
+			 , ASSYLOCCD = #{ASSYLOCCD}
+			 , CANCELLOCCD = #{CANCELLOCCD}
+			 , WHINVTYPE = #{WHINVTYPE}
+		     , REMARK = #{REMARK}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND WHCD = #{WHCD}
+	</update>
+
+	<!-- 삭제 (사용/미사용) -->
+	<update id="updateIsusing" parameterType="LDataMap">
+		/* alexcloud.p000.P000004.updateIsusing */
+		UPDATE P004 WITH (ROWLOCK)
+		   SET ISUSING = #{ISUSING}
+		     , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+		     , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND WHCD = #{WHCD}
+	</update>
+	
+</mapper>

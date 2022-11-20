@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 매입처별 품목관리 -->
+<mapper namespace="P000027Mapper">
+	<!-- 검색(매입처) -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000027.getSearch */
+		SELECT A.COMPCD
+     		, A.ORGCD
+			, B.NAME AS ORGNM
+			, A.CUSTCD
+			, A.NAME AS CUSTNM
+			, A.CUSTGROUP
+		    , A.CATEGORYCD
+		    , A.SNAME
+		    , A.ANAME
+		    , A.CEO
+		    , A.BIZKIND
+		    , A.BIZTYPE
+		    , A.BIZNO
+		    , A.ADDR1
+		    , A.ADDR2
+		    , A.ADDR3
+		    , A.POST
+		    , A.COUNTRYCD
+		    , A.PORTCD
+		    , A.DISTRICTCD
+		    , A.PHONE1
+		    , A.PHONE2
+		    , A.FAX1
+		    , A.FAX2
+		    , A.EMAIL
+		    , A.URL
+		    , A.REFUSERNM
+		    , A.REFUSERPHONE
+		    , A.ISSALES
+		    , A.ISSUPPLIER
+		    , A.ISSHIPPER
+		    , A.ISDELIVERY
+		    , A.REMARK
+		    , A.ADDUSERCD
+		    , A.ADDDATETIME
+		    , A.UPDUSERCD
+		    , A.UPDDATETIME
+		    , A.TERMINALCD
+		 FROM P003 A WITH(NOLOCK)
+		 JOIN P002 B WITH(NOLOCK)
+		   ON A.COMPCD = B.COMPCD
+		  AND A.ORGCD = B.ORGCD
+		WHERE A.COMPCD = #{S_COMPCD}
+		  AND A.ORGCD = #{S_ORGCD}
+		  AND A.ISSUPPLIER = 'Y'
+		  AND A.ISUSING = 'Y'
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		  AND A.CUSTCD = #{S_CUSTCD}	
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+		  AND EXISTS (SELECT 1
+		                FROM P006 WITH (NOLOCK)
+		               WHERE 1 = 1
+		                 AND (ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		                  OR NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+					     AND CUSTCD = A.CUSTCD
+					     AND COMPCD = A.COMPCD
+					     AND ORGCD = A.ORGCD
+					)
+		</if>
+	</select>
+	
+	<!-- 상세리스트(매입처가 등록된 품목) 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000027.getDetailList */
+		SELECT A.ITEMCD		
+			 , A.NAME		
+			 , F.NAME AS ITEMCAT1NM	
+			 , E.NAME AS ITEMCAT2NM	
+			 , A.CATEGORYCD AS ITEMCAT3CD	
+			 , D.NAME AS ITEMCAT3NM	
+		  FROM P006 A WITH(NOLOCK)		
+		  LEFT OUTER JOIN P017 D WITH (NOLOCK)		
+			ON A.COMPCD = D.COMPCD AND A.CATEGORYCD = D.CATEGORYCD	
+		  LEFT OUTER JOIN P017 E WITH (NOLOCK)		
+			ON D.COMPCD = E.COMPCD AND D.PCATEGORYCD = E.CATEGORYCD	
+		  LEFT OUTER JOIN P017 F WITH (NOLOCK)		
+			ON E.COMPCD = F.COMPCD AND E.PCATEGORYCD = F.CATEGORYCD	
+		 WHERE A.COMPCD = #{COMPCD}		
+		   AND A.ORGCD = #{ORGCD}	
+		   AND A.CUSTCD = #{CUSTCD}	
+		   AND A.ISUSING = 'Y'
+	</select>
+	
+	<!-- 검색(매입처 미지정 품목) -->
+	<select id="getSearch2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000027.getSearch2 */
+		SELECT A.ITEMCD									
+		     , A.NAME									
+			 , F.NAME AS ITEMCAT1NM								
+			 , E.NAME AS ITEMCAT2NM								
+			 , A.CATEGORYCD AS ITEMCAT3CD								
+			 , D.NAME AS ITEMCAT3NM								
+		  FROM P006 A WITH(NOLOCK)									
+		  LEFT OUTER JOIN P017 D WITH (NOLOCK)									
+			ON A.COMPCD = D.COMPCD AND A.CATEGORYCD = D.CATEGORYCD								
+		  LEFT OUTER JOIN P017 E WITH (NOLOCK)									
+			ON D.COMPCD = E.COMPCD AND D.PCATEGORYCD = E.CATEGORYCD								
+		  LEFT OUTER JOIN P017 F WITH (NOLOCK)									
+			ON E.COMPCD = F.COMPCD AND E.PCATEGORYCD = F.CATEGORYCD								
+		 WHERE A.COMPCD = #{S_COMPCD}	
+		 <if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_ITEM != null and S_ITEM != ''">
+		   AND (A.ITEMCD = #{S_ITEM} OR A.NAME = #{S_ITEM})
+		</if>
+		    AND (A.CUSTCD IS NULL OR A.CUSTCD = '')								
+		    AND A.ISUSING = 'Y'									
+	</select>
+
+	<!-- 수정(미지정 품목 -> 품목 지정) -->
+	<update id="updateITEM" parameterType="LDataMap">
+		/* alexcloud.p000.P000027.updateITEM */
+		UPDATE P006 
+		   SET CUSTCD      = #{CUSTCD}
+			, UPDUSERCD    = #{LOGIN_USERCD} 	 
+			, UPDDATETIME  = GETDATE()  
+			, TERMINALCD   = #{LOGIN_IP}
+		 WHERE COMPCD = #{COMPCD} 
+		   AND ORGCD  = #{ORGCD} 
+		   AND ITEMCD = #{ITEMCD}
+		     
+	</update>
+	
+	<!-- 수정(품목 지정 -> 미지정 품목 ) -->
+	<update id="deleteITEM" parameterType="LDataMap">
+		/* alexcloud.p000.P000027.deleteITEM */
+		UPDATE P006 
+		   SET CUSTCD      = NULL 
+			, UPDUSERCD    = #{LOGIN_USERCD} 	 
+			, UPDDATETIME  = GETDATE()  
+			, TERMINALCD   = #{LOGIN_IP}
+		 WHERE COMPCD = #{COMPCD} 
+		   AND ORGCD  = #{ORGCD} 
+		   AND ITEMCD = #{ITEMCD}
+	</update>
+	
+</mapper>

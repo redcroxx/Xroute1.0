@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopS014_1Mapper">
+
+	<!-- 공지사항 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopS014Mapper.getSearch */
+		SELECT A.NTKEY
+			 , A.STARTDT
+			 , A.ENDDT
+			 , A.NTTYPE
+			 , A.TITLE
+			 , A.CONTENTS
+			 , A.HITS
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 120) ADDDATETIME
+		<!-- , B.ORIGINFILENM -->
+		  FROM S014 A WITH (NOLOCK)
+		  <!-- JOIN S016 B
+		    ON A.NTKEY = B.NTKEY -->
+		 WHERE A.NTKEY = #{NTKEY}
+	     ORDER BY A.NTKEY
+	</select>
+	
+	<!-- 공지사항 팝업 : 파일 검색 -->
+	<select id="getFile" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopS014Mapper.getFile */
+		SELECT A.NTKEY
+			 , A.SEQ
+			 , A.FILENM
+			 , A.ORIGINFILENM
+		  FROM S016 A WITH (NOLOCK)
+		 WHERE A.NTKEY = #{NTKEY}
+	</select>
+	
+	
+	<!-- 메인화면 : 공지사항 -->
+	<select id="getNoticeList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getNoticeList */
+		<![CDATA[
+		SELECT Z.NTKEY 
+			 , Z.NTTYPE
+			 , Z.TITLE
+			 , Z.CONTENTS
+			 , Z.ADDUSERCD
+			 , Z.ADDUSERNM
+			 , CONVERT(VARCHAR, Z.ADDDATETIME, 23) AS ADDDATETIME
+			 , Z.POPFLG
+		FROM (
+			SELECT A.NTKEY
+				 , A.TITLE
+ 				 , A.CONTENTS
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.NTTYPE
+				 , A.POPFLG
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND REPLACE(#{S_STDDATE}, '-', '') BETWEEN A.STARTDT AND A.ENDDT
+			  AND A.TARGET = 'COMP'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY)
+			UNION ALL
+			SELECT A.NTKEY
+				 , A.TITLE
+ 				 , A.CONTENTS
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.NTTYPE
+				 , A.POPFLG
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND REPLACE(#{S_STDDATE}, '-', '') BETWEEN A.STARTDT AND A.ENDDT
+			  AND A.TARGET = 'ORG'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A1.ORGCD = A2.ORGCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY)
+		) Z
+		ORDER BY CASE WHEN Z.NTTYPE = 'IMP' THEN 0 ELSE 1 END, Z.ADDDATETIME DESC
+		-- OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
+		]]>
+	</select>
+</mapper>

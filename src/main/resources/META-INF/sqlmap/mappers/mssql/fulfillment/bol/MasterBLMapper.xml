@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="masterBlMapper">
+    <!--하우스 B/L 조회 -->
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.bol.MasterBLVO">
+        /* masterBlMapper.getSearch */
+        SELECT
+            MASTER_BL_SEQ       AS masterBlSeq,
+            COMPCD              AS compcd,
+            AIRWAY_BILL         AS airwayBill,
+            MASTER_BL_NO        AS masterBlNo,
+            ETD                 AS etd,
+            ETD_COMP            AS etdComp,
+            ETA                 AS eta,
+            ETA_COMP            AS etaComp,
+            REMARK              AS remark,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            CLOSE_YN            AS closeYn,
+            ADDUSERCD           AS addusercd,
+            CONVERT(CHAR(19), ADDDATETIME, 20) AS adddatetime,
+            UPDUSERCD           AS updusercd,
+            CONVERT(CHAR(19), UPDDATETIME, 20) AS upddatetime,
+            TERMINALCD          AS terminalcd
+        FROM MASTER_BL WITH (NOLOCK)
+        WHERE 1 = 1
+        <if test="sCompCd != null and sCompCd =! ''">
+            AND COMPCD = #{sCompCd}
+        </if>
+        <if test="sKeyword != null and sKeyword != ''">
+	        AND MASTER_BL_NO = #{sKeyword} OR AIRWAY_BILL = #{sKeyword}
+        </if>
+        <if test="sStatusCd != null and sStatusCd != ''">
+	        AND CLOSE_YN = #{sStatusCd} 
+        </if>
+        <if test="sEtcCd1 != null and sEtcCd1 != ''">
+	        AND CUSTOMS_CLEARANCE = #{sEtcCd1} 
+        </if>
+        AND ADDDATETIME BETWEEN #{sToDate} + ' 00:00:00' AND #{sFromDate} + ' 23:59:59'
+        ORDER BY ADDDATETIME ASC
+    </select>
+    
+    <select id="getMasterBL" parameterType="LDataMap" resultType="xrt.fulfillment.bol.MasterBLVO">
+        /* masterBlMapper.getMasterBL */
+        SELECT
+            MASTER_BL_SEQ       AS masterBlSeq,
+            COMPCD              AS compcd,
+            AIRWAY_BILL         AS airwayBill,
+            MASTER_BL_NO        AS masterBlNo,
+            ETD                 AS etd,
+            ETD_COMP            AS etdComp,
+            ETA                 AS eta,
+            ETA_COMP            AS etaComp,
+            REMARK              AS remark,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            CLOSE_YN            AS closeYn
+        FROM MASTER_BL WITH (NOLOCK)
+        WHERE 1 = 1
+        <if test="compcd != null and compcd =! ''">
+            AND COMPCD = #{compcd}
+        </if>
+        <if test="masterBlNo != null and masterBlNo != ''">
+            AND MASTER_BL_NO = #{masterBlNo}
+        </if>
+    </select>
+    
+    <select id="getHouseBLList" parameterType="LDataMap" resultType="xrt.fulfillment.bol.HouseBLVO">
+        /* masterBlMapper.getHouseBLList */
+        SELECT
+            HOUSE_BL_SEQ        AS houseBlSeq,
+            COMPCD              AS compcd,
+            SCAC_CODE           AS scacCode,
+            CUSTOMS_CLEARANCE   AS customsClearance,
+            CASE
+                WHEN CUSTOMS_CLEARANCE = 'general' THEN '일반'
+                ELSE '목록'
+            END                 AS customsClearanceNm,
+            HOUSE_BL_NO         AS houseBlNo,
+            MASTER_BL_NO        AS masterBlNo,
+            REMARK              AS remark,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            CLOSE_YN            AS closeYn,
+            ADDUSERCD           AS addusercd,
+            CONVERT(CHAR(19), ADDDATETIME, 20) AS adddatetime,
+            UPDUSERCD           AS updusercd,
+            CONVERT(CHAR(19), UPDDATETIME, 20) AS upddatetime,
+            TERMINALCD          AS terminalcd
+        FROM HOUSE_BL WITH (NOLOCK)
+        WHERE 1 = 1
+        AND CLOSE_YN = 'Y'
+        <if test="compcd != null and compcd =! ''">
+            AND COMPCD = #{compcd}
+        </if>
+        <if test="houseBlNo != null and houseBlNo != ''">
+            AND HOUSE_BL_NO = #{houseBlNo}
+        </if>
+        <choose>
+            <when test="masterBlNo != null and masterBlNo != ''">
+                AND MASTER_BL_NO = #{masterBlNo}
+            </when>
+            <otherwise>
+                AND MASTER_BL_NO IS NULL
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="getNoCount" parameterType="xrt.fulfillment.bol.MasterBLVO" resultType="java.lang.Integer">
+        /* masterBlMapper.getNoCount */
+        SELECT
+            COUNT(MASTER_BL_NO) AS isCreated
+        FROM MASTER_BL
+        WHERE 1 = 1
+        AND COMPCD = #{compcd}
+        AND CLOSE_YN = 'N'
+        AND MASTER_BL_NO = #{masterBlNo}
+    </select>
+
+    <insert id="insertMasterBL" parameterType="xrt.fulfillment.bol.MasterBLVO">
+        <selectKey resultType="java.lang.String" keyProperty="masterBlSeq" order="BEFORE">
+            /* masterBlMapper Create Sequence */
+            SELECT 
+                'MBL' + RIGHT('00000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_MASTER_BL), 17) AS masterBlSeq
+        </selectKey>
+        /* masterBlMapper.insertMasterBL */
+        INSERT INTO MASTER_BL (
+            MASTER_BL_SEQ,
+            COMPCD,
+            MASTER_BL_NO,
+            ETD,
+            ETA,
+            REMARK,
+            CLOSE_YN,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{masterBlSeq},
+            #{compcd},
+            #{masterBlNo},
+            #{etd},
+            #{eta},
+            #{remark},
+            #{closeYn},
+            #{addusercd},
+            getDate(),
+            #{updusercd},
+            getDate(),
+            #{terminalcd}
+        )
+    </insert>
+    
+    <insert id="insertTrackingHistory" parameterType="LDataMap">
+        /* masterBlMapper.insertTrackingHistory */
+        <selectKey resultType="java.lang.String" keyProperty="trackingSeq" order="BEFORE">
+            /* trackingHistoryMapper.getSEQ_TRACKING_HISTORY */
+            SELECT 
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_TRACKING_HISTORY), 20) AS trackingSeq
+        </selectKey>
+        INSERT INTO TRACKING_HISTORY (
+            TRACKING_SEQ,
+            XRT_INVC_SNO,
+            E_NATION,
+            STATUS_CD,
+            STATUS_NM,
+            STATUS_EN_NM,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        )
+        SELECT
+            #{trackingSeq}, 
+            XRT_INVC_SNO,
+            E_NATION,
+            #{statusCd},
+            #{statusNm},
+            #{statusEnNm},
+            #{usercd},
+            GETDATE(),
+            #{usercd},
+            GETDATE(),
+            #{terminalcd}
+        FROM TORDER
+        WHERE 1 = 1
+        AND SHIPMENT_BL_NO IN (
+            SELECT
+                SHIPMENT_BL_NO
+            FROM SHIPMENT_BL
+            WHERE HOUSE_BL_NO IN (
+                SELECT
+                    HOUSE_BL_NO
+                FROM HOUSE_BL
+                WHERE MASTER_BL_NO = #{masterBlNo}
+            )
+        )
+    </insert>
+    
+    <insert id="insertTrackingHistoryHBL" parameterType="LDataMap">
+        /* masterBlMapper.insertTrackingHistoryHBL */
+        <selectKey resultType="java.lang.String" keyProperty="trackingSeq" order="BEFORE">
+            /* trackingHistoryMapper.getSEQ_TRACKING_HISTORY */
+            SELECT 
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_TRACKING_HISTORY), 20) AS trackingSeq
+        </selectKey>
+        INSERT INTO TRACKING_HISTORY (
+            TRACKING_SEQ,
+            XRT_INVC_SNO,
+            E_NATION,
+            STATUS_CD,
+            STATUS_NM,
+            STATUS_EN_NM,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        )
+        SELECT
+            #{trackingSeq}, 
+            XRT_INVC_SNO,
+            E_NATION,
+            #{statusCd},
+            #{statusNm},
+            #{statusEnNm},
+            #{usercd},
+            GETDATE(),
+            #{usercd},
+            GETDATE(),
+            #{terminalcd}
+        FROM TORDER
+        WHERE 1 = 1
+        AND SHIPMENT_BL_NO IN (
+            SELECT
+                SHIPMENT_BL_NO
+            FROM SHIPMENT_BL
+            WHERE HOUSE_BL_NO = #{houseBlNo}
+        )
+    </insert>
+    
+    <update id="updateMasterBL" parameterType="xrt.fulfillment.bol.MasterBLVO">
+        /* masterBlMapper.updateMasterBL */
+        UPDATE MASTER_BL
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="remark != null and remark != ''">
+                REMARK = #{remark},
+            </if>
+            <if test="etd != null and etd != ''">
+                ETD = #{etd},
+            </if>
+            <if test="etdComp != null and etdComp != ''">
+                ETD_COMP = #{etdComp},
+            </if>
+            <if test="eta != null and eta != ''">
+                ETA = #{eta},
+            </if>
+            <if test="etaComp != null and etaComp != ''">
+                ETA_COMP = #{etaComp},
+            </if>
+            <if test="closeYn != null and closeYn != ''">
+                CLOSE_YN = #{closeYn},
+            </if>
+            <if test="airwayBill != null and airwayBill != ''">
+                AIRWAY_BILL = #{airwayBill},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND MASTER_BL_NO = #{masterBlNo}
+    </update>
+    
+    <update id="updateHouseBL" parameterType="xrt.fulfillment.bol.HouseBLVO">
+        /* masterBlMapper.updateHouseBL */
+        UPDATE HOUSE_BL
+        <trim prefix="SET" suffixOverrides=",">
+            <choose>
+                <when test="masterBlNo != null and masterBlNo != ''">
+                    MASTER_BL_NO = #{masterBlNo},
+                </when>
+                <otherwise>
+                    MASTER_BL_NO = NULL,
+                </otherwise>
+            </choose>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND HOUSE_BL_NO = #{houseBlNo}
+    </update>
+    
+    <update id="updateTOrder" parameterType="LDataMap">
+        /* masterBlMapper.updateTOrder */
+        UPDATE TORDER
+        SET
+            STATUS_CD = #{statusCd},
+            UPDUSERCD = #{usercd},
+            UPDDATETIME = getDate()
+        WHERE SHIPMENT_BL_NO IN (
+            SELECT
+                SHIPMENT_BL_NO
+            FROM SHIPMENT_BL
+            WHERE HOUSE_BL_NO IN (
+                SELECT
+                    HOUSE_BL_NO
+                FROM HOUSE_BL
+                WHERE MASTER_BL_NO = #{masterBlNo}
+            )
+        )
+    </update>
+    
+    <update id="updateTOrderHBL" parameterType="LDataMap">
+        /* masterBlMapper.updateTOrderHBL */
+        UPDATE TORDER
+        SET
+            STATUS_CD = #{statusCd},
+            UPDUSERCD = #{usercd},
+            UPDDATETIME = getDate()
+        WHERE SHIPMENT_BL_NO IN (
+            SELECT
+                SHIPMENT_BL_NO
+            FROM SHIPMENT_BL
+            WHERE HOUSE_BL_NO = #{houseBlNo}
+        )
+    </update>
+</mapper>

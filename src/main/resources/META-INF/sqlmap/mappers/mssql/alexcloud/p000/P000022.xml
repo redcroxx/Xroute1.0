@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P000022Mapper">
+
+	<!-- 주문서양식설정 : 검색 -->
+	<select id="getSearch1" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.p000022.getSearch1 */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , B.NAME AS ORGNM
+			 , A.SITE_CD
+			 , A.SITE_CD AS S_SITE_CD
+			 , A.SITE_NM
+			 , A.ACTIVE_YN
+			 , A.SITE_NM_SHORT
+			 , A.DELI_SUB_CODE
+			 , A.DELI_SND_NM
+			 , A.DELI_SND_TEL
+			 , A.DELI_SND_ADDR
+			 , A.DELI_INVC_DIRECT_YN
+			 , A.DELI_SND_ZIPCODE
+			 --, (SELECT COL_NO FROM MKTSITEFILECONFIG WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD AND SITE_CD = A.SITE_CD AND PACK_1 = 'Y') AS PACK_1
+			 --, (SELECT COL_NO FROM MKTSITEFILECONFIG WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD AND SITE_CD = A.SITE_CD AND PACK_2 = 'Y') AS PACK_2
+			 , A.ADDUSERCD
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) ADDDATETIME
+		     , A.UPDUSERCD 
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) UPDDATETIME
+			 , A.TERMINALCD
+		  FROM MKTSITE A WITH (NOLOCK)						
+	      JOIN P002 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.ORGCD = #{S_ORGCD}
+		   AND A.SITE_CD = #{S_SITE_CD}
+	</select>
+	
+	<!-- 주문서양식설정 : 검색(셀병합하기) -->
+	<select id="getSearch2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.p000022.getSearch2 */
+		SELECT COMPCD
+			 , ORGCD
+			 , IDX
+			 , SITE_CD
+			 , TGT_COL
+			 , SRC_COLS1
+			 , SRC_COLS2
+			 , SRC_COLS3
+			 , SEPS1
+			 , SEPS2
+			 , '=' AS ETC1
+			 , '+' AS ETC2
+			 , '+' AS ETC3
+			 , '+' AS ETC4
+			 , '+' AS ETC5
+			 , ADDUSERCD
+		     , CONVERT(VARCHAR, ADDDATETIME, 20) ADDDATETIME
+		     , UPDUSERCD 
+		     , CONVERT(VARCHAR, UPDDATETIME, 20) UPDDATETIME
+			 , TERMINALCD 
+		  FROM MKTSITEFILECOLEDIT1 WITH (NOLOCK)
+		 WHERE COMPCD = #{S_COMPCD}
+		   AND ORGCD = #{S_ORGCD}
+		   AND SITE_CD = #{S_SITE_CD}
+		 ORDER BY IDX
+	</select>
+		
+	<!-- 주문서양식설정 : 검색(문자치환하기) -->
+	<select id="getSearch3" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.p000022.getSearch3 */
+		SELECT COMPCD
+			 , ORGCD
+			 , IDX
+			 , SITE_CD
+			 , TGT_COL
+			 , REPLACES1
+			 , REPLACES2
+			 , ADDUSERCD
+		     , CONVERT(VARCHAR, ADDDATETIME, 20) ADDDATETIME
+		     , UPDUSERCD 
+		     , CONVERT(VARCHAR, UPDDATETIME, 20) UPDDATETIME
+			 , TERMINALCD 
+		  FROM MKTSITEFILECOLEDIT2 WITH (NOLOCK)
+		 WHERE COMPCD = #{S_COMPCD}
+		   AND ORGCD = #{S_ORGCD}
+		   AND SITE_CD = #{S_SITE_CD}
+	</select>
+
+	<!-- 주문서양식설정 : 검색(양식세부설정 대입코드) -->
+	<select id="getSearch4" parameterType="LDataMap" resultType="LDataMap">
+	/* alexcloud.p000.p000022.getSearch4 */
+	<!-- SELECT [0],  [1],  [2],  [3],  [4],  [5],  [6],  [7],  [8],  [9] 
+		 ,[10], [11], [12], [13], [14], [15], [16], [17], [18], [19]
+		 ,[20], [21], [22], [23], [24], [25], [26], [27], [28], [29]
+		 ,[30], [31], [32], [33], [34], [35], [36], [37], [38], [39]
+		 ,[40], [41], [42], [43], [44], [45], [46], [47], [48], [49]
+		 ,[50], [51], [52], [53], [54], [55], [56], [57], [58], [59]
+		 ,[60], [61], [62], [63], [64], [65], [66], [67], [68], [69]
+		 ,[70], [71], [72], [73], [74], [75], [76], [77], [78], [79]
+		 ,[80], [81], [82], [83], [84], [85], [86], [87], [88], [89]
+		 ,[90], [91], [92], [93], [94], [95], [96], [97], [98], [99], [100]
+		  FROM (
+				SELECT COMPCD
+					 , ORGCD
+					 , SITE_CD
+					 , COL_NO
+					 , DB_COL_NM_INVC
+				  FROM MKTSITEFILECONFIG WITH (NOLOCK) 
+				) AS A
+		 PIVOT (
+			  MIN(DB_COL_NM_INVC)
+			  FOR COL_NO IN ([0],  [1],  [2],  [3],  [4],  [5],  [6],  [7],  [8],  [9] 
+							,[10], [11], [12], [13], [14], [15], [16], [17], [18], [19]
+							,[20], [21], [22], [23], [24], [25], [26], [27], [28], [29]
+							,[30], [31], [32], [33], [34], [35], [36], [37], [38], [39]
+							,[40], [41], [42], [43], [44], [45], [46], [47], [48], [49]
+							,[50], [51], [52], [53], [54], [55], [56], [57], [58], [59]
+							,[60], [61], [62], [63], [64], [65], [66], [67], [68], [69]
+							,[70], [71], [72], [73], [74], [75], [76], [77], [78], [79]
+							,[80], [81], [82], [83], [84], [85], [86], [87], [88], [89]
+							,[90], [91], [92], [93], [94], [95], [96], [97], [98], [99], [100]
+							)
+		 ) A
+		 WHERE COMPCD = #{S_COMPCD}
+		   AND ORGCD = #{S_ORGCD}
+		   AND SITE_CD = #{S_SITE_CD} -->
+		SELECT 
+			    A.COMPCD
+		      , A.ORGCD
+		      , A.SITE_CD
+		      , B.SITE_NM
+		      , A.IDX
+		      , A.COL_NM
+		      , A.DB_COL_NM
+		      , A.DB_COL_NM_INVC
+		      , A.ISCHECK
+		      , A.CHECKTYPE
+		      , A.CODEKEY
+		      , A.MAXLEN
+		      , A.MINDATE
+		      , A.MAXDATE
+		      , A.MINNUM
+		      , A.MAXNUM
+		      , A.REF1
+		      , A.REF2
+		      , A.REF3
+		      , A.REF4
+		      , A.REF5
+		      , A.ATTRIBUTE1
+		      , A.ATTRIBUTE2
+		      , A.ATTRIBUTE3
+		      , A.ATTRIBUTE4
+		      , A.ATTRIBUTE5
+		      , A.ATTRIBUTE6
+		      , A.ATTRIBUTE7
+		      , A.ATTRIBUTE8
+		      , A.ATTRIBUTE9
+		      , A.ATTRIBUTE10
+		      , CONVERT(VARCHAR, A.ADDDATETIME, 20) ADDDATETIME
+		      , A.UPDUSERCD 
+		      , CONVERT(VARCHAR, A.UPDDATETIME, 20) UPDDATETIME
+			  , A.TERMINALCD
+		      , A.TERMINALCD
+		      
+		  FROM MKTSITEFILECONFIG A WITH (NOLOCK)
+		  LEFT JOIN MKTSITE B WITH(NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.SITE_CD = B.SITE_CD
+		  
+	     WHERE A.COMPCD  = #{S_COMPCD}
+		   AND A.ORGCD   = #{S_ORGCD}
+		   AND A.SITE_CD = #{S_SITE_CD}
+				  
+	</select>
+	
+	<!-- 주문서양식설정 : 검색(양식세부설정 대입코드명칭) -->
+	<select id="getSearch5" parameterType="LDataMap" resultType="LDataMap">
+	/* alexcloud.p000.p000022.getSearch5 */
+	SELECT [0],  [1],  [2],  [3],  [4],  [5],  [6],  [7],  [8],  [9] 
+		 ,[10], [11], [12], [13], [14], [15], [16], [17], [18], [19]
+		 ,[20], [21], [22], [23], [24], [25], [26], [27], [28], [29]
+		 ,[30], [31], [32], [33], [34], [35], [36], [37], [38], [39]
+		 ,[40], [41], [42], [43], [44], [45], [46], [47], [48], [49]
+		 ,[50], [51], [52], [53], [54], [55], [56], [57], [58], [59]
+		 ,[60], [61], [62], [63], [64], [65], [66], [67], [68], [69]
+		 ,[70], [71], [72], [73], [74], [75], [76], [77], [78], [79]
+		 ,[80], [81], [82], [83], [84], [85], [86], [87], [88], [89]
+		 ,[90], [91], [92], [93], [94], [95], [96], [97], [98], [99], [100]
+		  FROM (
+				SELECT COMPCD
+					 , ORGCD
+					 , SITE_CD
+					 , COL_NO
+					 , COL_NM
+				  FROM MKTSITEFILECONFIG WITH (NOLOCK) 
+				) AS A
+		 PIVOT (
+			  MIN(COL_NM)
+			  FOR COL_NO IN ([0],  [1],  [2],  [3],  [4],  [5],  [6],  [7],  [8],  [9] 
+							,[10], [11], [12], [13], [14], [15], [16], [17], [18], [19]
+							,[20], [21], [22], [23], [24], [25], [26], [27], [28], [29]
+							,[30], [31], [32], [33], [34], [35], [36], [37], [38], [39]
+							,[40], [41], [42], [43], [44], [45], [46], [47], [48], [49]
+							,[50], [51], [52], [53], [54], [55], [56], [57], [58], [59]
+							,[60], [61], [62], [63], [64], [65], [66], [67], [68], [69]
+							,[70], [71], [72], [73], [74], [75], [76], [77], [78], [79]
+							,[80], [81], [82], [83], [84], [85], [86], [87], [88], [89]
+							,[90], [91], [92], [93], [94], [95], [96], [97], [98], [99], [100]
+							)
+		 ) A
+		 WHERE COMPCD = #{S_COMPCD}
+		   AND ORGCD = #{S_ORGCD}
+		   AND SITE_CD = #{S_SITE_CD}
+	</select>
+	
+	<!-- 주문서양식설정 : 양식명 SEELCTBOX -->
+	<select id="getSiteCd" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.p000022.getSiteCd */
+		SELECT SITE_CD AS CODE
+			 , SITE_NM AS VALUE
+		  FROM MKTSITE WITH (NOLOCK)
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		 ORDER BY SITE_CD 
+	</select>
+		
+	<!-- 주문서양식설정 : 주문양식컬럼 가져오기 -->
+	<select id="getSiteCode" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.p000022.getSiteCode */
+		SELECT CODEKEY
+		     , CODE
+			 , SNAME1
+			 , SNAME2
+			 , SNAME3
+		  FROM S002
+		 WHERE CODEKEY = 'LF_SITE_CODE'
+		   AND COMPCD = #{LOGIN_COMPCD}
+		 ORDER BY SORTNO
+	</select>
+	
+	<!-- 주문서양식설정 : 마스터 신규저장 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.p000022.insertMst */
+		INSERT INTO MKTSITE
+	    (
+	          COMPCD
+			, ORGCD
+			, SITE_CD
+			, SITE_NM
+			, ACTIVE_YN
+			, SITE_NM_SHORT
+			, DELI_SUB_CODE
+		    , DELI_SND_NM
+		    , DELI_SND_TEL
+		    , DELI_SND_ADDR
+		    , DELI_INVC_DIRECT_YN
+		    , DELI_SND_ZIPCODE
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+	    )
+	    
+		VALUES
+		(
+			  #{S_COMPCD}
+            , #{S_ORGCD}
+            , #{SITE_CD}
+			, #{SITE_NM}
+			, #{ACTIVE_YN}
+			, #{SITE_NM_SHORT}
+			, #{DELI_SUB_CODE}
+		    , #{DELI_SND_NM}
+		    , #{DELI_SND_TEL}
+		    , #{DELI_SND_ADDR}
+		    , #{DELI_INVC_DIRECT_YN}
+		    , #{DELI_SND_ZIPCODE}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 주문서양식설정 : 마스터 수정저장-->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.p000023.updateMst */
+		UPDATE MKTSITE    
+		   SET 
+			  SITE_NM        = #{SITE_NM}
+			, ACTIVE_YN      = #{ACTIVE_YN}
+			, SITE_NM_SHORT  = #{SITE_NM_SHORT}
+			, DELI_SUB_CODE	 = #{DELI_SUB_CODE}
+		    , DELI_SND_NM	 = #{DELI_SND_NM}
+		    , DELI_SND_TEL	 = #{DELI_SND_TEL}
+		    , DELI_SND_ADDR	 = #{DELI_SND_ADDR}
+		    , DELI_INVC_DIRECT_YN = #{DELI_INVC_DIRECT_YN}
+		    , DELI_SND_ZIPCODE 	  = #{DELI_SND_ZIPCODE}
+			, UPDUSERCD      	  = #{LOGIN_USERCD}        
+			, UPDDATETIME   	  = GETDATE()      
+			, TERMINALCD  	      = #{LOGIN_IP}      
+		     
+		  WHERE COMPCD  = #{S_COMPCD}        
+		    AND ORGCD   = #{S_ORGCD}      
+		    AND SITE_CD = #{SITE_CD} 
+	</update>
+	
+	<!-- 주문서양식설정 : 디테일 신규저장-->
+	<insert id="insertDtl" parameterType="LDataMap">
+		/* alexcloud.p000.p000022.insertDtl */
+		INSERT INTO MKTSITEFILECONFIG
+	    (
+            COMPCD
+	      , ORGCD
+	      , SITE_CD
+	      , COL_NM
+	      , DB_COL_NM
+	      , DB_COL_NM_INVC
+	      , ISCHECK
+	      , CHECKTYPE
+	      , CODEKEY
+	      , MAXLEN
+	      , MINDATE
+	      , MAXDATE
+	      , MINNUM
+	      , MAXNUM
+	      , REF1
+	      , REF2
+	      , REF3
+	      , REF4
+	      , REF5
+	      , ADDUSERCD
+	      , ADDDATETIME
+	      , UPDUSERCD
+	      , UPDDATETIME
+	      , TERMINALCD
+	    )
+	    
+		VALUES
+		(
+	        #{COMPCD}
+          , #{ORGCD}
+          , #{SITE_CD}
+	      , #{COL_NM}
+	      , #{DB_COL_NM}
+	      , #{DB_COL_NM_INVC}
+	      , #{ISCHECK}
+	      , #{CHECKTYPE}
+	      , #{CODEKEY}
+	      , #{MAXLEN}
+	      , #{MINDATE}
+	      , #{MAXDATE}
+	      , #{MINNUM}
+	      , #{MAXNUM}
+	      , #{REF1}
+	      , #{REF2}
+	      , #{REF3}
+	      , #{REF4}
+	      , #{REF5}
+	      , #{LOGIN_USERCD}
+		  , GETDATE()
+		  , #{LOGIN_USERCD}
+		  , GETDATE()
+		  , #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 주문서양식설정 : 디테일 수정저장 -->
+	<update id="updateDtl" parameterType="LDataMap">
+		/* alexcloud.p000.p000022.updateDtl */
+		UPDATE MKTSITEFILECONFIG       
+		   SET 
+			    COL_NM		   = #{COL_NM}
+		      , DB_COL_NM	   = #{DB_COL_NM}
+		      , DB_COL_NM_INVC = #{DB_COL_NM_INVC}
+		      , ISCHECK		   = #{ISCHECK}
+		      , CHECKTYPE  	   = #{CHECKTYPE}
+		      , CODEKEY		   = #{CODEKEY}
+		      , MAXLEN		   = #{MAXLEN}
+		      , MINDATE		   = #{MINDATE}
+		      , MAXDATE		   = #{MAXDATE}
+		      , MINNUM		   = #{MINNUM}
+		      , MAXNUM		   = #{MAXNUM}
+		      , REF1		   = #{REF1}
+		      , REF2		   = #{REF2}
+		      , REF3		   = #{REF3}
+		      , REF4		   = #{REF4}
+		      , REF5		   = #{REF5}   
+			  , UPDUSERCD      =  #{LOGIN_USERCD}        
+			  , UPDDATETIME    =  GETDATE()      
+			  , TERMINALCD     =  #{LOGIN_IP}      
+		     
+		  WHERE COMPCD  = #{COMPCD}        
+		    AND ORGCD   = #{ORGCD}      
+		    AND SITE_CD = #{SITE_CD}
+		    AND IDX  = #{IDX} 
+	</update>
+				
+	<!-- 주문서양식설정 : 신규저장 -->
+	<select id="setUspInsMktSite" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USP_INS_MKTSITE_LOT_NEW_2(#{S_COMPCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{S_ORGCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{SITE_NM, jdbcType = VARCHAR, mode = IN}
+		                    , #{ACTIVE_YN, jdbcType = VARCHAR, mode = IN}
+		                    , #{COL_NMS, jdbcType = VARCHAR, mode = IN}
+		                    , #{DB_COL_NM_INVCS, jdbcType = VARCHAR, mode = IN}
+		                    , #{SITE_NM_SHORT, jdbcType = VARCHAR, mode = IN}
+		                    , #{PACK_1, jdbcType = VARCHAR, mode = IN}
+		                    , #{PACK_2, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SUB_CODE, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_NM, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_TEL, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_ADDR, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_INVC_DIRECT_YN, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_ZIPCODE, jdbcType = VARCHAR, mode = IN}
+		                    , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  	, #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  	, #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+	
+	<!-- 주문서양식설정 : 수정저장 -->
+	<select id="setUspUpdMktSiteLotNew2" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USP_UPD_MKTSITE_LOT_NEW_2(#{S_COMPCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{S_ORGCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{SITE_CD, jdbcType = VARCHAR, mode = IN}
+		                    , #{SITE_NM, jdbcType = VARCHAR, mode = IN}
+		                    , #{ACTIVE_YN, jdbcType = VARCHAR, mode = IN}
+		                    , #{COL_NMS, jdbcType = VARCHAR, mode = IN}
+		                    , #{DB_COL_NM_INVCS, jdbcType = VARCHAR, mode = IN}
+		                    , #{SITE_NM_SHORT, jdbcType = VARCHAR, mode = IN}
+		                    , #{PACK_1, jdbcType = VARCHAR, mode = IN}
+		                    , #{PACK_2, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SUB_CODE, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_NM, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_TEL, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_ADDR, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_INVC_DIRECT_YN, jdbcType = VARCHAR, mode = IN}
+		                    , #{DELI_SND_ZIPCODE, jdbcType = VARCHAR, mode = IN}
+		                    , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  	, #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  	, #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+	
+	<!-- 주문서양식설정 : 문자치환하기 저장 -->
+	<insert id="insertReplace" parameterType="LDataMap">
+		/* alexcloud.p000.p000022.insertReplace */
+		INSERT INTO MKTSITEFILECOLEDIT2 WITH (ROWLOCK) (
+		     COMPCD, ORGCD, SITE_CD, TGT_COL
+           , REPLACES1, REPLACES2
+		   , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+     	) VALUES(
+     		 #{COMPCD}, #{ORGCD}, #{SITE_CD}, #{TGT_COL}                
+           , #{REPLACES1}, #{REPLACES2}
+		   , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 주문서양식설정 : 문자치환하기 수정저장 -->
+	<update id="updateReplace" parameterType="LDataMap">
+		/* alexcloud.p000.p000022.updateReplace */
+		UPDATE MKTSITEFILECOLEDIT2       
+		   SET 
+			    TGT_COL		   = #{TGT_COL}
+		      , REPLACES1	   = #{REPLACES1}
+		      , REPLACES2      = #{REPLACES2}
+			  , UPDUSERCD      = #{LOGIN_USERCD}        
+			  , UPDDATETIME    = GETDATE()      
+			  , TERMINALCD     = #{LOGIN_IP}      
+		     
+		  WHERE COMPCD  = #{COMPCD}        
+		    AND ORGCD   = #{ORGCD}      
+		    AND SITE_CD = #{SITE_CD}
+		    AND IDX = #{IDX}
+	</update>
+	
+	<!-- 주문서양식설정 : 셀병합하기 저장 -->
+	<insert id="insertMerge" parameterType="LDataMap">
+		/* alexcloud.p000.p000022.insertMerge */
+		INSERT INTO MKTSITEFILECOLEDIT1 WITH (ROWLOCK) (
+		     COMPCD, ORGCD, SITE_CD, TGT_COL
+           , SRC_COLS1, SRC_COLS2, SRC_COLS3, SEPS1, SEPS2
+		   , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+     	) VALUES(
+     		 #{COMPCD}, #{ORGCD}, #{SITE_CD}, #{TGT_COL}                
+           , #{SRC_COLS1}, #{SRC_COLS2}, #{SRC_COLS3}, #{SEPS1}, #{SEPS2}
+		   , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	
+	</insert>
+	
+	<!-- 주문서양식설정 : 셀병합하기 수정저장 -->
+	<update id="updateMerge" parameterType="LDataMap">
+		/* alexcloud.p000.p000022.updateMerge */
+		UPDATE MKTSITEFILECOLEDIT1       
+		   SET 
+			    TGT_COL		   = #{TGT_COL}
+		      , SRC_COLS1      = #{SRC_COLS1}
+		      , SRC_COLS2	   = #{SRC_COLS2}
+		      , SRC_COLS3      = #{SRC_COLS3}
+		      , SEPS1	       = #{SEPS1}
+		      , SEPS2          = #{SEPS2}
+			  , UPDUSERCD      = #{LOGIN_USERCD}        
+			  , UPDDATETIME    = GETDATE()      
+			  , TERMINALCD     = #{LOGIN_IP}      
+		     
+		  WHERE COMPCD  = #{COMPCD}        
+		    AND ORGCD   = #{ORGCD}      
+		    AND SITE_CD = #{SITE_CD}
+		    AND IDX = #{IDX}
+	</update>
+	
+	
+	<!-- 주문서양식설정 : 삭제 -->
+	<select id="setUspDelSite" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USP_DEL_SITE(#{S_COMPCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{S_ORGCD, jdbcType = VARCHAR, mode = IN}
+		                    , #{S_SITE_CD, jdbcType = VARCHAR, mode = IN}
+		                  	, #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  	, #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+		
+</mapper>

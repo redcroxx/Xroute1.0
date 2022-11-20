@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 공지사항 등록 -->
+<mapper namespace="S000014Mapper">
+	
+	<!-- 공지사항 등록 : 초기 로드 -->
+	<select id="getInfo" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000014.getInfo */
+		SELECT A.NTKEY
+			 , A.STARTDT
+			 , A.ENDDT
+			 , A.NTTYPE
+			 , A.TITLE
+			 , A.CONTENTS
+			 , A.TARGET
+			 , A.ISUSING
+			 , A.POPFLG
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 120) ADDDATETIME
+		  FROM S014 A
+		 WHERE A.NTKEY = #{NTKEY}
+	     ORDER BY A.NTKEY
+	</select>
+		
+	<!-- 공지사항 등록 : 공지대상리스트 -->
+	<select id="getTargetList" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000014.getTargetList */
+		SELECT A.NTKEY
+			 , A.SEQ
+			 , A.COMPCD
+			 , A.ORGCD
+			 , A.DEPTCD
+			 , A.CUSTCD
+			 , B.TARGET AS TARGETTYPECD
+			 , G.SNAME1 AS TARGET
+			 , CASE WHEN B.TARGET = 'COMP' THEN A.COMPCD 
+					WHEN B.TARGET = 'ORG' THEN A.ORGCD
+					WHEN B.TARGET = 'DEPT' THEN A.DEPTCD
+					ELSE A.CUSTCD END AS TARGETCD  
+			 , CASE WHEN B.TARGET = 'COMP' THEN C.NAME 
+					WHEN B.TARGET = 'ORG' THEN D.NAME
+					WHEN B.TARGET = 'DEPT' THEN E.NAME
+					ELSE F.NAME END AS TARGETNM  
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 120) ADDDATETIME
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 120) UPDDATETIME
+			 , A.TERMINALCD
+		  FROM S015 A
+		  JOIN S014 B
+		    ON A.NTKEY = B.NTKEY
+		  JOIN P001 C ON A.COMPCD = C.COMPCD
+		  LEFT OUTER JOIN P002 D ON A.COMPCD = D.COMPCD AND A.ORGCD = D.ORGCD
+		  LEFT OUTER JOIN P016 E ON A.COMPCD = E.COMPCD AND A.ORGCD = E.ORGCD AND A.DEPTCD = E.DEPTCD
+		  LEFT OUTER JOIN P003 F ON A.COMPCD = F.COMPCD AND A.CUSTCD = F.CUSTCD
+		  LEFT OUTER JOIN S002 G ON B.COMPCD = G.COMPCD AND B.TARGET = G.CODE AND G.CODEKEY = 'NTTARGET'
+		 WHERE A.NTKEY = #{NTKEY}
+	     ORDER BY A.SEQ
+	</select>
+	
+	<!-- 공지번호 채번 -->
+	<select id="getNTKey" parameterType="LDataMap" resultType="LDataMap" statementType="CALLABLE">
+		/* sys.S000014.getNTKey */
+		DECLARE @DATE NVARCHAR(8);
+		SET @DATE = CONVERT(NVARCHAR(8), GETDATE(), 112);
+		EXEC USX_GETSEQ N'NTKEY', @DATE, NULL, NULL, NULL, NULL, #{LOGIN_USERCD}, #{LOGIN_IP}, #{NTKEY, mode=OUT, jdbcType=VARCHAR}
+	</select>
+	
+	<!-- 공지사항 등록  -->
+	<insert id="insertNotice" parameterType="LDataMap">
+		/* sys.S000014.insertNotice */
+		INSERT INTO S014 (
+		     NTKEY, COMPCD, STARTDT, ENDDT, NTTYPE
+           , TITLE, CONTENTS, TARGET, POPFLG, ISUSING
+		   , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+     	) VALUES(
+     		 #{NTKEY}, #{S_COMPCD}, REPLACE(#{STARTDT},'-',''), REPLACE(#{ENDDT},'-',''), #{NTTYPE}                
+           , #{TITLE}, #{CONTENTS}, #{TARGET}, #{POPFLG}, #{ISUSING}         
+		   , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 공지사항 대상 등록 -->
+	<insert id="insertNoticeTarget" parameterType="LDataMap">
+		/* sys.S000014.insertNoticeTarget */
+		INSERT INTO S015 (
+		     NTKEY, SEQ, COMPCD, ORGCD, DEPTCD, CUSTCD
+		   , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+     	) VALUES(
+     		 #{NTKEY}, (SELECT ISNULL(MAX(SEQ), 0) + 1 FROM S015 WHERE NTKEY = #{NTKEY}), #{COMPCD}, #{ORGCD}, #{DEPTCD}, #{CUSTCD}             
+		   , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 공지사항 파일 등록 -->
+	<insert id="insertNoticeFile" parameterType="LDataMap">
+		/* sys.S000014.insertNoticeFile */
+		INSERT INTO S016 (
+		     NTKEY, SEQ, FILENM, ORIGINFILENM
+		   , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+     	) VALUES(
+     		 #{NTKEY}, (SELECT ISNULL(MAX(SEQ), 0) + 1 FROM S016 WHERE NTKEY = #{NTKEY}), #{FILENM}, #{ORIGINFILENM}             
+		   , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 공지사항 수정 -->
+	<update id="updateNotice" parameterType="LDataMap">
+		/* sys.S000014.setHits */
+		UPDATE S014 WITH (ROWLOCK)
+		   SET
+		     STARTDT	     = REPLACE(#{STARTDT},'-','')
+		     , ENDDT         = REPLACE(#{ENDDT},'-','')
+		     , NTTYPE        = #{NTTYPE}
+		     , TITLE         = #{TITLE}
+		     , CONTENTS      = #{CONTENTS}
+		     , TARGET        = #{TARGET}
+		     , POPFLG        = #{POPFLG}
+		     , ISUSING       = #{ISUSING}
+		     , UPDUSERCD     = #{LOGIN_USERCD}
+		     , UPDDATETIME   = GETDATE()
+		     , TERMINALCD    = #{LOGIN_IP}
+		 WHERE NTKEY = #{NTKEY}
+	</update>
+	
+	<!-- 삭제(공지사항 대상) -->
+	<delete id="delNoticeTarget" parameterType="LDataMap">
+		/* sys.S000015.delNoticeTarget */
+		DELETE FROM S015 WITH (ROWLOCK)
+		 WHERE NTKEY = #{NTKEY}
+	</delete>
+	
+	<!-- 삭제(공지사항 파일) -->
+	<delete id="delNoticeFile" parameterType="LDataMap">
+		/* sys.S000014.delNoticeFile */
+		DELETE FROM S016 WITH (ROWLOCK)
+		 WHERE NTKEY = #{NTKEY}
+		   AND SEQ = #{SEQ}
+	</delete>
+	
+	<!-- 공지사항 존재여부 -->
+	<select id="getNoticeChk" parameterType="LDataMap" resultType="int">
+		/* sys.S000014.getNoticeChk */		
+		SELECT COUNT(1) AS CNT
+		  FROM S014
+		 WHERE NTKEY = #{NTKEY}
+	</select>	
+</mapper>

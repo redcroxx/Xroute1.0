@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PopupMapper">
+
+	<!-- 애플리케이션 팝업 검색 -->
+    <select id="getAppList" parameterType="LDataMap" resultType="LDataMap">
+        <![CDATA[
+		SELECT APPKEY, WINDOWNAME, TITLE, APPURL, REMARK
+		  FROM S005
+		]]>
+        <trim prefix="WHERE" prefixOverrides="AND |OR ">
+            <if test="S_APPKEY != null and S_APPKEY != ''">
+                AND APPKEY LIKE '%'||#{S_APPKEY}||'%'
+            </if>
+            <if test="S_TITLE != null and S_TITLE != ''">
+                AND UPPER(TITLE) LIKE '%'||UPPER(#{S_TITLE})||'%'
+            </if>
+        </trim>
+        ORDER BY APPKEY DESC
+    </select>
+    
+</mapper>

@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopP00501Mapper">
+
+	<!-- 로케이션 재고 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP00501Mapper.getSearch */
+		SELECT A.COMPCD	
+			 , A.ORGCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.ITEMCD
+			 , C.NAME AS ITEMNM
+			 , ISNULL(A.QTY, 0) AS QTY
+			 , ISNULL(A.ALLOCQTY, 0) AS ALLOCQTY
+			 , ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) AS INVQTY
+			 , A.LOTKEY
+			 , D.LOT1
+			 , D.LOT2
+			 , D.LOT3
+			 , D.LOT4
+			 , D.LOT5
+			 , B.LOCCD
+			 , B.LOCNAME
+			 , B.LOCGROUP
+			 , B.ISVIRTUAL
+			 , B.LOCTYPE
+			 , B.SLOTTYPE
+			 , B.PICKTYPE
+			 , B.ALLOCATETYPE
+			 , B.NOTALLOCFLG
+			 , B.WHINSEQ
+			 , B.WHOUTSEQ
+			 , B.BUIL
+			 , B.FLOOR
+			 , B.ZONE
+			 , B.LINE
+			 , B.RANGE
+			 , B.STEP
+			 , B.LANE
+			 , B.LENGTH
+			 , B.WIDTH
+			 , B.HEIGHT
+			 , B.WEIGHTCAPACITY
+			 , B.CAPACITY
+		  FROM P810 A WITH (NOLOCK)
+		  JOIN P005 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.WHCD = B.WHCD AND A.LOCCD = B.LOCCD
+		  JOIN P006 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD AND A.ITEMCD = C.ITEMCD
+		  JOIN P007 D WITH (NOLOCK) ON A.LOTKEY = D.LOTKEY
+		WHERE ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) > 0
+		  AND A.COMPCD = #{LOGIN_COMPCD}
+		  AND A.WHCD = #{S_WHCD}
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+			AND A.ITEMCD = #{S_ITEMCD}
+		</if>
+		  
+		<if test="S_LOCCD != null and S_LOCCD != ''">
+			AND ((A.LOCCD LIKE #{S_LOCCD} + '%')
+				OR (B.LOCNAME LIKE '%' + #{S_LOCCD} + '%'))
+		</if>
+		<if test="S_LOCTYPE != null and S_LOCTYPE != ''">
+			AND B.LOCTYPE = #{S_LOCTYPE}
+		</if>
+		<if test="S_NOTALLOCFLG != null and S_NOTALLOCFLG != ''">
+			AND B.NOTALLOCFLG = #{S_NOTALLOCFLG}
+		</if>
+		<if test="S_SPACEVAL != null and S_SPACEVAL != ''">
+			<if test="S_SPACEKEY == 'BUIL'">
+				AND B.BUIL LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>
+			<if test="S_SPACEKEY == 'FLOOR'">
+				AND B.FLOOR LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ZONE'">
+				AND B.ZONE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'LINE'">
+				AND B.LINE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'RANGE'">
+				AND B.RANGE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="STEP == 'ASSYLOCCD'">
+				AND B.STEP LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'LANE'">
+				AND B.LANE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'LENGTH'">
+				AND B.LENGTH LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'WIDTH'">
+				AND B.WIDTH LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'HEIGHT'">
+				AND B.HEIGHT LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'WEIGHTCAPACITY'">
+				AND B.WEIGHTCAPACITY LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'CAPACITY'">
+				AND B.CAPACITY LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+		</if>
+		
+		ORDER BY A.LOCCD
+	</select>
+
+	<!-- 로케이션 재고 팝업 : 검색(가상창고일때) -->
+	<select id="getSearch2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP00501Mapper.getSearch2 */
+		SELECT A.COMPCD	
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.LOCNAME
+			 , A.LOCGROUP
+			 , A.ISVIRTUAL
+			 , A.LOCTYPE
+			 , A.SLOTTYPE
+			 , A.PICKTYPE
+			 , A.ALLOCATETYPE
+			 , A.NOTALLOCFLG
+			 , A.WHINSEQ
+			 , A.WHOUTSEQ
+			 , A.BUIL
+			 , A.FLOOR
+			 , A.ZONE
+			 , A.LINE
+			 , A.RANGE
+			 , A.STEP
+			 , A.LANE
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.WEIGHTCAPACITY
+			 , A.CAPACITY
+		  FROM P005 A WITH (NOLOCK) 
+		WHERE A.COMPCD = #{LOGIN_COMPCD}
+		  AND A.WHCD = #{S_WHCD}
+		<if test="S_LOCCD != null and S_LOCCD != ''">
+			AND ((A.LOCCD LIKE #{S_LOCCD} + '%')
+				OR (A.LOCNAME LIKE '%' + #{S_LOCCD} + '%'))
+		</if>
+		<if test="S_LOCTYPE != null and S_LOCTYPE != ''">
+			AND A.LOCTYPE = #{S_LOCTYPE}
+		</if>
+		<if test="S_NOTALLOCFLG != null and S_NOTALLOCFLG != ''">
+			AND A.NOTALLOCFLG = #{S_NOTALLOCFLG}
+		</if>
+		<if test="S_SPACEVAL != null and S_SPACEVAL != ''">
+			<if test="S_SPACEKEY == 'BUIL'">
+				AND A.BUIL LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>
+			<if test="S_SPACEKEY == 'FLOOR'">
+				AND A.FLOOR LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'ZONE'">
+				AND A.ZONE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'LINE'">
+				AND A.LINE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'RANGE'">
+				AND A.RANGE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="STEP == 'ASSYLOCCD'">
+				AND A.STEP LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'LANE'">
+				AND A.LANE LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'LENGTH'">
+				AND A.LENGTH LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'WIDTH'">
+				AND A.WIDTH LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'HEIGHT'">
+				AND A.HEIGHT LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'WEIGHTCAPACITY'">
+				AND A.WEIGHTCAPACITY LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+			<if test="S_SPACEKEY == 'CAPACITY'">
+				AND A.CAPACITY LIKE '%' + #{S_SPACEVAL} + '%'
+			</if>	
+		</if>
+		
+		ORDER BY A.LOCCD
+	</select>
+	
+	<!-- 로케이션 재고 팝업 : 코드 유효성-->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP00501Mapper.getCheck */
+		SELECT A.COMPCD	
+			 , A.ORGCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.ITEMCD
+			 , C.NAME AS ITEMNM
+			 , ISNULL(A.QTY, 0) AS QTY
+			 , ISNULL(A.ALLOCQTY, 0) AS ALLOCQTY
+			 , ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) AS INVQTY
+			 , A.LOTKEY
+			 , D.LOT1
+			 , D.LOT2
+			 , D.LOT3
+			 , D.LOT4
+			 , D.LOT5
+			 , B.LOCCD
+			 , B.LOCNAME
+			 , B.LOCGROUP
+			 , B.ISVIRTUAL
+			 , B.LOCTYPE
+			 , B.SLOTTYPE
+			 , B.PICKTYPE
+			 , B.ALLOCATETYPE
+			 , B.NOTALLOCFLG
+			 , B.WHINSEQ
+			 , B.WHOUTSEQ
+			 , B.BUIL
+			 , B.FLOOR
+			 , B.ZONE
+			 , B.LINE
+			 , B.RANGE
+			 , B.STEP
+			 , B.LANE
+			 , B.LENGTH
+			 , B.WIDTH
+			 , B.HEIGHT
+			 , B.WEIGHTCAPACITY
+			 , B.CAPACITY
+		  FROM P810 A WITH (NOLOCK)
+		  JOIN P005 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.WHCD = B.WHCD AND A.LOCCD = B.LOCCD
+		  JOIN P006 C WITH (NOLOCK) ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD AND A.ITEMCD = C.ITEMCD
+		  JOIN P007 D WITH (NOLOCK) ON A.LOTKEY = D.LOTKEY
+		WHERE ISNULL(A.QTY, 0) - ISNULL(A.ALLOCQTY, 0) > 0
+		  AND A.COMPCD = #{LOGIN_COMPCD}
+	      AND A.WHCD = #{S_WHCD}
+		  AND A.LOCCD = #{S_LOCCD}
+		  AND A.ITEMCD = #{S_ITEMCD}
+	</select>
+	
+	
+	<!-- 로케이션 재고 팝업 : 코드 유효성(가상창고일때)-->
+	<select id="getCheck2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP00501Mapper.getCheck2 */
+		SELECT A.COMPCD	
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.LOCNAME
+			 , A.LOCGROUP
+			 , A.ISVIRTUAL
+			 , A.LOCTYPE
+			 , A.SLOTTYPE
+			 , A.PICKTYPE
+			 , A.ALLOCATETYPE
+			 , A.NOTALLOCFLG
+			 , A.WHINSEQ
+			 , A.WHOUTSEQ
+			 , A.BUIL
+			 , A.FLOOR
+			 , A.ZONE
+			 , A.LINE
+			 , A.RANGE
+			 , A.STEP
+			 , A.LANE
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.WEIGHTCAPACITY
+			 , A.CAPACITY
+		  FROM P005 A WITH (NOLOCK) 
+		WHERE A.COMPCD = #{LOGIN_COMPCD}
+		  AND A.WHCD = #{S_WHCD}
+		  AND A.LOCCD = #{S_LOCCD}
+	</select>
+</mapper>

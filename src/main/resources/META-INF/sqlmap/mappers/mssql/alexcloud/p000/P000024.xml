@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P000024Mapper">
+	<!-- 창고별 피킹렉 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.p000024.getSearch */
+		SELECT A.COMPCD									/* 회사코드 */		
+	         , A.ORGCD									/* 화주코드 */			
+		     , A.NAME AS ORGNM							/* 화주명 */			
+		     , B.WHCD									/* 창고코드 */			
+		     , B.NAME AS WHNM							/* 창고명 */			
+		     , C.ITEMCD									/* 품목코드 */			
+		     , C.NAME AS ITEMNM							/* 품목명 */	
+		     , D.CART_GROUP								/* 카트작업그룹 */			
+		     , D.CART_RACK_NO							/* 카트랙번호 */			
+		     , D.DPS_GROUP								/* DPS작업그룹 */			
+		     , D.DPS_RACK_NO							/* DPS랙번호 */			
+		     , D.REMARK									/* 비고 */			
+		     , D.ADDUSERCD											
+		     , CONVERT(VARCHAR, D.ADDDATETIME, 120) AS ADDDATETIME											
+		     , D.UPDUSERCD											
+		     , CONVERT(VARCHAR, D.UPDDATETIME, 120) AS UPDDATETIME											
+		     , D.TERMINALCD											
+		     , CASE WHEN D.COMPCD IS NULL THEN 'N' ELSE 'Y' END AS ISREG											
+		  FROM P002 A WITH (NOLOCK)													
+		  JOIN P004 B WITH (NOLOCK)	ON A.COMPCD = B.COMPCD												
+		  JOIN P006 C WITH (NOLOCK)	ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD												
+		  LEFT OUTER JOIN WHITEMRACK D WITH (NOLOCK) ON C.COMPCD = D.COMPCD AND C.ORGCD = D.ORGCD AND C.ITEMCD = D.ITEMCD	AND B.WHCD = D.WHCD	
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND C.ISUSING = 'Y'
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>		
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND B.WHCD = #{S_WHCD}
+		</if>	
+		<if test="S_REGFLG != null and S_REGFLG != ''">
+			<if test='S_REGFLG == "Y"'>
+				AND D.COMPCD IS NOT NULL
+			</if>
+			<if test='S_REGFLG == "N"'>
+				AND D.COMPCD IS NULL
+			</if>
+		</if> 
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+			AND (C.ITEMCD LIKE '%' + dbo.UFX_Trim(#{S_ITEMCD}) + '%' 
+				OR C.NAME LIKE '%' + dbo.UFX_Trim(#{S_ITEMCD}) + '%')
+		</if>		
+		<if test="S_CART_RACK_NO != null and S_CART_RACK_NO != ''">
+		   AND D.CART_RACK_NO = #{S_CART_RACK_NO}
+		</if>			
+		<if test="S_DPS_RACK_NO != null and S_DPS_RACK_NO != ''">
+		   AND D.DPS_RACK_NO = #{S_DPS_RACK_NO}
+		</if>	
+		 ORDER BY A.ORGCD, B.WHCD, C.ITEMCD	
+	</select>
+		
+	<!-- 창고별 피킹렉 : 피킹렉여부체크 -->
+	<select id="getChkRack" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000009.getChkRack */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.ITEMCD
+			 , A.CART_RACK_NO
+			 , A.DPS_RACK_NO
+			 , A.REMARK
+		FROM WHITEMRACK A WITH (NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.ORGCD = #{ORGCD}
+		  AND A.WHCD = #{WHCD}
+		  AND A.ITEMCD = #{ITEMCD}
+	</select>
+	
+	<!-- 창고별 피킹렉 : 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.p000024.WHITEMRACK */
+		INSERT INTO WHITEMRACK WITH (ROWLOCK)(
+			COMPCD, ORGCD, WHCD, ITEMCD, CART_RACK_NO, DPS_RACK_NO, REMARK
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD, CART_GROUP, DPS_GROUP
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, #{WHCD}, #{ITEMCD}, #{CART_RACK_NO}, #{DPS_RACK_NO}, #{REMARK}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}, #{CART_GROUP}, #{DPS_GROUP}
+		)
+	</insert>
+
+	<!-- 창고별 피킹렉 : 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.p000024.updateMst */
+		UPDATE WHITEMRACK WITH (ROWLOCK)
+		   SET CART_RACK_NO = #{CART_RACK_NO}
+		     , DPS_RACK_NO = #{DPS_RACK_NO}
+		     , REMARK = #{REMARK}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+			 , CART_GROUP = #{CART_GROUP}
+			 , DPS_GROUP = #{DPS_GROUP}
+		WHERE COMPCD = #{COMPCD}
+		  AND ORGCD = #{ORGCD}
+		  AND WHCD = #{WHCD}
+		  AND ITEMCD = #{ITEMCD}
+	</update>
+	
+	<!-- 창고별 피킹렉 : 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/* alexcloud.p000.p000024.deleteMst */
+		DELETE FROM WHITEMRACK WITH (ROWLOCK) 
+		 WHERE COMPCD = #{COMPCD} AND ORGCD = #{ORGCD} AND WHCD = #{WHCD} AND ITEMCD = #{ITEMCD}
+	</delete>
+</mapper>

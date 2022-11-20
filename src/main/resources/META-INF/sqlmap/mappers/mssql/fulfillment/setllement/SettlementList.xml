@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SettlementListMapper">
+	<select id="getSearch" parameterType="commonSearchVo" resultType="settlementListVo">
+		/* SettlementListMapper.getSearch */
+		SELECT
+			o.ORGCD				AS orgcd
+			, o.MALL_NM			AS mallNm
+			, o.XRT_INVC_SNO	AS xrtInvcSno
+			, CASE
+				WHEN o.INVC_SNO2 IS NOT NULL THEN '****' + SUBSTRING(o.INVC_SNO2, 4, LEN(o.INVC_SNO1))
+				ELSE o.INVC_SNO1
+			 END				AS invcSno1
+			, CASE
+				WHEN o.INVC_SNO2 IS NOT NULL THEN INVC_SNO2
+				ELSE ''
+			  END				AS invcSno2
+			, o.UPLOAD_DATE		AS uploadDate
+			, o.SHIP_METHOD_CD	AS shipMethodCd
+			, o.SHIP_NAME		AS shipName
+			, o.LOCAL_SHIPPER	AS localShipper
+			, o.S_NATION		AS sNation
+			, o.E_NATION		AS eNation
+			, o.RECV_NAME		AS recvName
+			, o.RECV_TEL		AS recvTel
+			, o.RECV_MOBILE		AS recvMobile
+			, o.RECV_ADDR1		AS recvAddr1
+			, o.RECV_ADDR2		AS recvAddr2
+			, o.RECV_POST		AS recvPost
+			, o.RECV_CURRENCY	AS recvCurrency
+			, o.ORD_CNT			AS ordCnt
+			, o.ORD_NO			AS ordNo
+			, o.CART_NO			AS cartNo
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_CD
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsCd
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_NM + ' ' + od.GOODS_CNT +'ea'
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsNm
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_OPTION
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsOption
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_CNT
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsCnt
+			, o.TOT_PAYMENT_PRICE   AS totPaymentPrice
+			, CASE
+                WHEN o.STATUS_CD = '10' THEN '주문등록'
+                WHEN o.STATUS_CD = '11' THEN '발송대기'
+                WHEN o.STATUS_CD = '12' THEN '발송완료'
+                WHEN o.STATUS_CD = '20' THEN '입금대기'
+                WHEN o.STATUS_CD = '21' THEN '결제완료'
+                WHEN o.STATUS_CD = '22' THEN '결제대기'
+                WHEN o.STATUS_CD = '23' THEN '결제실패'
+                WHEN o.STATUS_CD = '30' THEN '입고완료'
+                WHEN o.STATUS_CD = '31' THEN '창고보관'
+                WHEN o.STATUS_CD = '32' THEN '출고대기'
+                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                WHEN o.STATUS_CD = '34' THEN '검수취소'
+                WHEN o.STATUS_CD = '35' THEN '선적대기'
+                WHEN o.STATUS_CD = '40' THEN '출고완료'
+                WHEN o.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN o.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN o.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN o.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN o.STATUS_CD = '54' THEN '통관대기'
+                WHEN o.STATUS_CD = '55' THEN '통관완료'
+                WHEN o.STATUS_CD = '56' THEN '배송시작'
+                WHEN o.STATUS_CD = '57' THEN '배송중'
+                WHEN o.STATUS_CD = '60' THEN '배송완료'
+                WHEN o.STATUS_CD = '80' THEN 'API오류'
+                WHEN o.STATUS_CD = '98' THEN '입금취소'
+                WHEN o.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END               AS statusCdKr
+			, o.C_WGT_CHARGE		AS cWgtCharge
+			, o.C_WGT_REAL			AS cWgtReal
+			, o.C_WGT_VOLUME		AS cWgtVolume
+			, o.C_BOX_WIDTH			AS cBoxWidth
+			, o.C_BOX_LENGTH		AS cBoxLength
+			, o.C_BOX_HEIGHT		AS cBoxHeight
+			, o.WGT					AS xWgt
+			, o.BOX_WIDTH			AS xBoxWidth
+			, o.BOX_LENGTH			AS xBoxLength
+			, o.BOX_HEIGHT			AS xBoxHeight
+			, CONVERT(CHAR(19), o.ADDDATETIME, 120) AS adddatetime
+			, CONVERT(CHAR(19), o.UPDDATETIME, 120) AS upddatetime
+			, o.SHIP_NAME			AS shipName
+			, o.SHIP_TEL			AS shipTel
+			, o.SHIP_ADDR			AS shipAddr
+			, o.RECV_CITY			AS recvCity
+			, o.RECV_STATE			AS recvState
+			, CASE
+				WHEN o.SHIPPING_COMPANY is null or o.C_SHIPPING_PRICE = 0 or o.C_SHIPPING_PRICE is null THEN '0'
+				WHEN o.SHIPPING_COMPANY = 'SHIPPO' THEN CONVERT(NVARCHAR(20),CONVERT(NUMERIC(5,2),o.C_SHIPPING_PRICE))+' USD'
+				ELSE CONVERT(NVARCHAR(20),CEILING(o.C_SHIPPING_PRICE)) + ' KRW'
+			  END AS cShippingPrice
+			, o.XRT_SHIPPING_PRICE  AS xrtShippingPrice
+			, CASE
+				WHEN o.PAYMENT_TYPE = '1' THEN '건당결제'
+				WHEN o.PAYMENT_TYPE = '2' THEN '월말결제'
+                WHEN o.PAYMENT_TYPE = '3' THEN '정기결제'
+                WHEN o.PAYMENT_TYPE = '4' THEN '신용결제'
+				ELSE '-'
+			  END AS paymentType
+			, (SELECT "NAME" FROM S010 S WHERE 1=1 AND S.USERCD = O.ADDUSERCD ) AS sellerName
+		FROM TORDER o WITH (NOLOCK)
+		WHERE 1 = 1
+		AND o.DEL_FLG = 'N'
+		<if test="sOrgCd != null and sOrgCd != ''">
+		AND o.ORGCD = #{sOrgCd}
+		</if>
+		<choose>
+			<when test="sPeriodType == 'uploadDate'">
+			AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+			</when>
+			<when test="sPeriodType == 'stockDate'">
+			AND o.STOCK_DATE BETWEEN CONVERT(CHAR(19), #{sToDate}, 20) AND CONVERT(CHAR(19), #{sFromDate}, 20)
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="sKeywordType == 'total'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.XRT_INVC_SNO = #{sKeyword}
+				OR o.CART_NO = #{sKeyword}
+				OR o.ORD_NO = #{sKeyword}
+				OR o.SELLER_REF_NO1 = #{sKeyword}
+				OR o.SELLER_REF_NO2 = #{sKeyword}
+				OR o.INVC_SNO1 = #{sKeyword}
+				OR o.INVC_SNO2 = #{sKeyword}
+				OR o.SHIP_METHOD_CD = #{sKeyword}
+				OR o.LOCAL_SHIPPER = #{sKeyword}
+				OR o.RECV_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+				OR o.ORD_CD IN (SELECT ORD_CD FROM TORDERDTL WHERE 1 = 1 
+								<if test="sOrgCd != null and sOrgCd != ''">
+								AND ORGCD = #{sOrgCd}
+								</if>
+								AND GOODS_NM LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%')
+				</if>
+			</when>
+			<when test="sKeywordType == 'xrtInvcSno'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.XRT_INVC_SNO = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'cartNo'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.CART_NO = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'orderNo'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.ORD_NO = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'sellerRefNo'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.SELLER_REF_NO1 = #{sKeyword}
+				OR o.SELLER_REF_NO2 = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'invcSno'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.INVC_SNO1 = #{sKeyword}
+				OR o.INVC_SNO2 = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'shipMethodCd'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.SHIP_METHOD_CD = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'localShipper'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.LOCAL_SHIPPER = #{sKeyword}
+				</if>
+			</when>
+			<when test="sKeywordType == 'recvName'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.RECV_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+				</if>
+			</when>
+			<when test="sKeywordType == 'goodsNm'">
+				<if test="sKeyword != null and sKeyword != ''">
+				AND o.ORD_CD IN (SELECT ORD_CD FROM TORDERDTL WHERE 1 = 1 
+								<if test="sOrgCd != null and sOrgCd != ''">
+								AND ORGCD = #{sOrgCd}
+								</if>
+								AND GOODS_NM LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%')
+				</if>
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="sShipCompany == 'total'">
+			<!-- 전체검색 -->
+			</when>
+			<otherwise>
+			AND o.SHIPPING_COMPANY = #{sShipCompany}
+			</otherwise>
+		</choose>
+		<if test="sToNation != null and sToNation != ''">
+		AND o.S_NATION = #{sToNation}
+		</if>
+		<if test="sFromNation != null and sFromNation != ''">
+		AND o.E_NATION = #{sFromNation}
+		</if>
+		ORDER BY o.XRT_INVC_SNO ASC
+	</select>
+	
+	<select id="getPriceSearch" parameterType="shipPriceSearchVo" resultType="shippingPriceVo">
+		/* SettlementListMapper.getPriceSearch */
+		SELECT
+			ORGCD					AS orgcd
+			, ORD_CD				AS ordCd
+			, XRT_INVC_SNO			AS xrtInvcSno
+			, INVC_SNO1				AS invcSno1
+			, ISNULL(WGT, 0)		AS wgt
+			, ISNULL(BOX_VOLUME, 0)	AS boxVolume
+			, E_NATION				AS eNation
+		FROM TORDER 
+		WHERE 1 = 1
+		AND DEL_FLG = 'N'
+		AND STATUS_CD IN ('30', '40', '50', '60')
+		AND UPLOAD_DATE BETWEEN #{shipToDate} AND #{shipFromDate}
+		AND C_SHIPPING_PRICEDATE IS NULL
+		<choose>
+			<when test="shipCompany == 'EFS'">
+			AND SHIPPING_COMPANY = 'EFS'
+			</when>
+			<when test="shipCompany == 'ETOMARS'">
+			AND SHIPPING_COMPANY = 'ETOMARS'
+			</when>
+			<when test="shipCompany == 'QXPRESS'">
+			AND SHIPPING_COMPANY = 'QXPRESS'
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>	
+	</select>	
+	
+	<update id="efsWgtUpdate" parameterType="java.util.HashMap">
+		/* SettlementListMapper.efsWgtUpdate */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="invcSno1 != null and invcSno1 != ''">INVC_SNO1 = #{invcSno1},</if>
+			<if test="localShipper != null and localShipper != ''">LOCAL_SHIPPER = #{localShipper},</if>
+			<if test="invcSno2 != null and invcSno2 != ''">INVC_SNO2 = #{invcSno2},</if>
+			<if test="cWgtCharge != null and cWgtCharge != ''">C_WGT_CHARGE = #{cWgtCharge},</if>
+			<if test="cWgtReal != null and cWgtReal != ''">C_WGT_REAL = #{cWgtReal},</if>
+			<if test="cWgtVolume != null and cWgtVolume != ''">C_WGT_VOLUME = #{cWgtVolume},</if>
+			<if test=' statusCd != null and statusCd != "" '>STATUS_CD = #{statusCd},</if>
+			<if test="cShippingPrice != null and cShippingPrice != ''">
+			C_SHIPPING_PRICE  = #{cShippingPrice},
+			C_SHIPPING_PRICE_UNIT  = 'KRW',
+			C_SHIPPING_PRICEDATE  = GETDATE(),
+			</if>
+			UPDDATETIME = getdate()
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+	
+	<update id="etomarsWgtUpdate" parameterType="java.util.HashMap">
+		/* SettlementListMapper.etomarsWgtUpdate */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="cWgtCharge != null and cWgtCharge != ''">C_WGT_CHARGE = #{cWgtCharge},</if>
+			<if test=' statusCd != null and statusCd != "" '>STATUS_CD = #{statusCd},</if>
+			<if test="cShippingPrice != null and cShippingPrice != ''">
+			C_SHIPPING_PRICE  = #{cShippingPrice},
+			C_SHIPPING_PRICE_UNIT  = 'KRW',
+			C_SHIPPING_PRICEDATE  = GETDATE(),
+			</if>
+			UPDDATETIME = getdate()
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+	
+	<update id="qxpressWgtUpdate" parameterType="java.util.HashMap">
+		/* SettlementListMapper.qxpressWgtUpdate */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="cWgtReal != null and cWgtReal != ''">C_WGT_REAL = #{cWgtReal},</if>
+			<if test='cWgtWidth != null and cWgtWidth != ""'>C_BOX_WIDTH = #{cWgtWidth},</if>
+			<if test='cWgtLength != null and cWgtLength != ""'>C_BOX_LENGTH = #{cWgtLength},</if>
+			<if test='cWgtHeight != null and cWgtHeight != ""'>C_BOX_HEIGHT = #{cWgtHeight},</if>
+			<if test=' statusCd != null and statusCd != "" '>STATUS_CD = #{statusCd},</if>
+			<if test="cShippingPrice != null and cShippingPrice != ''">
+				C_SHIPPING_PRICE  = #{cShippingPrice},
+				C_SHIPPING_PRICE_UNIT  = 'KRW',
+				C_SHIPPING_PRICEDATE  = GETDATE(),
+			</if>
+			UPDDATETIME = getdate()
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+	
+	<select id="getPriceSearchData" parameterType="shippingPriceVo" resultType="settlementListVo">
+		/* SettlementListMapper.getPriceSearchData */
+		SELECT
+			o.ORGCD				AS orgcd
+			, o.MALL_NM			AS mallNm
+			, o.XRT_INVC_SNO	AS xrtInvcSno
+			, o.INVC_SNO1		AS invcSno1
+			, o.INVC_SNO2		AS invcSno2
+			, o.UPLOAD_DATE		AS uploadDate
+			, o.SHIP_METHOD_CD	AS shipMethodCd
+			, o.LOCAL_SHIPPER	AS localShipper
+			, o.S_NATION		AS sNation
+			, o.E_NATION		AS eNation
+			, o.RECV_NAME		AS recvName
+			, o.RECV_TEL		AS recvTel
+			, o.RECV_MOBILE		AS recvMobile
+			, o.RECV_ADDR1		AS recvAddr1
+			, o.RECV_ADDR2		AS recvAddr2
+			, o.RECV_POST		AS recvPost
+			, o.RECV_CURRENCY	AS recvCurrency
+			, o.ORD_CNT			AS ordCnt
+			, o.ORD_NO			AS ordNo
+			, o.CART_NO			AS cartNo
+			, o.SHIP_TEL		AS shipTel
+			, o.SHIP_MOBILE		AS shipMobile
+			, o.SHIP_ADDR		AS shipAddr
+			, o.SHIP_POST		AS shipPost
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_CD
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsCd
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_NM + ' ' + od.GOODS_CNT +'ea'
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsNm
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_OPTION
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsOption
+			, (SELECT TOP 1 STUFF(
+				(SELECT ', ' + od.GOODS_CNT
+				 FROM TORDERDTL od
+				 WHERE 1 = 1
+				 AND o.ORD_CD = od.ORD_CD
+				 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+			  FROM TORDERDTL
+			)					AS goodsCnt
+			, o.TOT_PAYMENT_PRICE   AS totPaymentPrice
+			, CASE
+				WHEN o.STATUS_CD = '10' THEN 'Order Registration'
+				WHEN o.STATUS_CD = '20' THEN 'Waiting For Deposit'
+				WHEN o.STATUS_CD = '22' THEN 'Confirming Payment'
+				WHEN o.STATUS_CD = '21' THEN 'Deposit Completed'
+				WHEN o.STATUS_CD = '30' THEN 'Warehousing completed'
+				WHEN o.STATUS_CD = '40' THEN 'Waiting For Transportation'
+				WHEN o.STATUS_CD = '50' THEN 'In Transit'
+				WHEN o.STATUS_CD = '60' THEN 'Delivered'
+				WHEN o.STATUS_CD = '80' THEN 'API Error'
+				WHEN o.STATUS_CD = '99' THEN 'Cancel'
+				ELSE 'Error'
+			 END AS statusCd
+			, o.C_WGT_CHARGE		AS cWgtCharge
+			, o.C_WGT_REAL			AS cWgtReal
+			, o.C_WGT_VOLUME		AS cWgtVolume
+			, o.C_BOX_WIDTH			AS cBoxWidth
+			, o.C_BOX_LENGTH		AS cBoxLength
+			, o.C_BOX_HEIGHT		AS cBoxHeight
+			, o.WGT					AS xWgt
+			, o.BOX_WIDTH			AS xBoxWidth
+			, o.BOX_LENGTH			AS xBoxLength
+			, o.BOX_HEIGHT			AS xBoxHeight
+			, CONVERT(CHAR(19), o.UPDDATETIME, 120) AS upddatetime
+			, o.SHIP_NAME			AS shipName
+			, o.RECV_CITY			AS recvCity
+			, o.RECV_STATE			AS recvState
+		FROM TORDER o WITH (NOLOCK)
+		WHERE 1 = 1
+		AND o.DEL_FLG = 'N'
+		AND o.STATUS_CD IN ('30', '40', '50', '60')
+		AND o.UPLOAD_DATE BETWEEN #{shipToDate} AND #{shipFromDate}
+		<choose>
+			<when test="shipCompany == 'EFS'">
+			AND o.SHIPPING_COMPANY = 'EFS'
+			</when>
+			<when test="shipCompany == 'ETOMARS'">
+			AND o.SHIPPING_COMPANY = 'ETOMARS'
+			</when>
+			<when test="shipCompany == 'QXPRESS'">
+			AND o.SHIPPING_COMPANY = 'QXPRESS'
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		ORDER BY o.XRT_INVC_SNO ASC
+	</select>	
+</mapper>

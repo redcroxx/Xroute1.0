@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UpsMapper">
+	<select id="getSearch" parameterType="CommonSearchVo" resultType="xrt.fulfillment.order.ups.UpsVO">
+		SELECT
+		    'W499X4'                      AS shipperNumber
+		    , o.XRT_INVC_SNO              AS shipmentRef1
+		    , CASE
+		          WHEN o.ORGCD = 'M00494' THEN o.ORD_NO
+		          ELSE ''
+		      END                         AS shipmentRef2
+		    , ''                          AS shipmentRef3
+		    , ''                          AS shipmentRef4
+		    , ''                          AS shipmentRef5
+		    , '1'                         AS numberOfPkg
+		    , o.WGT                       AS shipmentWeight
+		    , o.RECV_NAME                 AS shipToContact
+		    , o.RECV_NAME                 AS companyName
+		    , o.RECV_TEL                  AS phone
+		    , o.RECV_ADDR1                AS address1
+		    , o.RECV_ADDR2                AS address2
+		    , ''                          AS address3
+		    , o.RECV_CITY                 AS city
+		    , o.RECV_STATE                AS state
+		    , o.RECV_POST                 AS zip
+            , o.E_NATION                  AS country
+		    , 'SV'                        AS service
+		    , 'SHP'                      AS billTransportation
+		    , 'REC'                       AS billDuty
+		    , CASE    
+                WHEN o.ORGCD = 'M00494' THEN
+                  (SELECT ap.EN_PRODUCT_NAME
+                     FROM ATOMY_PRODUCT ap, TORDERDTL td
+                     WHERE 1 = 1
+                     AND o.ORD_CD = td.ORD_CD
+                     AND ap.ODP_CODE = td.GOODS_CD
+                     AND td.ORD_SEQ = 1
+                ) 
+                ELSE
+                (SELECT GOODS_NM
+                     FROM TORDERDTL td
+                     WHERE 1 = 1
+                     AND o.ORD_CD = td.ORD_CD
+                     AND td.ORD_SEQ = 1
+                ) 
+            END                           AS descriptionOfGoods
+            , ''                          AS shipToEmail
+            , ''                          AS printCopyOfInvoice
+            , ''                          AS qvnOption
+            , ''                          AS qvContactname
+            , 'XXX@gmail.com '            AS qvEmail
+            , ''                          AS qvShip
+            , ''                          AS qvExpection
+            , 'Y'                         AS qvDelivery
+            , 'Y'                         AS createAnInvoice
+            , 'Y'                         AS processAsPaperless
+	    FROM TORDER o
+	    WHERE 1 = 1
+	    AND o.DEL_FLG = 'N'
+		<choose>
+		    <when test="sOrgCd ==''">
+	            AND o.ORGCD != 'M00494'
+	            AND o.SHIP_METHOD_CD = 'UPS'
+		    </when>
+		    <when test="sOrgCd == 'atomy'">
+		        AND o.ORGCD = 'M00494'
+		    </when>
+		</choose>
+		<if test="sWhcd != null and sWhcd != ''">
+		    AND o.WHCD = #{sWhcd}
+		</if>
+		<choose>
+		    <when test="sPeriodType == 'uploadDate'">
+		        AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+		    </when>
+		    <when test="sPeriodType == 'stockDate'">
+		        AND o.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+		    </when>
+		</choose>
+		<if test="sStatusCd != null and sStatusCd != ''">
+		    AND o.STATUS_CD = #{sStatusCd}
+		</if>
+		<if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+            AND o.XRT_INVC_SNO = #{sXrtInvcSno}
+        </if>
+		ORDER BY shipmentRef1 ASC
+	</select>
+
+    <select id="goodsSearch" parameterType="CommonSearchVo" resultType="xrt.fulfillment.order.ups.UpsGoodsVO">
+        SELECT
+            t.XRT_INVC_SNO                AS shipmentRef1,
+            ''                            AS goodsPartNumber,
+            CASE
+                WHEN t.ORGCD != 'M00494' THEN td.GOODS_NM
+                ELSE ap.EN_PRODUCT_NAME
+            END AS goodsDescription,
+            ''                            AS goodsTariffCode,
+            'KR'                          AS goodsCoo,
+            td.GOODS_CNT                  AS goodsUnits,
+            'EA'                          AS goodsUnitOfMeasure,
+            CASE
+                WHEN t.ORGCD != 'M00494' THEN CONVERT(NVARCHAR, CONVERT(numeric(19, 2), CONVERT(FLOAT, td.PAYMENT_PRICE) / CONVERT(INT, td.GOODS_CNT)))
+                ELSE CONVERT(NVARCHAR, CONVERT(numeric(19, 2), CONVERT(FLOAT, td.SALE_TOT_SUM) / CONVERT(INT, td.GOODS_CNT)))
+            END AS goodsUnitPrice,
+            CASE
+                WHEN t.ORGCD != 'M00494' THEN t.RECV_CURRENCY
+                ELSE 'KRW'
+            END AS goodsCurrency
+        FROM TORDER t
+        LEFT JOIN TORDERDTL td 
+        ON t.ORD_CD = td.ORD_CD
+        LEFT JOIN ATOMY_PRODUCT ap
+        ON ap.ODP_CODE = td.GOODS_CD
+        WHERE 1 = 1
+        <choose>
+            <when test="sOrgCd ==''">
+                AND t.ORGCD != 'M00494'
+                AND t.SHIP_METHOD_CD = 'UPS'
+            </when>
+            <when test="sOrgCd == 'atomy'">
+                AND t.ORGCD = 'M00494'
+            </when>
+        </choose>
+        <choose>
+            <when test="sPeriodType == 'uploadDate'">
+                AND t.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+            </when>
+            <when test="sPeriodType == 'stockDate'">
+                AND t.STOCK_DATE BETWEEN CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sToDate}))) + ' 00:00:00' AND CONVERT(VARCHAR(10), CONVERT(date, CONVERT(VARCHAR(8), #{sFromDate}))) + ' 23:59:59'
+            </when>
+        </choose>
+        <if test="sXrtInvcSno != null and sXrtInvcSno != ''">
+            AND t.XRT_INVC_SNO = #{sXrtInvcSno}
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100360Mapper">
+
+	<!-- 입고지시취소 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100360.getSearch */
+		SELECT B.WISTS														/*입고상태*/			
+			 , B.WIKEY														/*입고번호*/
+			 , A.WDKEY 														/*입고지시번호*/			
+			 , A.WDDT														/*입고지시일자*/	
+			 , B.WITYPE /*입고유형*/		
+			 , A.WHCD														/*창고코드*/			
+			 , D.NAME AS WHNM												/*창고명*/			
+			 , A.ORGCD														/*사업장코드*/			
+			 , E.NAME AS ORGNM												/*사업장명*/	
+			 , B.CUSTCD
+			 , F.NAME AS CUSTNM
+			 , B.DEPTCD
+			 /*, H.NAME AS DEPTNM*/
+			 , B.USERCD
+			 /*, I.NAME AS USERNM*/
+			 , A.REMARK AS REMARK											/*비고*/			
+			 , A.ADDUSERCD AS ADDUSERCD		 								/*등록자ID*/			
+			 , CONVERT(NVARCHAR(20),A.ADDDATETIME,20) AS ADDDATETIME		/*등록일시*/			
+			 , A.UPDUSERCD AS UPDUSERCD										/*수정자ID*/			
+			 , CONVERT(NVARCHAR(20),A.UPDDATETIME,20) AS UPDDATETIME		/*수정일시*/			
+			 , A.TERMINALCD AS TERMINALCD									/*IP*/																		
+			 , (SELECT COUNT(DISTINCT ITEMCD) FROM P131 WITH (NOLOCK) WHERE WIKEY = B.WIKEY) AS ITEMCNT		/*품목수*/																								
+			 , (SELECT ISNULL(SUM(WISCHQTY),0) FROM P131 WITH (NOLOCK) WHERE WIKEY = B.WIKEY) AS QTYSUM		/*총수량*/
+		  FROM P140 A WITH (NOLOCK)																					
+		  JOIN P130 B WITH (NOLOCK) ON A.WDKEY = B.WDKEY AND A.ORGCD = B.ORGCD AND A.WHCD = B.WHCD																					
+		  JOIN P004 D WITH (NOLOCK) ON A.COMPCD = D.COMPCD AND A.WHCD = D.WHCD																					
+		  JOIN P002 E WITH (NOLOCK) ON A.COMPCD = E.COMPCD AND A.ORGCD = E.ORGCD	
+		  JOIN P003 F WITH (NOLOCK) ON B.COMPCD = F.COMPCD AND B.CUSTCD = F.CUSTCD AND B.ORGCD = F.ORGCD
+		  /*LEFT OUTER JOIN P016 H WITH (NOLOCK) ON B.COMPCD = H.COMPCD AND A.ORGCD = H.ORGCD AND B.DEPTCD = H.DEPTCD*/
+		  /*LEFT OUTER JOIN S010 I WITH (NOLOCK) ON B.COMPCD = I.COMPCD AND B.USERCD = I.USERCD*/
+		 WHERE A.COMPCD = #{S_COMPCD}
+	      	<if test="S_WISTS != null and S_WISTS != ''">
+				AND B.WISTS = #{S_WISTS}
+			</if>
+			<if test="S_WHCD != null and S_WHCD != ''">
+				AND A.WHCD LIKE '%' + #{S_WHCD} + '%'
+			</if>
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+				AND A.ORGCD LIKE '%' + #{S_ORGCD} + '%'
+			</if>
+			<if test="S_CUSTCD != null and S_CUSTCD != ''">
+			   AND B.CUSTCD = #{S_CUSTCD}
+			</if>
+			<if test="S_WDDT_FROM != null and S_WDDT_FROM != ''">
+				AND A.WDDT <![CDATA[>=]]> REPLACE(#{S_WDDT_FROM},'-','')
+			</if>
+			<if test="S_WDDT_TO != null and S_WDDT_TO != ''">
+				AND A.WDDT <![CDATA[<=]]> REPLACE(#{S_WDDT_TO},'-','')
+			</if>
+			<if test="S_SEARCH != null and S_SEARCH != ''">
+			    <if test="S_SERACHCOMBO == 'WIKEY' ">
+			   		AND B.WIKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH}) + '%'
+				</if>
+				<if test="S_SERACHCOMBO == 'WDKEY' ">
+			   		AND B.WDKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH}) + '%'
+				</if>
+			</if>
+			<if test="S_WITYPE != null and S_WITYPE != ''">
+			   AND B.WITYPE = #{S_WITYPE}
+			</if>
+				AND EXISTS (SELECT * FROM P131 Z WITH (NOLOCK)	
+							  JOIN P006 X WITH (NOLOCK)	ON Z.COMPCD = X.COMPCD AND Z.ITEMCD = X.ITEMCD   
+							 WHERE B.WIKEY = Z.WIKEY  
+				<if test="S_ITEMCD != null and S_ITEMCD != ''">
+							       AND ((Z.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+							           OR (X.NAME LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%'))
+				</if>
+				<if test="S_F_USER01 != null and S_F_USER01 != ''">
+			                   AND X.F_USER01 = #{S_F_USER01}
+				</if>
+				<if test="S_F_USER02 != null and S_F_USER02 != ''">
+				               AND X.F_USER02 = #{S_F_USER02}
+				</if>
+				<if test="S_F_USER03 != null and S_F_USER03 != ''">
+				               AND X.F_USER03 = #{S_F_USER03}
+				</if>
+				<if test="S_F_USER04 != null and S_F_USER04 != ''">
+				               AND X.F_USER04 = #{S_F_USER04}
+				</if>
+				<if test="S_F_USER05 != null and S_F_USER05 != ''">
+				               AND X.F_USER05 = #{S_F_USER05}
+				</if>
+				<if test="S_F_USER11 != null and S_F_USER11 != ''">
+				               AND X.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+				</if>
+				<if test="S_F_USER12 != null and S_F_USER12 != ''">
+				               AND X.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+				</if>
+				<if test="S_F_USER13 != null and S_F_USER13 != ''">
+				               AND X.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+				</if>
+				<if test="S_F_USER14 != null and S_F_USER14 != ''">
+				               AND X.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+				</if>
+				<if test="S_F_USER15 != null and S_F_USER15 != ''">
+				               AND X.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+				</if>
+						   )		
+		  ORDER BY A.WDKEY DESC, B.WIKEY
+	</select>
+	
+	<!-- 입고지시취소 : 상세검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100360.getDetail */														
+		SELECT A.WIKEY					/*입고번호*/
+			 , A.SEQ					/*순번*/
+			 , A.ITEMCD					/*품목코드*/
+		     , B.NAME AS ITEMNM			/*품명*/
+		     , A.WISCHQTY				/*입고예정수량*/
+		     , A.WIQTY					/*입고수량*/
+		     , A.EXCHCD					/*화폐단위*/
+		     , A.EXCHRATE				/*환율*/
+		     , A.UNITPRICE				/*화폐단위단가*/
+		     , A.EXCHAMT				/*입고금액(화폐단위)*/
+		     , A.SUPPLYAMT				/*입고금액(원화환산)*/
+		     , A.LOT1					/*로트속성1*/
+		     , A.LOT2					/*로트속성2*/
+		     , A.LOT3					/*로트속성3*/
+		     , A.LOT4					/*로트속성4*/
+		     , A.LOT5					/*로트속성5*/
+		     , A.COMPCD					/*회사코드*/
+		     , A.WHCD					/*창고코드*/
+		     , A.POKEY					/*발주번호*/
+		     , A.POSEQ					/*발주순번*/
+		     , A.PREDISTAMT				/*배부전금액*/
+		     , A.DISTAMT				/*배부비용*/
+		     , A.REMARK					/*비고*/
+		     , A.ADDUSERCD											/*등록자ID*/
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME	/*등록일시*/
+		     , A.UPDUSERCD											/*수정자ID*/
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME	/*수정일시*/
+		     , A.TERMINALCD											/*IP*/
+		     , B.F_USER01
+		     , B.F_USER02
+		     , B.F_USER03
+		     , B.F_USER04
+		     , B.F_USER05
+		     , B.F_USER11
+		     , B.F_USER12
+		     , B.F_USER13
+		     , B.F_USER14
+		     , B.F_USER15
+		     , B.ITEMSIZE /* 규격 */
+		     , B.UNITCD /* 단위 */
+		     , B.UNITTYPE /* 관리단위 */
+		     , B.INBOXQTY /* 박스입수량 */ 
+		     <!-- , A.IFORDERNO
+		     , A.IFORDERSUBNO
+		     , A.IFORDERSEQ
+		     , A.IFPOQTY  --> 
+		     , dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'BOX', B.INBOXQTY, ISNULL(A.WISCHQTY,0))  AS WISCHQTY_BOX /* 지시BOX */
+		     , dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'EA', B.INBOXQTY, ISNULL(A.WISCHQTY,0))  AS WISCHQTY_EA /* 지시EA */
+		  FROM P131 A WITH (NOLOCK)									
+		  JOIN P006 B WITH (NOLOCK)	ON A.COMPCD = B.COMPCD AND A.ITEMCD = B.ITEMCD AND A.ORGCD = B.ORGCD										
+	     WHERE A.WIKEY = #{WIKEY}																					
+		 ORDER BY A.SEQ
+	</select>
+	
+	<!-- 입고지시취소 : 입고전표 LOCK -->
+	<update id="updateWILock" parameterType="LDataMap">
+		/* alexcloud.p100.P100360.updateWILock */
+		UPDATE P130 WITH (ROWLOCK)
+		   SET UPDDATETIME = GETDATE()
+		 WHERE WDKEY = #{WDKEY}
+	</update>
+	
+	<!-- 입고지시취소 : 입고전표 LOCK -->
+	<update id="updateWDLock" parameterType="LDataMap">
+		/* alexcloud.p100.P100360.updateWDLock */
+		UPDATE P140 WITH (ROWLOCK)
+		   SET UPDDATETIME = GETDATE()
+		 WHERE WDKEY = #{WDKEY}
+	</update>
+	
+	<!-- 입고지시취소 : 전표 상태 체크 -->
+	<select id="getWdSts" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.P100360.getWdSts */		
+		SELECT B.WDKEY, B.WISTS, B.WIKEY
+		  FROM P140 A WITH (NOLOCK)
+		  JOIN P130	B WITH (NOLOCK) ON A.WDKEY = B.WDKEY	AND A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.WHCD = B.WHCD							
+	     WHERE B.WIKEY = #{WIKEY}		
+	</select>	
+	
+	<!-- 입고지시취소 : 입고전표 삭제 -->
+	<delete id="deleteWD" parameterType="LDataMap">
+	/* alexcloud.p100.P100360.deleteWD */		
+		DELETE FROM P140 WITH (ROWLOCK) WHERE WDKEY = #{WDKEY}
+	</delete>
+	
+	<!-- 입고지시취소 : 입고전표 상태, 입고일자, 입고지시번호  UPDATE -->
+	<update id="updateWiChange" parameterType="LDataMap">
+		/* alexcloud.p100.P100360.updateWiChange */
+		UPDATE P130 WITH (ROWLOCK)
+		   SET WDKEY = NULL
+		     , WISTS = '100'
+		     , WIDT = NULL
+		   	 , UPDUSERCD = #{LOGIN_USERCD}
+		   	 , UPDDATETIME = GETDATE()
+		   	 , TERMINALCD = #{LOGIN_IP}
+		 WHERE WIKEY = #{WIKEY}
+	</update>
+	
+	<!-- 입고지시취소 : 삭제여부 체크 -->
+	<select id="getWdDelChk" parameterType="LDataMap" resultType="int">
+		/* alexcloud.p100.P100360.getWdSts */		
+		SELECT COUNT(1) AS CNT
+		  FROM P140 A WITH (NOLOCK)
+		  JOIN P130	B WITH (NOLOCK) ON A.WDKEY = B.WDKEY	AND A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.WHCD = B.WHCD								
+	     WHERE B.WDKEY = #{WDKEY}		
+	</select>
+			
+</mapper>

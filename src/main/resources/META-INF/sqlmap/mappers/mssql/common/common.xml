@@ -1,0 +1,1073 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CommonMapper">
+
+	<!-- 대메뉴 가져오기 -->
+	<select id="getMenuL1" parameterType="LDataMap" resultType="LDataMap">
+		SELECT A.MENUL1KEY, A.L1TITLE, A.SORTNO
+		FROM S007 A WITH (NOLOCK)
+		JOIN S009 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.MENUL1KEY = B.MENUL1KEY
+		JOIN S005 C WITH (NOLOCK)
+		  ON B.APPKEY = C.APPKEY
+		JOIN S006 D WITH (NOLOCK)
+		  ON B.COMPCD = D.COMPCD AND B.MENUL1KEY = D.MENUL1KEY AND B.MENUL2KEY = D.MENUL2KEY AND B.APPKEY = D.APPKEY
+		JOIN S010 E WITH (NOLOCK)
+		  ON D.COMPCD = E.COMPCD AND D.USERCD = E.USERCD
+		WHERE D.USERCD = #{USERCD}
+		GROUP BY A.MENUL1KEY, A.L1TITLE, A.SORTNO
+		ORDER BY A.SORTNO
+	</select>
+
+	<!-- 중메뉴 가져오기 -->
+	<select id="getMenuL2" parameterType="LDataMap" resultType="LDataMap">
+		SELECT A.MENUL1KEY, CAST(A.MENUL2KEY AS NVARCHAR)AS MENUL2KEY, A.L2TITLE, A.SORTNO
+		FROM S008 A WITH (NOLOCK)
+		JOIN S009 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.MENUL1KEY = B.MENUL1KEY AND A.MENUL2KEY = B.MENUL2KEY
+		JOIN S005 C WITH (NOLOCK)
+		  ON B.APPKEY = C.APPKEY
+		JOIN S006 D WITH (NOLOCK)
+		  ON B.COMPCD = D.COMPCD AND B.MENUL1KEY = D.MENUL1KEY AND B.MENUL2KEY = D.MENUL2KEY AND B.APPKEY = D.APPKEY
+		JOIN S010 E WITH (NOLOCK)
+		  ON D.COMPCD = E.COMPCD AND D.USERCD = E.USERCD
+		WHERE A.MENUL1KEY = #{MENUL1KEY}
+		  AND D.USERCD = #{USERCD}
+		GROUP BY A.MENUL1KEY, A.MENUL2KEY, A.L2TITLE, A.SORTNO
+          
+		UNION ALL
+          
+		SELECT 0, A.L2TITLE, A.L2TITLE, 99999
+		FROM S012 A WITH (NOLOCK)
+		JOIN S006 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.USERCD = B.USERCD AND A.APPKEY = B.APPKEY
+		JOIN S009 C WITH (NOLOCK)
+		  ON B.COMPCD = C.COMPCD AND B.MENUL1KEY = C.MENUL1KEY AND B.MENUL2KEY = C.MENUL2KEY AND B.APPKEY = C.APPKEY
+		JOIN S005 D WITH (NOLOCK)
+		  ON C.APPKEY = D.APPKEY
+		JOIN S010 E WITH (NOLOCK)
+		  ON A.COMPCD = E.COMPCD AND A.USERCD = E.USERCD
+		WHERE A.USERCD = #{USERCD}
+		  AND 1 = #{MENUL1KEY}
+		GROUP BY A.L2TITLE
+		ORDER BY SORTNO, L2TITLE
+	</select>
+
+	<!-- 소메뉴 가져오기 -->
+	<select id="getMenuL3" parameterType="LDataMap" resultType="LDataMap">
+		SELECT A.MENUL1KEY, CAST(A.MENUL2KEY AS NVARCHAR)AS MENUL2KEY, A.APPKEY, A.L3TITLE
+			 , B.APPURL, A.SORTNO
+		FROM S009 A WITH (NOLOCK)
+		JOIN S005 B WITH (NOLOCK)
+		  ON A.APPKEY = B.APPKEY
+		JOIN S006 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.MENUL1KEY = C.MENUL1KEY AND A.MENUL2KEY = C.MENUL2KEY AND A.APPKEY = C.APPKEY
+		JOIN S010 D WITH (NOLOCK)
+		  ON C.COMPCD = D.COMPCD AND C.USERCD = D.USERCD
+		WHERE A.MENUL1KEY = #{MENUL1KEY}
+		  AND C.USERCD = #{USERCD}
+		GROUP BY A.MENUL1KEY, A.MENUL2KEY, A.APPKEY, A.L3TITLE
+			   , B.APPURL, A.SORTNO
+			   
+		UNION ALL
+		
+		SELECT 0, A.L2TITLE, A.APPKEY, C.L3TITLE, D.APPURL, A.SORTNO
+		FROM S012 A WITH (NOLOCK)
+		JOIN S006 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.USERCD = B.USERCD AND A.APPKEY = B.APPKEY
+		JOIN S009 C WITH (NOLOCK)
+		  ON B.COMPCD = C.COMPCD AND B.MENUL1KEY = C.MENUL1KEY AND B.MENUL2KEY = C.MENUL2KEY AND B.APPKEY = C.APPKEY
+		JOIN S005 D WITH (NOLOCK)
+		  ON C.APPKEY = D.APPKEY
+		JOIN S010 E WITH (NOLOCK)
+		  ON A.COMPCD = E.COMPCD AND A.USERCD = E.USERCD
+		WHERE A.USERCD = #{USERCD}
+		  AND 1 = #{MENUL1KEY}
+		GROUP BY A.L2TITLE, A.APPKEY, C.L3TITLE, D.APPURL, A.SORTNO
+		ORDER BY MENUL2KEY, SORTNO
+	</select>
+	
+	<!-- 화면 버튼 권한 가져오기 -->
+	<select id="getCommBtnInfo" parameterType="LDataMap" resultType="LDataMap">
+		SELECT A.APPKEY
+		     , MAX(B.BTNSEARCH) AS BTNSEARCH
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNNEW) END AS BTNNEW
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNSAVE) END AS BTNSAVE
+		     , CASE WHEN MAX(A.AUTHDEL) = 'N' THEN 0 ELSE MAX(B.BTNDELETE) END AS BTNDELETE
+		     , CASE WHEN MAX(A.AUTHEXEC) = 'N' THEN 0 ELSE MAX(B.BTNEXECUTE) END AS BTNEXECUTE
+		     , CASE WHEN MAX(A.AUTHEXEC) = 'N' THEN 0 ELSE MAX(B.BTNCANCEL) END AS BTNCANCEL
+		     , CASE WHEN MAX(A.AUTHPRINT) = 'N' THEN 0 ELSE MAX(B.BTNPRINT) END AS BTNPRINT
+		     , CASE WHEN MAX(A.AUTHPRINT) = 'N' THEN 0 ELSE MAX(B.BTNEXCELDOWN) END AS BTNEXCELDOWN
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNEXCELUP) END AS BTNEXCELUP
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNCOPY) END AS BTNCOPY
+		     , MAX(B.BTNLIST) AS BTNLIST
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNINIT) END AS BTNINIT
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNUSER1) END AS BTNUSER1
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNUSER2) END AS BTNUSER2
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNUSER3) END AS BTNUSER3
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNUSER4) END AS BTNUSER4
+		     , CASE WHEN MAX(A.AUTHUPD) = 'N' THEN 0 ELSE MAX(B.BTNUSER5) END AS BTNUSER5
+		     , MAX(A.AUTHSEARCH) AS AUTHSEARCH
+		     , MAX(A.AUTHUPD) AS AUTHUPD
+		     , C.L1TITLE
+		     , D.L2TITLE
+		     , E.L3TITLE
+		FROM S006 A WITH (NOLOCK)
+		JOIN S005 B WITH (NOLOCK)
+		  ON A.APPKEY = B.APPKEY
+		JOIN S007 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.MENUL1KEY = C.MENUL1KEY
+		JOIN S008 D WITH (NOLOCK)
+		  ON C.COMPCD = D.COMPCD AND C.MENUL1KEY = D.MENUL1KEY AND A.MENUL2KEY = D.MENUL2KEY
+		JOIN S009 E WITH (NOLOCK)
+		  ON D.COMPCD = E.COMPCD AND D.MENUL1KEY = E.MENUL1KEY AND D.MENUL2KEY = E.MENUL2KEY AND A.APPKEY = E.APPKEY
+		WHERE A.USERCD = #{USERCD}
+		  AND A.APPKEY = #{APPKEY}
+		<if test='MENUL1KEY != null and MENUL1KEY != "" and MENUL1KEY != "0"'>
+			AND A.MENUL1KEY = #{MENUL1KEY}
+		</if>
+		<!-- <if test='MENUL2KEY != null and MENUL2KEY != "" and MENUL2KEY != "0"'>
+			AND A.MENUL2KEY = #{MENUL2KEY}
+		</if> -->
+		GROUP BY A.APPKEY, C.L1TITLE, D.L2TITLE, E.L3TITLE
+	</select>
+	
+	<!-- 화면 버튼 권한 가져오기(대메뉴/중메뉴에 존재하지 않는 메뉴에 대한 권한 가져오기) -->
+	<select id="getCommBtnInfo2" parameterType="LDataMap" resultType="LDataMap">
+		SELECT A.APPKEY
+				, A.APPNM
+				, A.APPURL
+				, A.USEYN
+				, A.BTNSEARCH
+				, A.BTNNEW
+				, A.BTNSAVE
+				, A.BTNDELETE
+				, A.BTNEXECUTE
+				, A.BTNPRINT
+				, A.BTNCANCEL
+				, A.BTNEXCELDOWN
+				, A.BTNEXCELUP
+				, A.BTNCOPY
+				, A.BTNLIST
+				, A.BTNINIT
+				, A.BTNUSER1
+				, A.BTNUSER2
+				, A.BTNUSER3
+				, A.BTNUSER4
+				, A.BTNUSER5
+				, A.REMARK
+				, A.ADDUSERCD
+				, A.ADDDATETIME
+				, A.UPDUSERCD
+				, A.UPDDATETIME
+				, A.TERMINALCD
+		FROM S005 A WITH (NOLOCK)
+		WHERE A.APPKEY = #{APPKEY}
+	</select>
+
+	<!-- 메인화면 : 창고코드 목록 -->
+	<select id="getWhcdList" parameterType="LDataMap" resultType="codeVO">
+		/* common.common.getWhcdList */
+		SELECT COMPCD, WHCD AS CODE
+			 , NAME AS VALUE 
+			 , WHCD + '[' + NAME + ']' AS VALUE2 
+		FROM P004 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		ORDER BY WHCD 
+	</select>
+	
+	<!-- 메인화면 : 공지사항 -->
+	<select id="getNoticeList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getNoticeList */
+		<![CDATA[
+		SELECT Z.NTKEY
+			 , Z.NTTYPE
+			 , Z.TITLE
+			 , Z.ADDUSERCD
+			 , Z.ADDUSERNM
+			 , CONVERT(VARCHAR, Z.ADDDATETIME, 23) AS ADDDATETIME
+		FROM (
+			SELECT A.NTKEY
+				 , A.TITLE
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.NTTYPE
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND A.TARGET = 'COMP'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY)
+			UNION ALL
+			SELECT A.NTKEY
+				 , A.TITLE
+				 , A.ADDUSERCD
+				 , B.NAME AS ADDUSERNM
+				 , A.ADDDATETIME
+				 , A.NTTYPE
+			FROM S014 A WITH (NOLOCK)
+			JOIN S010 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ADDUSERCD = B.USERCD
+			WHERE A.ISUSING = 'Y'
+			  AND A.TARGET = 'ORG'
+			  AND EXISTS (SELECT 1 FROM S015 A1 WITH (NOLOCK)
+						  JOIN S010 A2 WITH (NOLOCK)
+							ON A1.COMPCD = A2.COMPCD AND A1.ORGCD = A2.ORGCD AND A2.USERCD = #{LOGIN_USERCD}
+						  WHERE A.NTKEY = A1.NTKEY)
+		) Z
+		ORDER BY CASE WHEN Z.NTTYPE = 'IMP' THEN 0 ELSE 1 END, Z.ADDDATETIME DESC
+		OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
+		]]>
+	</select>
+	
+	<!-- 메인화면 : 미확정 전표 현황 -->
+	<select id="getNotStateList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getNotStateList */
+		<![CDATA[
+		WITH T1 (TYPE, TODAYCNT, OLDCNT) AS (
+			SELECT 'WI' AS TYPE
+				 , COUNT(CASE WHEN WISCHDT = REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS TODAYCNT
+				 , COUNT(CASE WHEN WISCHDT < REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS OLDCNT
+			FROM P130 WITH (NOLOCK)
+			WHERE WISTS <> '400'
+			  AND WISTS <> '99'
+			  AND COMPCD = #{S_COMPCD}
+		]]>		
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			  AND ORGCD = #{S_ORGCD}
+		</if>
+		<![CDATA[
+			UNION ALL
+			SELECT 'WO' AS TYPE
+				 , COUNT(CASE WHEN WOSCHDT = REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS TODAYCNT
+				 , COUNT(CASE WHEN WOSCHDT < REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS OLDCNT
+			FROM P230 WITH (NOLOCK)
+			WHERE WOSTS <> '400'
+			  AND WOSTS <> '99'
+			  AND COMPCD = #{S_COMPCD}
+		]]>	
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			  AND ORGCD = #{S_ORGCD}
+		</if>
+		<![CDATA[
+			UNION ALL
+			SELECT 'IM' AS TYPE
+				 , COUNT(CASE WHEN IMDT = REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS TODAYCNT
+				 , COUNT(CASE WHEN IMDT < REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS OLDCNT
+			FROM P710 WITH (NOLOCK)
+			WHERE IMSTS <> '200'
+			  AND IMSTS <> '99'
+			  AND COMPCD = #{S_COMPCD}
+		]]>		
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			  AND ORGCD = #{S_ORGCD}
+		</if>
+		<![CDATA[
+			UNION ALL
+			SELECT 'IA' AS TYPE
+				 , COUNT(CASE WHEN IADT = REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS TODAYCNT
+				 , COUNT(CASE WHEN IADT < REPLACE(#{S_STDDATE}, '-', '') THEN 1 END) AS OLDCNT
+			FROM P740 WITH (NOLOCK)
+			WHERE IASTS <> '200'
+			  AND IASTS <> '99'
+			  AND COMPCD = #{S_COMPCD}
+		]]>		
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			  AND ORGCD = #{S_ORGCD}
+		</if>
+		<![CDATA[
+		) 
+		SELECT '당일' AS TYPE
+			 , ISNULL(MAX(CASE TYPE WHEN 'WI' THEN TODAYCNT END), 0) AS WICNT
+			 , ISNULL(MAX(CASE TYPE WHEN 'WO' THEN TODAYCNT END), 0) AS WOCNT
+			 , ISNULL(MAX(CASE TYPE WHEN 'IM' THEN TODAYCNT END), 0) AS IMCNT
+			 , ISNULL(MAX(CASE TYPE WHEN 'IA' THEN TODAYCNT END), 0) AS IACNT
+		FROM T1
+		UNION ALL
+		SELECT '이전' AS TYPE
+			 , ISNULL(MAX(CASE TYPE WHEN 'WI' THEN OLDCNT END), 0) AS WICNT
+			 , ISNULL(MAX(CASE TYPE WHEN 'WO' THEN OLDCNT END), 0) AS WOCNT
+			 , ISNULL(MAX(CASE TYPE WHEN 'IM' THEN OLDCNT END), 0) AS IMCNT
+			 , ISNULL(MAX(CASE TYPE WHEN 'IA' THEN OLDCNT END), 0) AS IACNT
+		FROM T1
+		]]>
+	</select>
+	
+	<!-- 메인화면 : 당월 거래처 매출 분포도 -->
+	<select id="getCompRateList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getItemRateList */
+		<![CDATA[
+		SELECT CASE WHEN AA.ROWNUM < 10 THEN AA.CUSTCD ELSE 'OTHER' END AS CUSTCD
+			 , CASE WHEN AA.ROWNUM < 10 THEN SUBSTRING(AA.CUSTNM, 1, 10) ELSE '기타' END AS name
+			 , SUM(AA.QTY) AS QTY
+			 , CASE WHEN (SUM(SUM(AA.QTY)) OVER()) = 0 THEN
+		          0
+		         ELSE
+		          SUM(AA.QTY) / SUM(SUM(AA.QTY)) OVER() * 100
+		       END AS y
+		FROM (
+			SELECT ROW_NUMBER() OVER(ORDER BY SUM(B.WOQTY) DESC) AS ROWNUM
+				 , A.CUSTCD
+				 , MAX(C.NAME) AS CUSTNM
+				 , SUM(B.WOQTY) AS QTY
+			FROM P230 A WITH (NOLOCK)
+			JOIN P231 B WITH (NOLOCK)
+			  ON A.WOKEY = B.WOKEY
+			JOIN P003 C WITH (NOLOCK)
+			  ON A.COMPCD = C.COMPCD 
+			 AND A.ORGCD = C.ORGCD
+			 AND A.CUSTCD = C.CUSTCD
+			WHERE A.WOSTS = '400'
+			  AND A.COMPCD = #{S_COMPCD}
+			  AND A.ORGCD = #{S_ORGCD}
+			  AND A.WODT BETWEEN (SELECT DATENAME(YEAR, GETDATE()) + DATENAME(MONTH, GETDATE()) + '01') 
+					AND (SELECT CONVERT(VARCHAR, DATEADD(DAY, -1, DATEADD(MONTH, 1, DATENAME(YEAR,GETDATE()) + DATENAME(MONTH,GETDATE()) + '01')), 112))
+			GROUP BY A.CUSTCD
+		) AA
+		GROUP BY CASE WHEN AA.ROWNUM < 10 THEN AA.CUSTCD ELSE 'OTHER' END, CASE WHEN AA.ROWNUM < 10 THEN SUBSTRING(AA.CUSTNM, 1, 10) ELSE '기타' END
+		ORDER BY SUM(AA.QTY) DESC
+		]]>
+	</select>
+	
+	<!-- 메인화면 : 당월  셀러 매출 분포도 -->
+	<select id="getCompOrgRateList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getCompOrgRateList */
+		<![CDATA[
+		SELECT CASE WHEN AA.ROWNUM < 10 THEN AA.ORGCD ELSE 'OTHER' END AS ORGCD
+			 , CASE WHEN AA.ROWNUM < 10 THEN SUBSTRING(AA.ORGNM, 1, 10) ELSE '기타' END AS name
+			 , SUM(AA.QTY) AS QTY
+			 , CASE WHEN (SUM(SUM(AA.QTY)) OVER()) = 0 THEN
+		          0
+		         ELSE
+		          SUM(AA.QTY) / SUM(SUM(AA.QTY)) OVER() * 100
+		       END AS y
+		FROM (
+			SELECT ROW_NUMBER() OVER(ORDER BY SUM(B.WOQTY) DESC) AS ROWNUM
+				 , A.ORGCD
+				 , MAX(C.NAME) AS ORGNM
+				 , SUM(B.WOQTY) AS QTY
+			FROM P230 A WITH (NOLOCK)
+			JOIN P231 B WITH (NOLOCK)
+			  ON A.WOKEY = B.WOKEY
+			JOIN P002 C WITH (NOLOCK)
+			  ON A.COMPCD = C.COMPCD 
+			 AND A.ORGCD = C.ORGCD
+			WHERE A.WOSTS = '400'
+			  AND A.COMPCD = #{S_COMPCD}
+			  AND A.WODT BETWEEN (SELECT DATENAME(YEAR, GETDATE()) + DATENAME(MONTH, GETDATE()) + '01') 
+					AND (SELECT CONVERT(VARCHAR, DATEADD(DAY, -1, DATEADD(MONTH, 1, DATENAME(YEAR,GETDATE()) + DATENAME(MONTH,GETDATE()) + '01')), 112))
+			GROUP BY A.ORGCD
+		) AA
+		GROUP BY CASE WHEN AA.ROWNUM < 10 THEN AA.ORGCD ELSE 'OTHER' END, CASE WHEN AA.ROWNUM < 10 THEN SUBSTRING(AA.ORGNM, 1, 10) ELSE '기타' END
+		ORDER BY SUM(AA.QTY) DESC
+		]]>
+	</select>
+	
+	<!-- 메인화면 : 당월 품목 매출 분포도 -->
+	<select id="getItemRateList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getItemRateList */
+		<![CDATA[
+		SELECT CASE WHEN AA.ROWNUM < 10 THEN AA.ITEMCD ELSE 'OTHER' END AS ITEMCD
+			 , CASE WHEN AA.ROWNUM < 10 THEN SUBSTRING(AA.ITEMNM, 1, 10) ELSE '기타' END AS name
+			 , SUM(AA.QTY) AS QTY
+			 , CASE WHEN (SUM(SUM(AA.QTY)) OVER()) = 0 THEN
+		          0
+		         ELSE
+		          SUM(AA.QTY) / SUM(SUM(AA.QTY)) OVER() * 100
+		       END AS y
+		FROM (
+			SELECT ROW_NUMBER() OVER(ORDER BY SUM(B.WOQTY) DESC) AS ROWNUM
+				 , B.ITEMCD
+				 , C.NAME AS ITEMNM
+				 , SUM(B.WOQTY) AS QTY
+			FROM P230 A WITH (NOLOCK)
+			JOIN P231 B WITH (NOLOCK)
+			  ON A.WOKEY = B.WOKEY
+			JOIN P006 C WITH (NOLOCK)
+			  ON B.COMPCD = C.COMPCD 
+			 AND B.ORGCD = C.ORGCD
+			 AND B.ITEMCD = C.ITEMCD
+			WHERE A.WOSTS = '400'
+			  AND A.COMPCD = #{S_COMPCD}
+		]]>		
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			  AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<![CDATA[
+			  AND A.WODT BETWEEN (SELECT DATENAME(YEAR, GETDATE()) + DATENAME(MONTH, GETDATE()) + '01') 
+					AND (SELECT CONVERT(VARCHAR, DATEADD(DAY, -1, DATEADD(MONTH, 1, DATENAME(YEAR,GETDATE()) + DATENAME(MONTH,GETDATE()) + '01')), 112))
+			GROUP BY B.ITEMCD, C.NAME
+		) AA
+		GROUP BY CASE WHEN AA.ROWNUM < 10 THEN AA.ITEMCD ELSE 'OTHER' END, CASE WHEN AA.ROWNUM < 10 THEN SUBSTRING(AA.ITEMNM, 1, 10) ELSE '기타' END
+		ORDER BY SUM(AA.QTY) DESC
+		]]>
+	</select>
+	
+	<!-- 메인화면 : 해당월의 정보 가져오기 -->
+	<select id="getThisMonthList" parameterType="LDataMap" resultType="LDataMap">
+		<![CDATA[
+		SELECT SUBSTRING(CONVERT(NVARCHAR, DATEADD(D, NUMBER, (SELECT DATENAME(YEAR, GETDATE()) + DATENAME(MONTH, GETDATE()) + '01')), 112),7,2) AS DT
+		  FROM MASTER..SPT_VALUES
+			WHERE TYPE = 'P' 
+			  AND NUMBER <= DATEDIFF(D, (SELECT DATENAME(YEAR, GETDATE()) + DATENAME(MONTH, GETDATE()) + '01')
+					, (SELECT CONVERT(VARCHAR, DATEADD(DAY, -1, DATEADD(MONTH, 1, DATENAME(YEAR,GETDATE()) + DATENAME(MONTH,GETDATE()) + '01')), 112)))
+		]]>
+	</select>
+	
+	<!-- 메인화면 : 당월 입출고 현황 -->
+	<select id="getWiWoRetList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getWiWoRetList */
+		<![CDATA[
+		SELECT AAA.DT
+			 , SUBSTRING(AAA.DT, 7, 2) AS DT_VIEW
+			 , CONVERT(INT,MAX(CASE AAA.TYPE WHEN 'WI' THEN AAA.QTY ELSE 0 END)) AS WIQTY
+			 , CONVERT(INT,MAX(CASE AAA.TYPE WHEN 'WO' THEN AAA.QTY ELSE 0 END)) AS WOQTY
+		FROM (
+			SELECT AA.DT, BB.TYPE, BB.QTY
+			FROM (
+			SELECT CONVERT(CHAR(10), DATEADD(D, NUMBER, (SELECT DATENAME(YEAR, GETDATE()) + DATENAME(MONTH, GETDATE()) + '01')), 112) AS DT
+			FROM MASTER..SPT_VALUES
+			WHERE TYPE = 'P' 
+			  AND NUMBER <= DATEDIFF(D, (SELECT DATENAME(YEAR, GETDATE()) + DATENAME(MONTH, GETDATE()) + '01')
+					, (SELECT CONVERT(VARCHAR, DATEADD(DAY, -1, DATEADD(MONTH, 1, DATENAME(YEAR,GETDATE()) + DATENAME(MONTH,GETDATE()) + '01')), 112)))
+			) AA
+			LEFT OUTER JOIN (
+				SELECT A.WIDT AS DT, 'WI' AS TYPE, SUM(B.WIQTY) AS QTY
+				FROM P130 A WITH (NOLOCK)
+				JOIN P131 B WITH (NOLOCK)
+				  ON A.WIKEY = B.WIKEY
+				WHERE A.WISTS = '400'
+				  AND A.COMPCD = #{S_COMPCD}
+		]]>		
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			      AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<![CDATA[
+				GROUP BY A.WIDT
+				UNION ALL
+				SELECT A.WODT AS DT, 'WO' AS TYPE, SUM(B.WOQTY) AS QTY
+				FROM P230 A WITH (NOLOCK)
+				JOIN P231 B WITH (NOLOCK)
+				  ON A.WOKEY = B.WOKEY
+				WHERE A.WOSTS = '400'
+				  AND A.COMPCD = #{S_COMPCD}
+		]]>		
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			      AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<![CDATA[
+				GROUP BY A.WODT
+			) BB
+			  ON AA.DT = BB.DT
+		) AAA
+		GROUP BY AAA.DT
+		ORDER BY DT
+		]]>
+	</select>
+	
+	<!-- 메인화면 : 로케이션 현재고 현황 -->
+	<select id="getLocInvList" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getLocInvList */
+		/* common.common.getLocInvList */
+		SELECT I.COMPCD, I.WHCD, K.CODE, ISNULL(J.QTY, 0) QTY
+		  FROM (SELECT A.CODE, A.SNAME1, A.SORTNO
+		          FROM S002 A WITH (NOLOCK)
+		         WHERE A.COMPCD = #{S_COMPCD}
+		           AND A.CODEKEY = 'LOCGROUP'
+		        UNION ALL
+		        SELECT 'ZZZZZ', '미지정', 99999) K
+		  JOIN P004 I WITH (NOLOCK)
+		    ON I.COMPCD = #{S_COMPCD}
+		  LEFT OUTER JOIN (SELECT A.COMPCD,
+		                          A.WHCD,
+		                          ISNULL(B.LOCGROUP,'ZZZZZ') AS LOCGROUP,
+		                          SUM(A.QTY - A.ALLOCQTY) AS QTY
+		                     FROM P810 A WITH(NOLOCK)
+		                     JOIN P005 B WITH(NOLOCK)
+		                       ON A.COMPCD = B.COMPCD
+		                      AND A.WHCD = B.WHCD
+		                      AND A.LOCCD = B.LOCCD
+		                    WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			                  AND A.ORGCD = #{S_ORGCD}
+		</if>
+		                    GROUP BY A.COMPCD, A.ORGCD, A.WHCD, B.LOCGROUP) J
+		    ON I.COMPCD = J.COMPCD
+		   AND I.WHCD = J.WHCD
+		   AND K.CODE = J.LOCGROUP
+		 ORDER BY I.COMPCD, I.WHCD, K.SORTNO
+
+	</select>
+
+	<!-- 로트속성 정보 및 상품지정 속성  (추후 캐시mapper로 이동해야 함)-->
+	<select id="getCompItemInfo" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getCompItemInfo */
+		SELECT A.COMPCD
+			 , A.LOT1_YN
+			 , A.LOT1_LABEL
+			 , A.LOT1_TYPE
+			 , A.LOT2_YN
+			 , A.LOT2_LABEL
+			 , A.LOT2_TYPE
+			 , A.LOT3_YN
+			 , A.LOT3_LABEL
+			 , A.LOT3_TYPE
+			 , A.LOT4_YN
+			 , A.LOT4_LABEL
+			 , A.LOT5_YN
+			 , A.LOT5_LABEL
+			 , A.F_USER01_YN
+			 , A.F_USER01_LABEL
+			 , A.F_USER02_YN
+			 , A.F_USER02_LABEL
+			 , A.F_USER03_YN
+			 , A.F_USER03_LABEL
+			 , A.F_USER04_YN
+			 , A.F_USER04_LABEL
+			 , A.F_USER05_YN
+			 , A.F_USER05_LABEL
+			 , A.F_USER11_YN
+			 , A.F_USER11_LABEL
+			 , A.F_USER12_YN
+			 , A.F_USER12_LABEL
+			 , A.F_USER13_YN
+			 , A.F_USER13_LABEL
+			 , A.F_USER14_YN
+			 , A.F_USER14_LABEL
+			 , A.F_USER15_YN
+			 , A.F_USER15_LABEL
+		  FROM P020 A WITH (NOLOCK)
+		 WHERE A.COMPCD = #{COMPCD}
+	</select>
+	
+	<!-- 채번 -->
+	<select id="getKEY" parameterType="LDataMap" statementType="CALLABLE" >
+	{
+		call USX_GETSEQ(#{P_SEQ_NAME, jdbcType = VARCHAR, mode = IN}
+		              , #{P_DATA1, jdbcType = VARCHAR, mode = IN}
+		              , NULL
+		              , NULL
+		              , NULL
+		              , NULL
+	                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+	                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+	                  , #{P_SEQVALUE, jdbcType = VARCHAR, mode = OUT, javaType=String}
+	                  )
+	}
+    </select>
+    
+    <!-- 상태값-->
+	<select id="getStatus" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_GetStatus(#{P_TABLE, jdbcType = VARCHAR, mode = IN}
+		                 , #{P_KEY, jdbcType = VARCHAR, mode = IN}
+		                 , #{P_STS, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                 )
+	}
+	</select>
+	
+	<!-- 로그인 사용자 정보 조회 -->
+	<select id="getUserInfo" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getUserInfo */
+		SELECT A.COMPCD
+		     , A.USERCD
+		     , A.NAME
+		     , A.ORGCD
+		     , A.CUSTCD
+		     , A.DEPTCD
+		     , A.POSITION
+		     , A.WHCD
+		     , A.USERGROUP
+		     , A.PHONENO
+		     , A.FAX
+		     , A.EMAIL
+		     , A.SEX
+		     , A.BIRTHDATE
+		     , A.WORKTYPE
+		     , A.EMPLOYTYPE
+		     , A.EMPLOYDATE
+		     , A.ISDRT
+		     , A.ISLOCK
+		     , A.ISUSING
+		     , A.ADDUSERCD
+		     , A.ADDDATETIME
+		     , A.UPDUSERCD
+		     , A.UPDDATETIME
+		     , A.TERMINALCD
+		 FROM S010 A WITH (NOLOCK)
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.USERCD = #{USERCD}
+	</select>
+	
+	
+	<!-- 프린터  -->
+	<select id="getPrint" parameterType="LDataMap" resultType="printVO">
+	/* common.common.getPrint */
+		SELECT 
+			   ISNULL(A.PRINT1, '-') AS PRINT1
+			 , ISNULL(A.PRINT2, '-') AS PRINT2
+			 , ISNULL(A.PRINT3, '-') AS PRINT3
+			 , ISNULL(A.PRINT4, '-') AS PRINT4
+		 FROM S017 A
+		WHERE UPPER(A.USERCD) = UPPER(#{USERCD})
+	</select>
+	
+	<!-- 일정정보  -->
+	<select id="getCalendarList" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getCalendarList */
+		SELECT SEQ_NAME  
+		     , USERCD
+			 , STRTDATETIME
+			 , CASE WHEN ALLDAYYN = '1'
+					THEN CONVERT(CHAR(10), STRTDATETIME, 23)
+					ELSE CONVERT(CHAR(23), STRTDATETIME, 126)
+			   END STARTDATE
+			 , ENDDATETIME
+			 , CASE WHEN ALLDAYYN = '1'
+					THEN CONVERT(CHAR(10), ENDDATETIME, 23)
+					ELSE CONVERT(CHAR(23), ENDDATETIME, 126)
+			   END ENDDATE
+			 , ALLDAYYN
+			 , TITLE
+			 , MEMO
+		  FROM S018 WITH (NOLOCK)
+		 WHERE 1=1
+		   AND USERCD = #{LOGIN_USERCD}
+		   AND (CONVERT(CHAR(10), STRTDATETIME, 23) BETWEEN #{STARTDATE} AND #{ENDDATE}
+		   		OR CONVERT(CHAR(10), ENDDATETIME, 23) BETWEEN #{STARTDATE} AND #{ENDDATE})
+		      
+	</select>
+	
+	<!-- 입고요약정보  -->
+	<select id="getWiSummaryList" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getWiSummaryList */
+		SELECT SUM(WI01) AS WI01, /* 전체 입고량(누계) */
+		       SUM(WI02) AS WI02, /* 전체 입고량(당일) */
+		       SUM(WI03) AS WI03, /* 전체 PO량(당일) */
+		       SUM(WI04) AS WI04, /* 전체 입고량(당일) */
+		       SUM(WI05) AS WI05, /* ERP 입고량(누계) */
+		       SUM(WI01) AS WI06, /* WMS 입고량(누계) */
+		       SUM(WI07) AS WI07, /* 입고예정 업체수(당일) */
+		       SUM(WI08) AS WI08  /* 익일입고 업체수 */
+		FROM   (SELECT Sum(CASE
+		                     WHEN WISTS = '400' THEN WIQTY
+		                     ELSE 0
+		                   END)                AS WI01,
+		               Sum(CASE
+		                     WHEN WISTS = '400'
+		                          AND WIDT = CONVERT(CHAR(8), #{S_STDDATE}, 112) THEN WIQTY
+		                     ELSE 0
+		                   END)                AS WI02,
+		               Sum(CASE
+		                     WHEN WISTS != '99'
+		                          AND WIDT = CONVERT(CHAR(8), #{S_STDDATE}, 112) THEN (CASE WHEN WISTS = '400' THEN WISCHQTY ELSE WIQTY END)
+		                     ELSE 0
+		                   END)                AS WI04,
+		               Count(DISTINCT ( CASE
+		                                  WHEN WISTS != '99'
+		                                       AND WIDT = CONVERT(CHAR(8), #{S_STDDATE}, 112) THEN A.CUSTCD
+		                                  ELSE NULL
+		                                END )) AS WI07,
+		               Count(DISTINCT ( CASE
+		                                  WHEN WISTS = '400'
+		                                       AND WIDT = Dateadd(DD, -1, CONVERT(CHAR(8), #{S_STDDATE}, 112)) THEN A.CUSTCD
+		                                  ELSE NULL
+		                                END )) AS WI08,
+		               0                       AS WI03,
+		               0                       AS WI05
+		        FROM   P130 A WITH (NOLOCK)
+		               JOIN P131 B WITH (NOLOCK)
+		                 ON A.WIKEY = B.WIKEY
+		        WHERE  1 = 1
+		        	   AND A.COMPCD = #{S_COMPCD}	        	   
+		        	   AND A.ORGCD = #{S_ORGCD}
+		        	   AND WIDT BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112) 
+		        UNION ALL
+		        SELECT 0,
+		               0,
+		               0,
+		               0,
+		               0,
+		               Sum(CASE
+		                     WHEN ORDERDATE = CONVERT(CHAR(8), #{S_STDDATE}, 112) THEN STOCKCOUNT
+		                     ELSE 0
+		                   END),
+		               Sum(CASE 
+							 WHEN INTF_YN = 'S'	THEN STOCKCOUNT
+							 ELSE 0
+						   END)
+		        FROM   INTF_ORDERSTOCK WITH (NOLOCK)
+		        WHERE  1 = 1
+		        	   AND COMPCD = #{S_COMPCD}
+		        	   AND ORGCD = #{S_ORGCD}
+		       		   AND ORDERDATE BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)
+		       ) A 
+	</select>
+	
+	<!-- 출고요약정보  -->
+	<select id="getWoSummaryList" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getWoSummaryList */
+		SELECT Sum(WO01) AS WO01,
+		       Sum(WO02) AS WO02,
+		       Sum(WO05) AS WO03,
+		       Sum(WO06) AS WO04,
+		       0         AS WO05,
+		       Sum(WO02) AS WO06,
+		       Sum(WO03) AS WO07,
+		       Sum(WO04) AS WO08
+		FROM   (SELECT Sum(CASE
+		                     WHEN WOSTS = '400' THEN B.WOQTY
+		                     ELSE 0
+		                   END) AS WO01 /* 전체출고량 */,
+		               Sum(CASE
+		                     WHEN WOSTS = '400'
+		                          AND WOSCHDT = CONVERT(CHAR(8), #{S_STDDATE}, 112) THEN B.WOQTY
+		                     ELSE 0
+		                   END) AS WO02 /* 당일출고량 */,
+		               Sum(CASE
+		                     WHEN WOSTS NOT IN ( '99', '400' ) THEN B.WOSCHQTY
+		                     ELSE 0
+		                   END) AS WO03/* 대기상태누계 */,
+		               Sum(CASE
+		                     WHEN WOSTS NOT IN ( '99', '400' )
+		                          AND WOSCHDT = Dateadd(DD, -1, CONVERT(CHAR(8), #{S_STDDATE}, 112)) THEN B.WOSCHQTY
+		                     ELSE 0
+		                   END) AS WO04/* 대기상태전일 */,
+		               0        AS WO05 /* 주문건수 */,
+		               0        AS WO06 /* 주문생성 건수 */
+		        FROM   P230 A WITH(NOLOCK)
+		               JOIN P231 B WITH(NOLOCK)
+		                 ON A.WOKEY = B.WOKEY
+		        WHERE  1 = 1
+		               AND WOSCHDT BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)
+		        UNION ALL
+		        SELECT 0,
+		               0,
+		               0,
+		               0,
+		               Count(DISTINCT A.REG_SEQ) AS SUM1,
+		               0                         AS SUM2
+		        FROM   ORDERFILE A WITH(NOLOCK)
+		        WHERE  1 = 1
+		               AND A.FILE_YMD BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)
+		        UNION ALL
+		        SELECT 0,
+		               0,
+		               0,
+		               0,
+		               0,
+		               Count(DISTINCT A.REG_SEQ)
+		        FROM   ORDERFILE A WITH(NOLOCK)
+		               JOIN P230 B WITH(NOLOCK)
+		                 ON A.REG_SEQ = B.REG_SEQ
+		        WHERE  1 = 1
+		               AND A.FILE_YMD BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)) A 
+				
+	</select>
+	
+	<!-- 재고요약정보  -->
+	<select id="getIvtSummaryList" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getIvtSummaryList */
+	/* 현 재고와 일별 재고 량이 안 맞음
+	 * 품목별 부족재고 협의 필요
+	 * ERP재고량 조회 테이블 없음 */
+		SELECT Sum(IVT01) AS IVT01,
+		       Sum(IVT02) AS IVT02,
+		       0          AS IVT03,
+		       0          AS IVT04,
+		       0          AS IVT05,
+		       Sum(IVT01) AS IVT06,
+		       Sum(IVT07) AS IVT07,
+		       Sum(IVT08) AS IVT08
+		FROM   (SELECT Sum(QTY) AS IVT01,
+		               0        AS IVT02,
+		               0        AS IVT07,
+		               0        AS IVT08
+		        FROM   P810	A	WITH (NOLOCK)
+		        WHERE  1 = 1
+		               AND A.COMPCD = #{S_COMPCD}
+		               AND A.ORGCD = #{S_ORGCD}
+		        UNION ALL
+		        SELECT  0,
+		               Sum(CLOSE_QTY) / Count(DISTINCT YYYYMMDD),
+		               0,
+		               0
+		        FROM   JEGOCLOSEDAILY	WITH (NOLOCK)
+		        WHERE  1 = 1
+		               AND YYYYMMDD BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)
+		        UNION ALL 
+		        SELECT 0,
+		               0,
+		               Sum(A.COUNT),
+		               0
+		        FROM   INTF_MOVEREQUEST A	WITH (NOLOCK)
+		        WHERE  1 = 1
+		               AND A.COMPCD = #{S_COMPCD}
+		               AND A.ORGCD = #{S_ORGCD}
+		               AND TYPE = '301'
+		               AND REQUESTDATE BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)
+		       --AND INTF_YN = 'Y'	요청이므로 전체 조회
+		        UNION ALL
+		        SELECT 0,
+		               0,
+		               0,
+		               Sum(IMQTY)
+		        FROM   P710 A		WITH (NOLOCK)
+		               JOIN P711 B	WITH (NOLOCK)
+		                 ON A.IMKEY = B.IMKEY
+		                    AND A.COMPCD = B.COMPCD
+		                    AND A.ORGCD = B.ORGCD
+		        WHERE  1 = 1
+		               AND A.COMPCD = #{S_COMPCD}
+		               AND A.ORGCD = #{S_ORGCD}
+		               AND IMTYPE = 'WH'
+		               AND IMSTS = '200'
+		               AND IMDT BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)
+		       ) A 			
+	</select>
+	
+	<!-- 기타요약정보  -->
+	<select id="getEtcSummaryList" parameterType="LDataMap" resultType="LDataMap">
+	/* common.common.getEtcSummaryList */
+		SELECT Sum(ETC01)	AS ETC01,
+		       Sum(ETC02)	AS ETC02,
+		       Sum(ETC03)	AS ETC03,
+		       CONVERT(NUMERIC(5,2), Sum(ETC04))	AS ETC04,
+		       0			AS ETC05,
+		       0			AS ETC06,
+		       0			AS ETC07
+		FROM   (SELECT Count(*) AS ETC01,
+		               Sum(CASE
+		                     WHEN EXCH_YMD = CONVERT(CHAR(8), #{S_STDDATE}, 112) THEN 1
+		                     ELSE 0
+		                   END) AS ETC02,
+		               0        AS ETC03,
+		               0        AS ETC04
+		        FROM   ORDERFILEEXCH A WITH (NOLOCK)
+		        WHERE  1 = 1
+		               AND A.COMP_CD = #{S_COMPCD}
+		               AND A.ORG_CD = #{S_ORGCD}
+		               AND EXCH_STATUS NOT IN ( '00005', '00006' )  /* 완료, 취소분 제외 */
+		               AND EXCH_YMD BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)
+		        UNION ALL
+		        SELECT 0,
+		               0,
+		               Count(*) AS CNT,
+		               CASE
+		                 WHEN Isnull(Count(*), '') != ''
+		                 THEN ( Count(*) * 1. ) / ((datediff(dd, Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), #{S_STDDATE}) + 1) * 1. )
+		                 ELSE 0
+		               END
+		        FROM   ORDERFILEOTHER A WITH (NOLOCK)
+		        WHERE  1 = 1
+		               AND A.COMP_CD = #{S_COMPCD}
+		               AND OTHER_YMD BETWEEN CONVERT(CHAR(8), Dateadd(mm, Datediff(mm, 0, #{S_STDDATE}), 0), 112) AND CONVERT(CHAR(8), #{S_STDDATE}, 112)) A 			
+	</select>
+	
+	
+	<!-- 메인화면 : 금일 주문 현황 2018. 11. 28 -->
+	<select id="getTodayOrder" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getTodayOrder */
+		SELECT 
+			A.COMPCD
+			, A.ORGCD
+			, A.DELI_CD
+			, COUNT(DISTINCT A.REG_SEQ) AS FILE_SEQ_CNT
+			, COUNT(*) AS ORD_CNT
+			, SUM(CONVERT(INT, ISNULL(B.C08, 0))) AS PROD_CNT
+         FROM ORDERFILE A
+         JOIN ORDERFILEDTL B (NOLOCK) ON A.REG_SEQ = B.REG_SEQ
+        WHERE A.COMPCD = #{S_COMPCD}
+          AND A.ORGCD = #{S_ORGCD}
+          <if test="S_WHCD != null and S_WHCD != ''">
+		  	AND A.WHCD = #{S_WHCD}
+		  </if>
+          AND A.FILE_YMD = #{S_STDDATE}
+        GROUP BY A.COMPCD, A.ORGCD, A.DELI_CD
+	</select>
+	
+	<!-- 메인화면 : 주간 주문상태 현황 -->
+	<select id="getOrderList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getOrderList */
+		SELECT 
+			a.UPLOAD_DATE
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'totalCount'
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '10' AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'orderRegistration'
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '20' AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'waitingForDeposit'
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '22' AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'confirmingPayment'
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '21' AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'depositCompleted'
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '30' AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'warehousingCompleted'
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '80' AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'APIError'
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '99' AND UPLOAD_DATE = a.UPLOAD_DATE) AS 'cancel'
+			FROM (
+				SELECT
+					CONVERT(date, UPLOAD_DATE, 23) as UPLOAD_DATE
+				FROM TORDER
+				WHERE 1 = 1
+				AND UPLOAD_DATE BETWEEN GETDATE() - 7 AND GETDATE()
+				GROUP BY UPLOAD_DATE
+			) a
+			
+			WHERE 1 = 1
+			ORDER BY a.UPLOAD_DATE
+	</select>
+	
+	<!-- TORDER 일자 가져오기 -->
+	<select id="getTorderThisMonthList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getTorderThisMonthList */
+		SELECT
+			SUBSTRING(CONVERT(NVARCHAR, UPLOAD_DATE, 23),5,9) AS DT
+		FROM TORDER
+		
+		WHERE 1 = 1
+			AND UPLOAD_DATE BETWEEN GETDATE() - 31 AND GETDATE()
+		GROUP BY UPLOAD_DATE
+		ORDER BY UPLOAD_DATE
+		
+	</select>
+	
+	<!-- 메인화면 : 월간 주문등록/입고완료 현황(리스트)-->
+	<select id="getOrderShippedCntList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getOrderShippedCntList */
+		SELECT 
+			SUBSTRING(CONVERT(NVARCHAR, UPLOAD_DATE, 23),5,9) AS DT
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND UPLOAD_DATE = a.UPLOAD_DATE) AS total
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '30' AND UPLOAD_DATE = a.UPLOAD_DATE) AS ORDERQTY
+			, (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if> AND STATUS_CD = '60' AND UPLOAD_DATE = a.UPLOAD_DATE) AS SHIPPEDQTY
+			
+				FROM (
+				SELECT
+				CONVERT(NVARCHAR, UPLOAD_DATE, 23) as UPLOAD_DATE
+				FROM TORDER
+				WHERE 1 = 1
+				AND UPLOAD_DATE BETWEEN GETDATE() - 31 AND GETDATE()
+				GROUP BY UPLOAD_DATE
+			) a
+			
+			WHERE 1 = 1
+			ORDER BY 1 ASC
+	</select>
+	
+	<!-- 메인화면 : 월간 주문등록/입고완료 현황-->
+	<select id="getOrderShippedCnt" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getOrderShippedCnt */
+		SELECT
+			ISNULL(SUM(CASE WHEN STATUS_CD = '30' THEN 1 ELSE 0 END),0) AS NewOrder
+			, ISNULL(SUM(CASE WHEN STATUS_CD = '60' THEN 1 ELSE 0 END),0) AS OrderShipped
+		FROM TORDER
+		WHERE 1 = 1
+		AND UPLOAD_DATE BETWEEN GETDATE() - 31 AND GETDATE()
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		AND ORGCD = #{S_ORGCD}
+		</if>
+	</select>
+	
+	<!-- 메인화면 : 월 누적 발송량-->
+	<select id="getOrderCntList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getOrderCntList */
+		SELECT
+			a.*
+		FROM (
+			SELECT
+				'WEEK' AS GBN
+				, COUNT(STATUS_CD) as 'count'
+			
+			FROM TORDER
+			WHERE 1 = 1	
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND ORGCD = #{S_ORGCD}
+			</if>
+			AND STATUS_CD = '30'
+			-- AND UPLOAD_DATE BETWEEN 20200914 AND 20200919 
+			AND UPLOAD_DATE BETWEEN  DATEADD(WK, DATEDIFF(WK, 0, GETDATE()), 0) AND DATEADD(MS, -3, DATEADD(WK, DATEDIFF(WK, 0, GETDATE()) + 1, 0))
+			UNION ALL
+			SELECT
+				'MONTH' AS GBN
+				, COUNT(STATUS_CD) as 'count'
+			FROM TORDER
+			WHERE 1 = 1
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND ORGCD = #{S_ORGCD}
+			</if>
+			AND STATUS_CD = '30'
+			-- AND UPLOAD_DATE BETWEEN 20200901 AND 20200930
+			AND UPLOAD_DATE BETWEEN  DATEADD(MM, DATEDIFF(MM, 0, GETDATE()), 0) AND DATEADD(MS, -3, DATEADD(MM, DATEDIFF(MM, 0, GETDATE()) + 1, 0))
+		) a
+		
+		WHERE 1 = 1
+		ORDER BY 1 DESC
+	</select>
+	
+	<!-- 메인화면 : 배송 국가 현황-->
+	<select id="getOrderNationCntList" parameterType="LDataMap" resultType="LDataMap">
+		/* common.common.getOrderNationCntList */
+		SELECT TOP 8
+			E_NATION as name
+			, COUNT(E_NATION) AS y
+		FROM TORDER
+		WHERE 1 = 1
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		AND ORGCD = #{S_ORGCD}
+		</if>
+		AND UPLOAD_DATE BETWEEN DATEADD(MM, DATEDIFF(MM, 0, GETDATE()), 0) AND DATEADD(MS, -3, DATEADD(MM, DATEDIFF(MM, 0, GETDATE()) + 1, 0))
+		GROUP BY E_NATION
+	</select>
+	
+	<!-- 메인화면 : 메모 현황 -->
+	<select id="getMemoCnt" parameterType="LDataMap" resultType="LDataMap">
+        /* common.getMemoCnt */
+        SELECT
+            a.*
+        FROM(
+            SELECT
+                'ALL'       AS DBN,
+                COUNT(*)    AS count
+            FROM ORDER_MEMO_MASTER om
+            LEFT JOIN TORDER o
+            ON om.XRT_INVC_SNO = o.XRT_INVC_SNO
+            WHERE 1 = 1
+            AND om.MEMOAUTHORITY = 'total'
+            AND o.ORGCD = #{S_ORGCD}
+            UNION
+            SELECT
+                'NO'        AS DBN,
+                COUNT(*)    AS 'count'
+            FROM ORDER_MEMO_MASTER om
+            LEFT JOIN TORDER o
+            ON om.XRT_INVC_SNO = o.XRT_INVC_SNO
+            WHERE 1 = 1
+            AND om.STATUS_CD  = 'N'
+            AND om.MEMOAUTHORITY = 'total'
+            AND o.ORGCD = #{S_ORGCD}
+        ) a
+        WHERE 1 = 1
+        ORDER BY 1 DESC
+	</select>
+	
+	<!-- 메인 화면 : 주문 배송 현황. -->
+	<select id="getOrderShippingCnt" parameterType="LDataMap" resultType="LDataMap">
+		SELECT
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'totalCount',
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND STATUS_CD IN ('10', '11', '12') AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'order',
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND STATUS_CD BETWEEN '20' AND '30' AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'warehouse',
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND STATUS_CD IN ('31') AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'warehousing',
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND STATUS_CD IN ('40') AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'shipped',
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND STATUS_CD BETWEEN '50' AND '59' AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'delivery',
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND STATUS_CD IN ('60') AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'delivered',
+            (SELECT COUNT(STATUS_CD) FROM TORDER WHERE 1=1 <if test="S_ORGCD != null and S_ORGCD != ''">AND ORGCD = #{S_ORGCD}</if>AND DEL_FLG = 'N' AND STATUS_CD IN ('32', '80', '99') AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}) AS 'error'
+		FROM TORDER
+		WHERE 1 = 1
+		<if test="S_ORGCD != null and S_ORGCD !=''">
+			AND ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_COMPCD != null and S_COMPCD !=''">
+			AND COMPCD = #{S_COMPCD}
+		</if>
+		AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+		GROUP BY ORGCD
+	</select>
+</mapper>

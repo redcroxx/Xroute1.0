@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P200210PopUpMapper">
+	
+	<!-- 재고부족품목분리 SELECT -->
+	<select id="getDIVSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getDIVSearch */
+		SELECT A.COMPCD 
+			, A.ORGCD 
+			, A.REG_SEQ 
+			, C.ITEMCD
+			, C.NAME AS ITEMNM
+			, SUM(A.${P_ORD_QTY} * B.SPROD_QTY) AS ORDQTY
+			, ISNULL((SELECT SUM(ISNULL(QTY - ALLOCQTY, 0)) FROM P810 WITH(NOLOCK) WHERE 1=1 AND COMPCD = #{COMPCD} AND ORGCD = #{ORGCD} AND WHCD = #{WHCD} AND ITEMCD = C.ITEMCD), 0) AS INVQTY
+			
+		 FROM ORDERFILEDTL A WITH(NOLOCK) 
+		 LEFT JOIN PRODSPROD B WITH(NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.${P_PROD_CDX} = B.PROD_CD 
+		 LEFT JOIN P006 C WITH(NOLOCK) ON B.COMPCD = C.COMPCD AND B.ORGCD = C.ORGCD AND B.ITEMCD = C.ITEMCD
+		  
+		WHERE A.COMPCD  = #{COMPCD}
+		  AND A.ORGCD   = #{ORGCD}
+		  AND A.REG_SEQ = #{REG_SEQ}
+		  
+		GROUP BY 
+			A.COMPCD
+			, A.ORGCD 
+			, A.REG_SEQ 
+			, C.ITEMCD
+			, C.NAME
+		 <!-- SELECT A.COMPCD,A.ORGCD,A.REG_SEQ,A.SNO,A.${STRCOLPRODKEY} AS ITEMCD,B.NAME AS ITEMNM,A.${STRCOLORDQTY} AS ORDQTY ,/*SUM(ISNULL(C.QTY,0)-ISNULL(C.ALLOCQTY,0)) OVER (PARTITION BY A.COMPCD,A.ORGCD,A.REG_SEQ,A.C04 ) AS INVQTY*/
+		  	   SUM(ISNULL(C.QTY,0)-ISNULL(C.ALLOCQTY,0)) AS INVQTY
+		  FROM ORDERFILEDTL A
+		  JOIN P006 B
+		    ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.C04 = B.ITEMCD
+		  JOIN P810 C 
+		    ON B.COMPCD = C.COMPCD AND B.ORGCD = C.ORGCD AND B.ITEMCD = C.ITEMCD
+		 WHERE A.COMPCD=#{S_COMPCD} 
+		   AND A.ORGCD=#{S_ORGCD} 
+		   AND A.REG_SEQ=#{S_REG_SEQ} 
+		   AND A.SNO IN	
+		   <foreach item="item" collection="SNOLISTS" index="index" open="(" separator="," close=")">
+		   #{item}
+		   </foreach>
+		   GROUP BY A.COMPCD,A.ORGCD,A.REG_SEQ,A.SNO,A.${STRCOLPRODKEY},B.NAME,A.${STRCOLORDQTY}  -->
+
+		
+		<!-- SELECT X.COMPCD,
+		       X.WHCD,
+		       X.ORGCD,
+		       X.REG_SEQ,
+		       X.ITEMCD,
+		       X.ITEMNM,
+		       X.ORDQTY,
+		       DBO.FN_GET_ALLOCQTY(X.COMPCD, X.ORGCD, X.WHCD, X.ITEMCD) AS INVQTY
+		FROM   (SELECT A.COMPCD,
+		               A.ORGCD,
+		               A.REG_SEQ,
+		               A.${P_PROD_CDX}                     AS ITEMCD,
+		               MAX(C.PROD_NM)                      AS ITEMNM,
+		               B.WHCD,
+		               SUM(CONVERT(DECIMAL(10, 0), A.${P_ORD_QTY})) AS ORDQTY
+		               
+		        FROM   ORDERFILEDTL A WITH(NOLOCK)
+		        JOIN   ORDERFILE B WITH(NOLOCK) ON A.REG_SEQ = B.REG_SEQ
+		        JOIN   PRODUCT C WITH(NOLOCK) ON A.COMPCD = C.COMPCD
+		                                         AND A.ORGCD = C.ORGCD
+		                                         AND A.${P_PROD_CDX}  = C.PROD_CD
+		        WHERE A.COMPCD=#{S_COMPCD} 
+		          AND A.ORGCD=#{S_ORGCD} 
+		   	      AND A.REG_SEQ=#{S_REG_SEQ}
+		        GROUP BY A.${P_PROD_CDX} ,
+		                 A.COMPCD,
+		                 A.ORGCD,
+		                 A.REG_SEQ,
+		                 B.WHCD) X 		  
+		    -->
+	</select>
+	
+	<!-- 주문액가져오기 가져오기 -->
+	<select id="getSearchSa" parameterType="LDataMap" statementType="CALLABLE" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getSearchSa */
+		
+           EXEC USP_AMT_GET #{S_REG_SEQ}                      
+		   
+	</select>
+	
+	<!-- 재고부족 품목분리 -->
+	<select id="setOrdDiv" parameterType="LDataMap" statementType="CALLABLE" >
+	{
+            call USP_INS_ORDERFILE_DIV(#{XML, jdbcType = VARCHAR, mode = IN}
+						   , #{COMPCD, jdbcType = VARCHAR, mode = IN}
+		                   , #{ORGCD, jdbcType = VARCHAR, mode = IN}
+		                   , #{WHCD, jdbcType = VARCHAR, mode = IN}
+						   , #{REG_SEQ, jdbcType = VARCHAR, mode = IN}
+						   , #{TYPE, jdbcType = VARCHAR, mode = IN}
+			               , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+					       , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+			               , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+			               , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+			                  ) 
+	}
+	</select>
+	
+	
+	<!-- 판매가 컬럼 가져오기 -->
+	<select id="getAmtChk" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getAmtChk */
+		
+          SELECT RTRIM( LTRIM(MIN(DB_COL_NM))) as ORD_AMT_CHK FROM MKTSITEFILECONFIG WITH(NOLOCK) WHERE SITE_CD=#{S_SITE_CD} AND ORD_AMT_YN='Y'                        
+	</select>
+	
+	<!-- 택배사 매핑 데이터 임시 저장-->
+	<insert id="setPopTmpDeli" parameterType="LDataMap">
+		/* alexcloud.p200.p200210_popup.setPopTmpDeli */
+		
+		INSERT INTO POPTMPORD WITH (ROWLOCK) (
+			A, B, C, D, E,
+			F, G, H, I, J,
+			K, L, M, N, O,
+			P, Q, R, S, T,
+			U, V, W, X, Y, Z,
+			AA, AB, AC, AD, AE,
+			AF, AG, AH, AI, AJ,
+			AK, AL, AM, AN, AO,
+			AP, AQ, AR, [AS], AT,
+			AU, AV, AW, AX, AY, AZ,
+			REG_SEQ
+			
+		) VALUES (
+			#{A}, #{B}, #{C}, #{D}, #{E},
+			#{F}, #{G}, #{H}, #{I}, #{J},
+			#{K}, #{L}, #{M}, #{N}, #{O},
+			#{P}, #{Q}, #{R}, #{S}, #{T},
+			#{U}, #{V}, #{W}, #{X}, #{Y}, #{Z},
+			#{AA}, #{AB}, #{AC}, #{AD}, #{AE},
+			#{AF}, #{AG}, #{AH}, #{AI}, #{AJ},
+			#{AK}, #{AL}, #{AM}, #{AN}, #{AO},
+			#{AP}, #{AQ}, #{AR}, #{AS}, #{AT},
+			#{AU}, #{AV}, #{AW}, #{AX}, #{AY}, #{AZ},
+			#{S_REG_SEQ}
+			 
+		)
+		
+	</insert>
+	
+	
+	<!--  택배사 매핑 데이터 가져오기 -->
+	<select id="getDeliMapping" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getDeliMapping */
+		
+          SELECT 
+          <if test="S_CLGO_SEQ != null and S_CLGO_SEQ != ''">
+          		 ${S_CLGO_SEQ} AS CLGO_SEQ,
+		  </if>          		 
+		  <if test="S_INVC_SNO != null and S_INVC_SNO != ''">
+          		 ${S_INVC_SNO} AS INVC_SNO,
+    	  </if>
+    	  <if test="S_FAREAMT != null and S_FAREAMT != ''">
+          		 ${S_FAREAMT} AS FARE,
+          </if>
+          <if test="S_AIRFARE != null and S_AIRFARE != ''">
+          		 ${S_AIRFARE} AS FARE_AIR,
+          </if>
+          <if test="S_SHIPFARE != null and S_SHIPFARE != ''">
+          		 ${S_SHIPFARE} AS FARE_SHIP,
+          </if>
+          REG_SEQ
+            FROM POPTMPORD WITH(NOLOCK)
+           WHERE REG_SEQ=#{S_REG_SEQ}
+                                 
+	</select>
+	
+	<!--  임시 저장데이터 삭제 -->
+	<delete id="delPopTmpDeli" parameterType="LDataMap">
+		/* alexcloud.p200.p200210_popup.delPopTmpDeli */
+		DELETE FROM POPTMPORD WITH (ROWLOCK)
+           WHERE REG_SEQ=#{S_REG_SEQ}
+	</delete>
+	
+	<!--  택배사 매핑 체크 -->
+	<select id="getMappingChk" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getMappingChk */
+		
+         SELECT COUNT(*) AS CNT FROM DELIFILEDTL WITH(NOLOCK) WHERE CLGO_SEQ = #{CLGO_SEQ}
+                                 
+	</select>
+	
+	<!--  택배사 데이터 체크 -->
+	<select id="getDataChk" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getDataChk */
+		
+         SELECT COUNT(*) AS CNT
+                FROM   P230 WITH(NOLOCK)
+                WHERE  CLGO_SEQ = #{CLGO_SEQ} 
+                       AND REG_SEQ = (SELECT REG_SEQ 
+                                      FROM   ORDERFILE WITH(NOLOCK) 
+                                      WHERE  COMPCD = #{S_COMPCD}
+                                        AND  ORGCD = #{S_ORGCD}
+                                        AND  FILE_YMD = #{S_FILE_YMD} 
+                                        AND  FILE_SEQ = #{S_FILE_SEQ})
+                                 
+	</select>
+	
+	
+	<!-- 택배사 마스터 데이터 저장 -->
+	<select id="setInsDeliFile" parameterType="LDataMap" statementType="CALLABLE" >
+	{
+            call USP_INS_DELIFILE(        #{S_COMPCD, jdbcType = VARCHAR, mode = IN}
+            							, #{S_ORGCD, jdbcType = VARCHAR, mode = IN}
+					                    , #{S_FILE_YMD, jdbcType = VARCHAR, mode = IN}
+					                    , #{S_FILE_SEQ, jdbcType = VARCHAR, mode = IN}
+					                    , #{FILENMREAL, jdbcType = VARCHAR, mode = IN}
+					                    , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+					                    , #{P_MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+					                    , #{P_MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+					                    , #{P_CNT, jdbcType = VARCHAR, mode = OUT, javaType=String}
+							                  )
+	}
+	</select>
+	
+	<!-- 택배사 상세 데이터  저장-->
+	<insert id="setDeliFileDtl" parameterType="LDataMap">
+		/* alexcloud.p200.p200210_popup.setDeliFileDtl */
+		
+		INSERT INTO DeliFileDtl WITH (ROWLOCK)(IN_ADMIN_ID,FILE_SNO,CLGO_SEQ,INVC_SNO,FARE,FARE_AIR,FARE_SHIP) 
+						VALUES (#{USERCD},#{FILE_SNO},#{CLGO_SEQ},#{INVC_SNO},#{FARE},#{FARE_AIR},#{FARE_SHIP}
+		)
+		
+	</insert>
+	
+	<!--  택배사 마스터 데이터 삭제 -->
+	<delete id="setDelDeliFile" parameterType="LDataMap">
+		/* alexcloud.p200.p200210_popup.setDelDeliFile */
+		DELETE FROM DELIFILE WITH (ROWLOCK)
+		      WHERE FILE_SNO=#{FILE_SNO}
+           
+	</delete>
+	
+	<select id="getCompDeli" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getCompDeli */
+		
+         SELECT    HDR_YN_INVC, 
+                   COL_CLGO_SEQ, 
+                   COL_INVC_SNO, 
+                   COL_FARE, 
+                   COL_FARE_AIR, 
+                   COL_FARE_SHIP, 
+                   INVC_START_LINE 
+            FROM   COMPDELI WITH(NOLOCK) 
+            WHERE  COMPCD = #{S_COMPCD} AND ORGCD = #{S_ORGCD} 
+                                 
+	</select>
+	
+		
+	<update id="setCompDeli" parameterType="LDataMap">
+		/* alexcloud.p200.p200210_popup.setCompDeli */
+		  
+	UPDATE COMPDELI WITH(ROWLOCK)
+	   SET INVC_START_LINE=#{INVC_START_LINE}
+	      ,HDR_YN_INVC=#{HDR_YN_INVC} 
+		  ,COL_CLGO_SEQ=#{COL_CLGO_SEQ} 
+		  ,COL_INVC_SNO=#{COL_INVC_SNO} 
+		  ,COL_FARE=#{COL_FARE} 
+		  ,COL_FARE_AIR=#{COL_FARE_AIR} 
+		  ,COL_FARE_SHIP=#{COL_FARE_SHIP} 
+	 WHERE COMPCD=#{S_COMPCD} AND ORGCD=#{S_ORGCD}		  
+	</update>
+	
+	<!-- 운송장데이터 저장 -->
+	<select id="setMapInvc" parameterType="LDataMap" statementType="CALLABLE" >
+	{
+            call USP_MAP_INVC(        #{FILE_SNO, jdbcType = VARCHAR, mode = IN}
+					                    , #{USERCD, jdbcType = VARCHAR, mode = IN}
+					                    , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+					                    , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+					        
+							                  )
+	}
+	</select>
+	
+	<!-- 원주문 저장데이터 가져오기 -->
+	<select id="getAtomySearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getAtomySearch */
+		SELECT 
+				 A.COMPCD  
+			   , A.ORGCD
+			   , B.NAME AS ORGNM
+			   , A.WHCD 
+			   , C.NAME AS WHNM 
+			   , A.REG_SEQ
+			   , A.ORGCD
+			   , A.SEQ_TP
+			   , A.SITE_CD
+			   , E.SITE_NM
+			   , A.DELI_CD 
+			   , D.DELI_NM
+			   , A.FILE_YMD
+			   , A.FILE_SEQ
+			   , A.FILE_NM
+			   , A.RELEASE_LINE
+
+			   , ISNULL(A.BOOK_YN, 'N') AS BOOK_YN
+			   , ISNULL(A.CARD_YN, 'N') AS CARD_YN
+			   , COUNT(F.C00) AS ORDCNT
+			   <!-- , (SELECT CASE WHEN COUNT(Z.WOKEY) > 0 THEN 'Y' ELSE 'N' END FROM P230 Z WITH(NOLOCK) WHERE A.REG_SEQ = Z.REG_SEQ) AS ADDYN
+			   , (SELECT CASE WHEN COUNT(Z.WOKEY) > 0 AND COUNT(Z.WOKEY) = COUNT(CASE WHEN LEN(Z.INVC_SNO)  >  6 THEN 1 END) THEN 'Y' ELSE 'N' END FROM P230 Z WITH(NOLOCK) WHERE A.REG_SEQ = Z.REG_SEQ) AS INVCYN
+			   , (SELECT CASE WHEN COUNT(Z.WOKEY) > 0 AND COUNT(CASE WHEN Z.ADDRYN = 'N' THEN 1 END)  =  0  THEN 'Y' ELSE 'N' END FROM P230 Z WITH(NOLOCK) WHERE A.REG_SEQ = Z.REG_SEQ) AS ADDRYN -->
+			   , CASE WHEN A.STATUS_CD >= '00002' THEN 'Y' ELSE 'N' END AS ADDYN 
+			   , CASE WHEN A.STATUS_CD > '00002' THEN
+						CASE WHEN A.DELI_CD = 'D0004' THEN
+								CASE WHEN A.STATUS_CD >= '00003' THEN 'Y' ELSE 'N' END
+
+						     WHEN A.DELI_CD = 'D0005' THEN
+							    CASE WHEN A.STATUS_CD >= '00003' AND A.STATUS_CD != '00004' THEN 'Y'
+								     WHEN A.STATUS_CD = '00004' THEN 'N' 
+							    END 
+						END
+				ELSE 'N' END AS INVCYN
+
+			   , CASE WHEN A.STATUS_CD > '00002' THEN
+						CASE WHEN A.DELI_CD = 'D0004' THEN
+								CASE WHEN A.STATUS_CD >= '00004' THEN 'Y' ELSE 'N' END
+
+						     WHEN A.DELI_CD = 'D0005' THEN
+								CASE WHEN A.STATUS_CD >= '00003' THEN 'Y' ELSE 'N' END
+						END
+				ELSE 'N' END AS ADDRYN
+			   
+	     FROM ORDERFILE A WITH(NOLOCK)
+		 LEFT JOIN P002 B WITH(NOLOCK) ON A.ORGCD = B.ORGCD 
+		 LEFT JOIN P004 C WITH(NOLOCK) ON A.WHCD = C.WHCD
+		 LEFT JOIN DELIDEF D WITH(NOLOCK) ON A.DELI_CD = D.DELI_CD 
+		 LEFT JOIN MKTSITE E WITH(NOLOCK) ON A.SITE_CD = E.SITE_CD
+		 LEFT JOIN ORDERFILEDTL F WITH(NOLOCK) ON A.REG_SEQ = F.REG_SEQ
+		 
+	   WHERE A.COMPCD = #{COMPCD}
+	      AND A.ORGCD = #{ORGCD}
+		  AND A.FILE_YMD = REPLACE(#{FILE_YMD},'-','')
+		   <if test="WHCD != null and WHCD != ''">
+       	    	AND A.WHCD = #{WHCD}
+           </if>
+		  
+		GROUP BY A.COMPCD  
+			   , A.ORGCD
+			   , B.NAME
+			   , A.WHCD 
+			   , C.NAME 
+			   , A.REG_SEQ
+			   , A.ORGCD
+			   , A.SEQ_TP
+			   , A.SITE_CD
+			   , E.SITE_NM
+			   , A.DELI_CD 
+			   , D.DELI_NM
+			   , A.FILE_YMD
+			   , A.FILE_SEQ
+			   , A.FILE_NM
+			   , A.SEQ_TP
+			   , A.RELEASE_LINE
+			   , A.BOOK_YN
+			   , A.CARD_YN
+			   , A.STATUS_CD
+        ORDER BY A.FILE_SEQ
+        
+		<!-- SELECT 
+				 A.FILE_YMD
+			   , A.FILE_SEQ
+			   , A.FILE_NM 
+			   , A.WHCD 
+			   , (SELECT NAME FROM P004 Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.WHCD = Z.WHCD) AS WHNM 
+			   , A.REG_SEQ
+			   , A.ORGCD
+			   , A.SEQ_TP
+			   , (SELECT Z.NAME FROM P002 Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.ORGCD = Z.ORGCD) AS ORGNM
+			   , A.SITE_CD
+			   , (SELECT Z.SNAME1 FROM S002 Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND Z.CODEKEY = 'RELEASE_LINE' AND A.RELEASE_LINE = Z.CODE) AS RELEASE_LINE 
+			   , (SELECT Z.SITE_NM FROM MKTSITE Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.ORGCD = Z.ORGCD AND A.SITE_CD = Z.SITE_CD) AS SITE_NM
+			   , (SELECT Z.DELI_NM FROM DELIDEF Z WITH(NOLOCK) WHERE A.DELI_CD = Z.DELI_CD) AS DELI_NM 
+			   , (SELECT NAME FROM P002 Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.ORGCD = Z.ORGCD ) AS ORGNM 
+			   , ISNULL(A.BOOK_YN, 'N') AS BOOK_YN
+			   , ISNULL(A.CARD_YN, 'N') AS CARD_YN
+			   , (SELECT COUNT(Z.C00) FROM ORDERFILEDTL Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.ORGCD = Z.ORGCD AND A.REG_SEQ = Z.REG_SEQ) AS ORDCNT
+			   , (SELECT CASE WHEN COUNT(Z.WOKEY) > 0 THEN 'Y' ELSE 'N' END FROM P230 Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.ORGCD = Z.ORGCD AND A.REG_SEQ = Z.REG_SEQ) AS ADDYN
+			   , (SELECT CASE WHEN COUNT(Z.WOKEY) > 0 AND COUNT(Z.WOKEY) = COUNT(CASE WHEN LEN(Z.INVC_SNO)  >  6 THEN 1 END) THEN 'Y' ELSE 'N' END FROM P230 Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.ORGCD = Z.ORGCD AND A.REG_SEQ = Z.REG_SEQ) AS INVCYN
+			   , (SELECT CASE WHEN COUNT(Z.WOKEY) > 0 AND COUNT(CASE WHEN Z.ADDRYN = 'N' THEN 1 END)  =  0  THEN 'Y' ELSE 'N' END FROM P230 Z WITH(NOLOCK) WHERE A.COMPCD = Z.COMPCD AND A.ORGCD = Z.ORGCD AND A.REG_SEQ = Z.REG_SEQ) AS ADDRYN
+			   
+	     FROM ORDERFILE A WITH(NOLOCK)
+	    WHERE A.COMPCD = #{COMPCD}
+	      AND A.ORGCD = #{ORGCD}
+		  AND A.FILE_YMD = REPLACE(#{FILE_YMD},'-','')
+		   <if test="WHCD != null and WHCD != ''">
+       	    	AND A.WHCD = #{WHCD}
+           </if>
+        ORDER BY A.FILE_SEQ  -->
+		<!-- SELECT 
+			  A.FILE_YMD
+			, A.FILE_SEQ
+			, A.FILE_NM
+			, A.WHCD
+			, E.NAME                 AS WHNM
+			, A.REG_SEQ
+			, A.SITE_CD
+			, F.SITE_NM
+			, G.DELI_NM
+			, A.ORGCD
+			, D.NAME                 AS ORGNM
+			, ISNULL(A.BOOK_YN, 'N') AS BOOK_YN
+			, ISNULL(A.CARD_YN, 'N') AS CARD_YN
+			, COUNT(DISTINCT B.C00) AS 'ORDCNT'
+			, CASE WHEN COUNT(C.WOKEY) > 0 THEN 'Y' ELSE 'N' END 'ADDYN'
+			, CASE WHEN COUNT(CASE WHEN LEN(C.INVC_SNO) > 6 THEN 1 END) > 0  THEN 'Y' ELSE 'N' END AS 'INVCYN'
+			, CASE WHEN COUNT(CASE WHEN C.ADDRYN = 'Y' THEN 1 END) > 0  THEN 'Y' ELSE 'N' END AS 'ADDRYN'
+			
+		    FROM   ORDERFILE A
+			LEFT JOIN ORDERFILEDTL B WITH(NOLOCK)
+			  ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.REG_SEQ = B.REG_SEQ 
+			LEFT JOIN P230 C WITH(NOLOCK)
+			  ON B.COMPCD = C.COMPCD AND B.ORGCD = C.ORGCD AND B.C00 = C.CLGO_SEQ
+			JOIN P002 D WITH(NOLOCK)
+			  ON A.COMPCD = D.COMPCD
+			  AND A.ORGCD = D.ORGCD
+			JOIN P004 E WITH(NOLOCK)
+			  ON A.COMPCD = E.COMPCD
+			  AND A.WHCD = E.WHCD
+			JOIN MKTSITE F WITH(NOLOCK)
+			  ON A.SITE_CD = F.SITE_CD
+			  AND A.COMPCD = F.COMPCD 
+			  AND A.ORGCD = F.ORGCD
+			JOIN DELIDEF G WITH(NOLOCK)
+			  ON A.DELI_CD = G.DELI_CD
+				
+		 WHERE 1 = 1
+		 	   AND A.COMPCD = #{S_COMPCD}
+               AND A.ORGCD = #{S_ORGCD}
+               <if test="S_WHCD != null and S_WHCD != ''">
+          	    	AND A.WHCD = #{S_WHCD}
+	           </if>
+               AND A.FILE_YMD = REPLACE(#{S_FILE_YMD},'-','')
+               
+		 GROUP BY A.FILE_YMD
+				, A.FILE_SEQ
+				, A.FILE_NM
+				, A.WHCD
+				, E.NAME             
+				, A.REG_SEQ
+				, A.SITE_CD
+				, F.SITE_NM
+				, G.DELI_NM
+				, A.ORGCD
+				, D.NAME         
+				, A.BOOK_YN
+				, A.CARD_YN
+			    
+		ORDER BY A.FILE_YMD, FILE_SEQ -->
+			    
+		<!-- SELECT X.FILE_YMD,
+		       X.FILE_SEQ,
+		       X.FILE_NM,
+		       X.WHCD,
+		       X.WHNM,
+		       X.DELI_NM,
+		       X.REG_SEQ,
+		       X.SITE_CD,
+		       X.SITE_NM,
+		       X.ORGCD,
+		       X.ORGNM,
+		       X.BOOK_YN,
+		       X.CARD_YN,
+		       SUM(CASE
+		             WHEN GUBUN = 'ORDCNT' THEN CNT
+		             ELSE 0
+		           END) AS ORDCNT,
+		       MAX(CASE
+		             WHEN GUBUN = 'ADDYN' THEN YN
+		             ELSE 'N'
+		           END) AS ADDYN,
+		       MAX(CASE
+		             WHEN GUBUN = 'INVCYN' THEN YN
+		             ELSE 'N'
+		           END) AS INVCYN,
+		       MAX(CASE
+		             WHEN GUBUN = 'ADDRYN' THEN YN
+		             ELSE 'N'
+		           END) AS ADDRYN
+		           
+		FROM   (SELECT CONVERT(VARCHAR, CONVERT(DATETIME, A.FILE_YMD), 23) AS FILE_YMD,
+		               A.FILE_SEQ,
+		               A.FILE_NM,
+		               A.WHCD,
+		               C.NAME                 AS WHNM,
+		               A.REG_SEQ,
+		               A.SITE_CD,
+		               D.SITE_NM,
+		               E.DELI_NM,
+		               A.ORGCD,
+		               B.NAME                 AS ORGNM,
+		               ISNULL(A.BOOK_YN, 'N') AS BOOK_YN,
+		               ISNULL(A.CARD_YN, 'N') AS CARD_YN
+		               
+		        FROM   ORDERFILE A
+		               JOIN P002 B WITH(NOLOCK)
+		                 ON A.COMPCD = B.COMPCD
+		                    AND A.ORGCD = B.ORGCD
+		               JOIN P004 C WITH(NOLOCK)
+		                 ON A.COMPCD = C.COMPCD
+		                    AND A.WHCD = C.WHCD
+		               JOIN MKTSITE D WITH(NOLOCK)
+		                 ON A.SITE_CD = D.SITE_CD
+		               JOIN DELIDEF E WITH(NOLOCK)
+		                 ON A.DELI_CD = E.DELI_CD
+		                 
+		        WHERE  1 = 1
+		               AND A.ORGCD = #{S_ORGCD}
+		               <if test="S_WHCD != null and S_WHCD != ''">
+		          	    	AND A.WHCD = #{S_WHCD}
+			           </if>
+		               AND A.FILE_YMD = REPLACE(#{S_FILE_YMD},'-','')) X
+		               
+		       JOIN (SELECT 'ORDCNT' AS GUBUN,
+		                    COUNT(1) AS CNT,
+		                    'N'      AS YN,
+		                    A.REG_SEQ,
+		                    A.WHCD
+		             FROM   ORDERFILE A (NOLOCK)
+		                    JOIN ORDERFILEDTL B (NOLOCK)
+		                      ON A.REG_SEQ = B.REG_SEQ
+		             WHERE  A.FILE_YMD = REPLACE(#{S_FILE_YMD},'-','')
+		             	<if test="S_WHCD != null and S_WHCD != ''">
+		          	    	AND A.WHCD = #{S_WHCD}
+			           </if>
+		             GROUP  BY A.REG_SEQ, A.WHCD
+		             
+		             UNION ALL
+		             
+		             SELECT 'ADDYN' AS GUBUN,
+		                    COUNT(A.REG_SEQ),
+		                    CASE
+		                      WHEN COUNT(A.REG_SEQ) > 0 THEN 'Y'
+		                      ELSE 'N'
+		                    END     AS 'ADDYN',
+		                    A.REG_SEQ,
+		                    A.WHCD
+		             FROM   ORDERFILE A (NOLOCK)
+		                    JOIN P230 B (NOLOCK)
+		                      ON A.REG_SEQ = B.REG_SEQ
+		             WHERE  A.FILE_YMD = REPLACE(#{S_FILE_YMD},'-','')
+			             	<if test="S_WHCD != null and S_WHCD != ''">
+			          	    	AND A.WHCD = #{S_WHCD}
+				           </if>
+		             GROUP  BY A.REG_SEQ, A.WHCD
+		             
+		             UNION ALL
+		             
+		             SELECT 'INVCYN' AS GUBUN,
+		                    COUNT(A.REG_SEQ),
+		                    CASE
+		                      WHEN COUNT(A.REG_SEQ) > 0 THEN 'Y'
+		                      ELSE 'N'
+		                    END      AS 'INVCYN',
+		                    A.REG_SEQ,
+		                    A.WHCD
+		             FROM   ORDERFILE A (NOLOCK)
+		                    JOIN P230 B (NOLOCK)
+		                      ON A.REG_SEQ = B.REG_SEQ
+		             WHERE  A.FILE_YMD = REPLACE(#{S_FILE_YMD},'-','')
+		                    AND LEN(B.INVC_SNO) > 6
+		                    <if test="S_WHCD != null and S_WHCD != ''">
+			          	    	AND A.WHCD = #{S_WHCD}
+				           </if>
+		                    
+		             GROUP  BY A.REG_SEQ, A.WHCD
+		             
+		             UNION ALL
+		             
+		             SELECT 'ADDRYN' AS GUBUN,
+		                    COUNT(A.REG_SEQ),
+		                    CASE
+		                      WHEN COUNT(A.REG_SEQ) > 0 THEN 'Y'
+		                      ELSE 'N'
+		                    END      AS 'ADDRYN',
+		                    A.REG_SEQ,
+		                    A.WHCD
+		             FROM   ORDERFILE A (NOLOCK)
+		                    JOIN P230 B (NOLOCK)
+		                      ON A.REG_SEQ = B.REG_SEQ
+		             WHERE  A.FILE_YMD = REPLACE(#{S_FILE_YMD},'-','')
+		                    AND ADDRYN = 'Y'
+		                    <if test="S_WHCD != null and S_WHCD != ''">
+			          	    	AND A.WHCD = #{S_WHCD}
+				           </if>
+		                    
+		             GROUP  BY A.REG_SEQ, A.WHCD) Y
+		         ON X.REG_SEQ = Y.REG_SEQ
+		         
+		GROUP  BY X.FILE_YMD,
+		          X.FILE_SEQ,
+		          X.FILE_NM,
+		          X.WHCD,
+		          X.WHNM,
+		          X.DELI_NM,
+		          X.REG_SEQ,
+		          X.SITE_CD,
+		          X.SITE_NM,
+		          X.ORGCD,
+		          X.ORGNM,
+		          X.BOOK_YN,
+		          X.CARD_YN -->
+	   
+	</select>
+	
+	
+	<!-- 복합품목 가져오기 -->
+	<select id="getSearchDivPopUp2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getSearchDivPopUp2 */
+		
+		SELECT B.ITEMCD,(#{S_ORDQTY} * B.SPROD_QTY) AS ORDQTY, C.NAME,
+		  ISNULL((SELECT SUM(ISNULL(QTY,0)-ISNULL(ALLOCQTY,0)) 
+		 	   FROM P810 WITH(NOLOCK)
+		 	  WHERE COMPCD=B.COMPCD 
+		 	    AND ORGCD= B.ORGCD 
+		 	    AND WHCD=#{S_WHCD}  
+		 	    AND ITEMCD=B.ITEMCD),0) AS INVQTY
+		  FROM PRODUCT A WITH(NOLOCK)
+		  JOIN PRODSPROD B WITH(NOLOCK)
+		    ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.PROD_CD = B.PROD_CD
+		  JOIN P006 C WITH(NOLOCK)
+		    ON B.COMPCD = C.COMPCD AND B.ORGCD = C.ORGCD AND B.ITEMCD = C.ITEMCD
+		  WHERE A.COMPCD = #{S_COMPCD}
+		    AND A.ORGCD = #{S_ORGCD}
+			AND A.PROD_TYPE_CD='00002'
+			AND A.PROD_CD = #{S_ITEMCD}
+		   
+	</select>
+	
+	<!-- 체크내역  : 검색(주문접수양식) -->
+	<select id="getMktSiteFileData" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p200.p200210_popup.getMktSiteFileData */
+		SELECT 
+		       PV.RCV_NM                           AS 'RCV_NM',
+		       PV.RCV_TEL1                         AS 'RCV_TEL1',
+		       PV.RCV_TEL2                         AS 'RCV_TEL2',
+		       PV.RCV_ADDR                         AS 'RCV_ADDR',
+		       PV.RCV_ZIPCODE                      AS 'RCV_ZIPCODE',
+		       PV.PROD_CDX                         AS 'PROD_CDX',
+		       PV.PROD_NMX                         AS 'PROD_NMX',
+		       PV.ORD_QTY                          AS 'ORD_QTY',
+		       PV.DELI_MSG                         AS 'DELI_MSG',
+		       PV.DELI_TYPE                        AS 'DELI_TYPE',
+		       PV.INVC_SNO                         AS 'INVC_SNO',
+		       PV.ORD_SNOS                         AS 'ORD_SNOS',
+		       PV.ORD_ID                           AS 'ORD_ID',
+		       PV.ORD_EMAIL                        AS 'ORD_EMAIL',
+		       PV.ORD_NM                           AS 'ORD_NM',
+		       PV.ORD_AMT                          AS 'ORD_AMT',
+		       PV.ORD_YMD                          AS 'ORD_YMD',
+		       PV.ORD_TEL1                         AS 'ORD_TEL1',
+		       PV.ORD_TEL2                         AS 'ORD_TEL2',
+		       PV.ORD_ADDR                         AS 'ORD_ADDR',
+		       PV.ORD_BIRTH_YMD                    AS 'ORD_BIRTH_YMD',
+		       PV.ORD_JOIN_YMD                     AS 'ORD_JOIN_YMD',
+		       PV.SND_NM                           AS 'SND_NM',
+		       PV.SND_TEL                          AS 'SND_TEL',
+		       PV.SND_ADDR                         AS 'SND_ADDR',
+		       PV.SND_ZIPCODE                      AS 'SND_ZIPCODE',
+		       PV.SND_MSG                          AS 'SND_MSG',
+		       PV.IPGO_AMT                         AS 'IPGO_AMT',
+		       PV.QTY_INV                          AS 'QTY_INV',
+		       PV.DELI_FEE_IN                      AS 'DELI_FEE_IN',
+		       PV.PROD_GIFT_CD                     AS 'PROD_GIFT_CD',
+		       PV.PROD_GIFT_NM                     AS 'PROD_GIFT_NM',
+		       PV.PROD_GIFT_MSG                    AS 'PROD_GIFT_MSG',
+		       PV.BOOKYN                           AS 'BOOKYN',
+		       PV.BOOK_MSG                         AS 'BOOK_MSG',
+		       PV.BOOK_SND_NM                      AS 'BOOK_SND_NM',
+		       PV.SALEYN                           AS 'SALEYN',
+		       PV.SALE_YMD                         AS 'SALE_YMD',
+		       PV.SALE_AMT                         AS 'SALE_AMT',
+		       PV.CARDYN                           AS 'CARDYN',
+		       PV.MULTIPACK                        AS 'MULTIPACK',
+		       PV.MULTIPACK_WHNM                   AS 'MULTIPACK_WHNM',
+		       PV.ETC1                             AS 'ETC1',
+		       PV.ETC2                             AS 'ETC2',
+		       PV.ETC3                             AS 'ETC3',
+		       PV.ETC4                             AS 'ETC4',
+		       PV.ETC5                             AS 'ETC5',
+		       PV.ETC6                             AS 'ETC6',
+		       PV.ETC7                             AS 'ETC7',
+		       PV.GUBUN1                           AS 'GUBUN1',
+		       PV.GUBUN2                           AS 'GUBUN2',
+		       PV.GUBUN3                           AS 'GUBUN3',
+		       PV.GUBUN4                           AS 'GUBUN4',
+		       PV.GUBUN5                           AS 'GUBUN5'
+		       
+		FROM   MKTSITE A,
+		
+		       (SELECT A.CODE AS DB_COL_NM_INVC,
+		               B.DB_COL_NM
+		        FROM   S002 A WITH(NOLOCK)
+		               LEFT JOIN MKTSITEFILECONFIG B WITH(NOLOCK)
+		                      ON A.COMPCD = B.COMPCD
+		                         AND A.CODE = B.DB_COL_NM_INVC
+		                         AND B.SITE_CD = #{SITE_CD}
+		        WHERE  A.CODEKEY = 'LF_SITE_CODE') P
+		        
+		       PIVOT ( Max(DB_COL_NM)
+		             FOR DB_COL_NM_INVC IN ( [RCV_NM],
+		                                     [RCV_TEL1],
+		                                     [RCV_TEL2],
+		                                     [RCV_ADDR],
+		                                     [RCV_ZIPCODE],
+		                                     [PROD_CDX],
+		                                     [PROD_NMX],
+		                                     [ORD_QTY],
+		                                     [DELI_MSG],
+		                                     [DELI_TYPE],
+		                                     [INVC_SNO],
+		                                     [ORD_SNOS],
+		                                     [ORD_ID],
+		                                     [ORD_EMAIL],
+		                                     [ORD_NM],
+		                                     [ORD_AMT],
+		                                     [ORD_YMD],
+		                                     [ORD_TEL1],
+		                                     [ORD_TEL2],
+		                                     [ORD_ADDR],
+		                                     [ORD_BIRTH_YMD],
+		                                     [ORD_JOIN_YMD],
+		                                     [SND_NM],
+		                                     [SND_TEL],
+		                                     [SND_ADDR],
+		                                     [SND_ZIPCODE],
+		                                     [SND_MSG],
+		                                     [IPGO_AMT],
+		                                     [QTY_INV],
+		                                     [DELI_FEE_IN],
+		                                     [PROD_GIFT_CD],
+		                                     [PROD_GIFT_NM],
+		                                     [PROD_GIFT_MSG],
+		                                     [BOOKYN],
+		                                     [BOOK_MSG],
+		                                     [BOOK_SND_NM],
+		                                     [SALEYN],
+		                                     [SALE_YMD],
+		                                     [SALE_AMT],
+		                                     [CARDYN],
+		                                     [MULTIPACK],
+		                                     [MULTIPACK_WHNM],
+		                                     [ETC1],
+		                                     [ETC2],
+		                                     [ETC3],
+		                                     [ETC4],
+		                                     [ETC5],
+		                                     [ETC6],
+		                                     [ETC7],
+		                                     [GUBUN1],
+		                                     [GUBUN2],
+		                                     [GUBUN3],
+		                                     [GUBUN4],
+		                                     [GUBUN5] ) ) PV
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.ORGCD = #{ORGCD}
+		  AND A.SITE_CD = #{SITE_CD} 
+	</select>
+</mapper>

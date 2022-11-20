@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="S000007Mapper">
+
+	<!-- 대메뉴 : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.s000007.getSearch */
+	    SELECT A.COMPCD  	  /*회사코드*/
+	          ,A.MENUL1KEY    /*대메뉴코드*/
+	          ,A.L1TITLE      /*명칭*/
+	          ,A.SORTNO       /*정렬순서*/
+	          ,A.REMARKS      /*비고*/
+	          ,A.ADDUSERCD    /*등록자ID*/
+	          ,A.ADDDATETIME  /*등록일시*/
+	          ,A.UPDUSERCD    /*수정자ID*/
+	          ,A.UPDDATETIME  /*수정일시*/
+	          ,A.TERMINALCD   /*IP*/  
+	          ,(SELECT COUNT(1) FROM S008 B WITH (NOLOCK)
+	            WHERE A.COMPCD = B.COMPCD
+	              AND A.MENUL1KEY = B.MENUL1KEY) MENUL2CNT	/*중메뉴건수*/ 
+	          ,(SELECT COUNT(1) FROM S009 C WITH (NOLOCK)
+	            WHERE A.COMPCD = C.COMPCD
+	              AND A.MENUL1KEY = C.MENUL1KEY) MENUL3CNT	/*소메뉴건수*/
+	    FROM S007 A WITH (NOLOCK)
+	    WHERE A.COMPCD = #{S_COMPCD}					
+	    <if test="S_MENUNAME != null and S_MENUNAME != ''">
+	      AND A.L1TITLE LIKE '%' + dbo.UFX_TRIM(#{S_MENUNAME}) + '%'
+	    </if>					
+	    ORDER BY A.SORTNO ASC 
+	</select>
+	
+	<select id="orgcdChk" parameterType="LDataMap" resultType="int">
+		/* sys.s000007.orgcdChk */
+		SELECT COUNT(1) AS CNT 
+		 FROM S007 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		  AND MENUL1KEY = #{MENUL1KEY}
+	</select>
+	
+	<!-- 사업장 : 마스터 신규 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* sys.s000007.insertMst */
+		INSERT INTO S007 WITH (ROWLOCK)
+			(COMPCD,  	/*회사코드*/
+			MENUL1KEY,  /*대메뉴코드*/
+			L1TITLE,  	/*명칭*/
+			SORTNO,		/*정렬순서*/
+			REMARKS,	/*비고*/
+			ADDUSERCD,	/*등록자ID*/
+			ADDDATETIME,/*등록일시*/
+			UPDUSERCD,	/*수정자ID*/
+			UPDDATETIME,/*수정일시*/
+			TERMINALCD)	/*IP*/
+		VALUES
+			(#{COMPCD},
+			#{MENUL1KEY},
+			#{L1TITLE},
+			#{SORTNO},
+			#{REMARKS},
+			#{LOGIN_USERCD},
+			GETDATE(),
+			#{LOGIN_USERCD},
+			GETDATE(),
+			#{LOGIN_IP})
+	</insert>
+	
+	<!-- 대메뉴 : 저장(마스터수정) -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* sys.s000007.updateMst */
+		UPDATE S007 WITH (ROWLOCK)
+		   SET L1TITLE = #{L1TITLE}
+			 , SORTNO = #{SORTNO}
+			 , REMARKS = #{REMARKS}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+			 , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE MENUL1KEY = #{MENUL1KEY}
+	</update>
+	
+	<!-- 대메뉴 : 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap" >
+		DELETE FROM S007 WITH (ROWLOCK)
+		 WHERE COMPCD = #{COMPCD} AND MENUL1KEY = #{MENUL1KEY}
+	</delete>
+	
+</mapper>

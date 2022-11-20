@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 박스 관리 -->
+<mapper namespace="passBookMapper">
+
+    <select id="getUser" parameterType="LDataMap" resultType="xrt.lingoframework.common.vo.LoginVO">
+        /* passBookMapper.getUser */
+        SELECT 
+            COMPCD          AS compcd,
+            ORGCD           AS orgcd,
+            MEM_USERCD      AS usercd,
+            PAYMENT_TYPE    AS paymentType
+        FROM P002
+        WHERE 1 = 1
+        <if test='usercd != null and usercd != ""'>
+            AND MEM_USERCD = #{usercd}
+        </if>
+    </select>
+
+    <select id="getPassBookAuth" parameterType="LDataMap" resultType="xrt.fulfillment.order.payment.PassBookAuthVO">
+        /* passBookMapper.getPassBookAuth */
+        SELECT
+            COMPCD      AS compcd,
+            ORGCD       AS orgcd,
+            USERCD      AS usercd,
+            ORD_NO      AS ordNo,
+            COMPLETE_YN AS completeYn,
+            CANCEL_YN   AS cancelYn
+        FROM PASS_BOOK_AUTH
+        WHERE 1 = 1
+        AND COMPCD = #{compcd}
+        AND ORGCD = #{orgcd}
+        <if test='usercd != null and usercd != ""'>
+            AND USERCD = #{usercd}
+        </if>
+    </select>
+    
+    <select id="getOrdNo" parameterType="LDataMap" resultType="java.lang.String">
+        /* passBookMapper.getOrdNo */
+        SELECT
+            FORMAT(getdate(), 'yyMMdd')+'P'+ REPLICATE('0', 5 - LEN('0')) + CONVERT(NVARCHAR(10), NEXT VALUE FOR PASS_BOOK_ORD_NO) AS ordNo
+    </select>
+    
+    <select id="getCancelOrdNo" parameterType="LDataMap" resultType="java.lang.String">
+        /* passBookMapper.getCancelOrdNo */
+        SELECT
+            FORMAT(getdate(), 'yyMMdd')+'C'+ REPLICATE('0', 5 - LEN('0')) + CONVERT(NVARCHAR(10), NEXT VALUE FOR PASS_BOOK_ORD_NO) AS ordNo
+    </select>
+    
+    <select id="getPassBookMaster" parameterType="LDataMap" resultType="xrt.fulfillment.order.payment.PassBookMasterVO">
+        /* passBookMapper.getPassBookMaster */
+        SELECT
+            COMPCD  AS compcd,
+            ORGCD   AS orgcd,
+            USERCD  AS usercd,
+            ORD_NO  AS ordNo,
+            TR_NO   as trNo
+        FROM PASS_BOOK_MASTER
+        WHERE 1 = 1
+        <if test='ordNo != null and ordNo != ""'>
+            AND ORD_NO = #{ordNo}
+        </if>
+        <if test='xrtInvcSno != null and xrtInvcSno != ""'>
+            AND CUST_PARAM1 = #{xrtInvcSno}
+        </if>
+        <if test='cancelYn == "Y"'>
+            AND PRODUCT_NM = #{productNm}
+            AND ISNULL(CANCEL_TR_NO , '') = ''
+        </if>
+    </select>
+    
+    <select id="getPassBookRegular" parameterType="LDataMap" resultType="xrt.fulfillment.order.payment.PassBookRegularVO">
+        /* passBookMapper.getPassBookRegular */
+        SELECT
+            PASS_BOOK_REGULAR_SEQ   AS passBookRegularSeq,
+            COMPCD                  AS compcd,
+            ORGCD                   AS orgcd,
+            ORD_NO                  AS ordNo,
+            REGULARPAY_KEY          AS regularpayKey,
+            BANK_ACCT_NO            AS bankAcctNo
+        FROM PASS_BOOK_REGULAR
+        WHERE 1 = 1
+        <if test='orgcd != null and orgcd != ""'>
+            AND ORGCD = #{orgcd}
+        </if>
+    </select>
+    
+    <select id="getTOrder" parameterType="LDataMap" resultType="shippingListVo">
+        /* passBookMapper.getTOrder */
+        SELECT
+            COMPCD              AS compcd,
+            ORGCD               AS orgcd,
+            XRT_INVC_SNO        AS xrtInvcSno,
+            XRT_SHIPPING_PRICE  AS xrtShippingPrice,
+            E_NATION            AS eNation
+        FROM TORDER
+        WHERE 1 = 1
+        <if test='orgcd != null and orgcd != ""'>
+            AND ORGCD = #{orgcd}
+        </if>
+        <if test='xrtInvcSno != null and xrtInvcSno != ""'>
+            AND XRT_INVC_SNO = #{xrtInvcSno}
+        </if>
+    </select>
+
+    <select id="getRegular" parameterType="LDataMap" resultType="LDataMap">
+        /* passBookMapper.getRegular */
+        SELECT
+            A.COMPCD            AS "compcd",
+            A.ORGCD             AS "orgcd",
+            A.USERCD            AS "usercd",
+            A.ORD_NO            AS "ordNo",
+            B.BANK_ACCT_NO      AS "bankAcctNo",
+            B.REGULARPAY_KEY    AS "regularpayKey"
+        FROM PASS_BOOK_AUTH A
+        LEFT JOIN PASS_BOOK_REGULAR B
+        ON A.ORGCD = B.ORGCD
+        WHERE A.ORGCD = B.ORGCD
+        AND A.COMPLETE_YN = 'Y'
+        <if test='compcd != null and compcd != ""'>
+            AND A.COMPCD = #{compcd}
+        </if>
+        <if test='orgcd != null and orgcd != ""'>
+            AND A.ORGCD = #{orgcd}
+        </if>
+    </select>
+    
+    <select id="getPaymentCheck" parameterType="LDataMap" resultType="java.lang.String">
+        /* passBookMapper.getPaymentCheck */
+            SELECT
+               CASE
+                    WHEN COUNT(*) = 0 THEN 'N'
+                    ELSE 'Y'
+               END AS paymentYn
+            FROM PASS_BOOK_MASTER
+            WHERE 1 = 1
+            AND CANCEL_TR_NO IS NULL
+            <if test='xrtInvcSno != null and xrtInvcSno != ""'>
+                AND CUST_PARAM1 = #{xrtInvcSno}
+            </if>
+            <if test='productNm != null and productNm != ""'>
+                AND PRODUCT_NM = #{productNm}
+            </if>
+    </select>
+
+    <insert id="insertPassBookAuth" parameterType="xrt.fulfillment.order.payment.PassBookAuthVO">
+        <selectKey resultType="java.lang.String" keyProperty="passBookAuthSeq" order="BEFORE">
+            /* passBookMapper Create passBookAuthSeq */
+            SELECT 
+                RIGHT('00000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR PASS_BOOK_AUTH_SEQ), 20) AS passBookAuthSeq
+        </selectKey>
+        /* passBookMapper.insertPassBookAuth */
+        INSERT INTO PASS_BOOK_AUTH (
+            PASS_BOOK_AUTH_SEQ,
+            COMPCD, 
+            ORGCD,
+            USERCD, 
+            ORD_NO, 
+            COMPLETE_YN,
+            CANCEL_YN,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{passBookAuthSeq},
+            #{compcd},
+            #{orgcd},
+            #{usercd},
+            #{ordNo},
+            #{completeYn},
+            #{cancelYn},
+            #{addusercd},
+            GETDATE(),
+            #{updusercd},
+            GETDATE(),
+            #{terminalcd}
+        )
+    </insert>
+
+    <insert id="insertPassBookMaster" parameterType="xrt.fulfillment.order.payment.PassBookMasterVO">
+        <selectKey resultType="java.lang.String" keyProperty="passBookMasterSeq" order="BEFORE">
+            /* passBookMapper Create passBookMasterSeq */
+            SELECT 
+                RIGHT('00000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR PASS_BOOK_MASTER_SEQ), 20) AS passBookMasterSeq
+        </selectKey>
+        /* passBookMapper.insertPassBookMaster */
+        INSERT INTO PASS_BOOK_MASTER (
+            PASS_BOOK_MASTER_SEQ,
+            COMPCD,
+            ORGCD,
+            USERCD,
+            HD_INFO,
+            API_VER,
+            MERCNT_ID,
+            ORD_NO,
+            PRODUCT_NM,
+            DUTYFREE_YN,
+            PRICE,
+            TR_PRICE,
+            TR_DAY,
+            TR_TIME,
+            <if test='reqDay != null and reqDay != ""'>
+                REQ_DAY,
+            </if>
+            <if test='reqTime != null and reqTime != ""'>
+                REQ_TIME,
+            </if>
+            <if test='callbackUrl != null and callbackUrl != ""'>
+                CALLBACK_URL,
+            </if>
+            <if test='custParam1 != null and custParam1 != ""'>
+                CUST_PARAM1,
+            </if>
+            SIGNATURE,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{passBookMasterSeq},
+            #{compcd},
+            #{orgcd},
+            #{usercd},
+            #{hdInfo},
+            #{apiVer},
+            #{mercntId},
+            #{ordNo},
+            #{productNm},
+            #{dutyFreeYn},
+            #{price},
+            #{trPrice},
+            #{trDay},
+            #{trTime},
+            <if test='reqDay != null and reqDay != ""'>
+                #{reqDay},
+            </if>
+            <if test='reqTime != null and reqTime != ""'>
+                #{reqTime},
+            </if>
+            <if test='callbackUrl != null and callbackUrl != ""'>
+                #{callbackUrl},
+            </if>
+            <if test='custParam1 != null and custParam1 != ""'>
+                #{custParam1},
+            </if>
+            #{signature},
+            #{addusercd},
+            GETDATE(),
+            #{updusercd},
+            GETDATE(),
+            #{terminalcd}
+        )
+    </insert>
+
+    <insert id="insertPassBookRegular" parameterType="xrt.fulfillment.order.payment.PassBookRegularVO">
+        <selectKey resultType="java.lang.String" keyProperty="passBookRegularSeq" order="BEFORE">
+            /* passBookMapper Create passBookRegularSeq */
+            SELECT 
+                RIGHT('00000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR PASS_BOOK_REGULAR_SEQ), 20) AS passBookRegularSeq
+        </selectKey>
+        /* passBookMapper.insertPassBookRegular */
+        INSERT INTO PASS_BOOK_REGULAR (
+            PASS_BOOK_REGULAR_SEQ,
+            COMPCD,
+            ORGCD,
+            ORD_NO,
+            REGULARPAY_KEY,
+            BANK_ACCT_NO,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{passBookRegularSeq},
+            #{compcd},
+            #{orgcd},
+            #{ordNo},
+            #{regularpayKey},
+            #{bankAcctNo},
+            #{addusercd},
+            GETDATE(),
+            #{updusercd},
+            GETDATE(),
+            #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updatePassBookAuth" parameterType="xrt.fulfillment.order.payment.PassBookAuthVO">
+        /* passBookMapper.updatePassBookAuth */
+        UPDATE PASS_BOOK_AUTH
+        <trim prefix="SET" suffixOverrides=",">
+            <if test='completeYn != null and completeYn != ""'>
+                COMPLETE_YN = #{completeYn},
+            </if>
+            <choose>
+                <when test='cancelYn == "Y"'>
+                    CANCEL_DATE = GETDATE(),
+                    CANCEL_YN = #{cancelYn},
+                </when>
+                <when test='cancelYn == "N"'>
+                    CANCEL_DATE = NULL,
+                    CANCEL_YN = #{cancelYn},
+                </when>
+                <otherwise>
+                </otherwise>
+            </choose>
+            <if test='ordNo != null and ordNo != ""'>
+                ORD_NO = #{ordNo},
+            </if>
+            <if test='updusercd != null and updusercd != ""'>
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = GETDATE()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        <if test='compcd != null and compcd != ""'>
+            AND COMPCD = #{compcd}
+        </if>
+        <if test='orgcd != null and orgcd != ""'>
+            AND ORGCD = #{orgcd}
+        </if>
+        <if test='usercd != null and usercd != ""'>
+            AND USERCD = #{usercd}
+        </if>
+    </update>
+    
+    <update id="updatePassBookMaster" parameterType="xrt.fulfillment.order.payment.PassBookMasterVO">
+        /* passBookMapper.updatePassBookMaster */
+        UPDATE PASS_BOOK_MASTER
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="authNo != null and authNo != ''">
+                AUTH_NO = #{authNo},
+            </if>
+            <if test="reqDay != null and reqDay != ''">
+                REQ_DAY = #{reqDay},
+            </if>
+            <if test="reqTime != null and reqTime != ''">
+                REQ_TIME = #{reqTime},
+            </if>
+            <if test="payPrice != null and payPrice != ''">
+                PAY_PRICE = #{payPrice},
+            </if>
+            <if test="trNo != null and trNo != ''">
+                TR_NO = #{trNo},
+            </if>
+            <if test="cancelTrNo != null and cancelTrNo != ''">
+                CANCEL_TR_NO = #{cancelTrNo},
+            </if>
+            <if test="cancelPrice != null and cancelPrice != ''">
+                CANCEL_PRICE = #{cancelPrice},
+            </if>
+            <if test="cancelReqDay != null and cancelReqDay != ''">
+                CANCEL_REQ_DAY = #{cancelReqDay},
+            </if>
+            <if test="signature != null and signature != ''">
+                SIGNATURE = #{signature},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        <if test='ordNo != null and ordNo != ""'>
+            AND ORD_NO = #{ordNo}
+        </if>
+        <if test='cancelTrNo != null and cancelTrNo != ""'>
+            AND TR_NO = #{trNo}
+        </if>
+    </update>
+    
+    <update id="updateP002" parameterType="LDataMap">
+        /* passBookMapper.updateP002 */
+        UPDATE P002
+        SET
+            PAYMENT_TYPE = '3',
+            UPDUSERCD = 'SettleBank',
+            UPDDATETIME = getDate()
+        WHERE 1 = 1
+        AND UPPER(MEM_USERCD) = UPPER(#{usercd})
+    </update>
+    
+    <update id="updateTOrder" parameterType="LDataMap">
+        /* passBookMapper.updateTOrder */
+        UPDATE TORDER
+        SET
+            STATUS_CD = #{statusCd},
+            UPDUSERCD = #{usercd},
+            UPDDATETIME = getDate()
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+    
+    <delete id="deletePassBookRegular" parameterType="LDataMap">
+        /* passBookMapper.deletePassBookRegular */
+        DELETE FROM PASS_BOOK_REGULAR
+        WHERE 1 = 1
+        AND COMPCD = #{compcd}
+        AND ORGCD = #{orgcd}
+        AND ORD_NO = #{ordNo}
+    </delete>
+    
+    <delete id="deletePassBookMaster" parameterType="LDataMap">
+        /* passBookMapper.deletePassBookMaster */
+        DELETE FROM PASS_BOOK_MASTER
+        WHERE 1 = 1
+        AND ORD_NO = #{ordNo}
+        AND CANCEL_TR_NO IS NULL
+    </delete>
+</mapper>

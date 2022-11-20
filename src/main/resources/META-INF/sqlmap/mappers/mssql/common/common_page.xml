@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="page">
+
+	<sql id="pagingPre">
+	SELECT B.*
+		FROM (SELECT COUNT(*) OVER() AS TOTAL_COUNT
+		           , CEILING(1.0*ROW_NUMBER() OVER(ORDER BY (SELECT 0)) / ISNULL(#{ROWS_PER_PAGE},999999999)) AS CURRENT_PAGE
+		           , A.*
+			    FROM (
+	</sql>
+	 
+	<sql id="pagingPost">
+	   				 ) A	 
+	 		 ) B
+	WHERE CURRENT_PAGE = ISNULL(#{CURRENT_PAGE}, 1)
+	</sql>
+	
+	<sql id="pagingPostOrderBy">
+	    				OFFSET 0 ROWS  <!-- 메인쿼리에 ORDER BY절 사용을 위해 -->
+						FETCH NEXT 999999999 ROWS ONLY
+	   				 ) A	 
+	 		 ) B
+	WHERE CURRENT_PAGE = ISNULL(#{CURRENT_PAGE}, 1)
+	</sql>
+
+</mapper>

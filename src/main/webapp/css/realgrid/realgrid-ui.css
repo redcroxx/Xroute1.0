@@ -1,0 +1,79 @@
+@CHARSET "UTF-8";
+/**
+ * RealGrid UI CSS
+ */
+/* 페이징 영역 */
+.grid_pager {
+	height:25px; background:#e6e6e6; border:1px solid #b9b9b9; border-top:0;
+}
+.grid_pager .pager_left {
+	float:left; width:40%; height:100%; text-align:left; vertical-align: middle;
+}
+.grid_pager .pager_center {
+	float:left; width:20%; height:100%; text-align:center; vertical-align: middle;
+}
+.grid_pager .pager_right {
+	float:right; width:40%; height:100%; text-align:right; vertical-align: middle;
+}
+
+/* ContextMenu (PopupMenu) */
+.rg-popup-menu {
+    background: #ffffff;
+    border: 1px solid rgb(200, 200, 200);
+    box-shadow: rgba(0, 0, 0, 0.8) 1px 2px 5px;
+    font-family: 'NotoSansCJKjp', 'NanumBarunGothic', sans-serif;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    font-size: 10pt;
+    padding: 4px;
+    margin: 0px;
+}
+.rg-popup-item {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    height: 20px;
+    cursor: pointer;
+}
+.rg-popup-item:hover {
+    background-color: #ecf5fd;
+}
+.rg-popup-separator-hr {
+    height: 1px;
+    border: 0px;
+    margin: 2px;
+    color: #777;
+    background-color: #777;
+}
+.rg-popup-expander {
+    background-image: url("/resource/image/icon/menu_expander.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.rg-popup-check {
+    /*
+  background-image:url("/resource/image/icon/menu_uncheck.png");
+  background-repeat : no-repeat;
+  background-position : center center;
+  */
+}
+.rg-popup-check-checked {
+    background-image: url("/resource/image/icon/menu_check.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.rg-popup-radio {
+    /*
+  background-image:url("/resource/image/icon/menu_unradio.png");
+  background-repeat : no-repeat;
+  background-position : center center;
+  */
+}
+.rg-popup-radio-checked {
+    background-image: url("/resource/image/icon/menu_radio.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.rg-popup-group1 {
+    background: #ffd800;
+}

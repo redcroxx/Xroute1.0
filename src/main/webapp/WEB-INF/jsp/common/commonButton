@@ -1,0 +1,20 @@
+<%--
+  * ========= 공통버튼 클릭함수 =========
+  * 검색 : cfn_retrieve()
+  * 목록 : cfn_list()
+  * 신규 : cfn_new()
+  * 삭제 : cfn_del()
+  * 저장 : cfn_save()
+  * 복사 : cfn_copy()
+  * 초기화 : cfn_init()
+  * 실행 : cfn_execute()
+  * 취소 : cfn_cancel()
+  * 엑셀업로드 : cfn_excelup()
+  * 엑셀다운 : cfn_exceldown()
+  * 출력 : cfn_print()
+  * 사용자버튼 : cfn_userbtn1() ~ cfn_userbtn5()
+  * -------------------------------
+  * 버튼 순서 : setCommBtnSeq(['ret",'list']) : ret,list,new,del,save,copy,init,execute,cancel,print,excelup,exceldown,user1,2,3,4,5
+  * 버튼 표시/숨김 : setCommBtn('ret", true) : ret,list,new,del,save,copy,init,execute,cancel,print,excelup,exceldown,user1,2,3,4,5
+  * ===============================
+--%>

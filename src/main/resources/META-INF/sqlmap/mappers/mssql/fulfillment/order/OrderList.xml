@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="OrderListMapper">
+	<select id="getSearch" parameterType="commonSearchVo" resultType="orderVo">
+		/* OrderListMapper.getSearch */
+		SELECT
+			o.ORD_CD			AS ordCd
+			, o.ORGCD			AS orgcd
+			, o.RELAY_SEQ		AS relaySeq
+			, o.FILE_NM			AS fileNm
+			, o.MALL_NM			AS mallNm
+			, CONVERT(CHAR(8), o.TALLY_DATETIME, 112)  AS tallyDatetime
+			, o.TALLY_USER_CD	AS tallyUserCd
+			, o.XRT_INVC_SNO	AS xrtInvcSno
+			, o.UPLOAD_DATE		AS uploadDate
+			, o.SHIP_METHOD_CD	AS shipMethodCd
+			, o.LOCAL_SHIPPER	AS localShipper
+			, o.S_NATION		AS sNation
+			, o.E_NATION		AS eNation
+			, o.RECV_NAME		AS recvName
+			, o.RECV_TEL		AS recvTel
+			, o.RECV_MOBILE		AS recvMobile
+			, o.RECV_ADDR1		AS recvAddr1
+			, o.RECV_ADDR2		AS recvAddr2
+			, o.RECV_POST		AS recvPost
+			, o.RECV_CURRENCY	AS recvCurrency
+			, o.ORD_NO			AS ordNo
+			, o.ORD_CNT			AS ordCnt
+			, o.CART_NO			AS cartNo
+			, (SELECT
+				TOP 1 STUFF(
+					(SELECT	
+						', ' + od.GOODS_CD
+					FROM TORDERDTL od
+					WHERE 1 = 1
+					AND o.ORD_CD = od.ORD_CD
+					FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				FROM TORDERDTL)	AS goodsCd
+			, (SELECT
+				TOP 1 STUFF(
+					(SELECT
+						', ' + od.GOODS_NM + ' ' + od.GOODS_CNT +'ea'
+					FROM TORDERDTL od
+					WHERE 1 = 1
+					AND o.ORD_CD = od.ORD_CD
+					FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				FROM TORDERDTL)	AS goodsNm
+			, (SELECT
+				TOP 1 STUFF(
+				(SELECT
+					', ' + od.GOODS_OPTION
+					FROM TORDERDTL od
+					WHERE 1 = 1
+					AND o.ORD_CD = od.ORD_CD
+					FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				FROM TORDERDTL)	AS goodsOption
+			, (SELECT
+				TOP 1 STUFF(
+				(SELECT
+					', ' + od.GOODS_CNT
+					FROM TORDERDTL od
+					WHERE 1 = 1
+					AND o.ORD_CD = od.ORD_CD
+					FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				FROM TORDERDTL)		AS goodsCnt
+			, o.TOT_PAYMENT_PRICE	AS totPaymentPrice
+			, o.SHIP_NAME			AS shipName
+			, o.SHIP_TEL			AS shipTel
+			, o.SHIP_ADDR			AS shipAddr
+			, o.STATUS_CD           AS statusCd
+			, CASE
+                WHEN o.STATUS_CD = '10' THEN '주문등록'
+                WHEN o.STATUS_CD = '11' THEN '발송대기'
+                WHEN o.STATUS_CD = '12' THEN '발송완료'
+                WHEN o.STATUS_CD = '20' THEN '입금대기'
+                WHEN o.STATUS_CD = '21' THEN '결제완료'
+                WHEN o.STATUS_CD = '22' THEN '결제대기'
+                WHEN o.STATUS_CD = '23' THEN '결제실패'
+                WHEN o.STATUS_CD = '30' THEN '입고완료'
+                WHEN o.STATUS_CD = '31' THEN '창고보관'
+                WHEN o.STATUS_CD = '32' THEN '출고대기'
+                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                WHEN o.STATUS_CD = '34' THEN '검수취소'
+                WHEN o.STATUS_CD = '35' THEN '선적대기'
+                WHEN o.STATUS_CD = '40' THEN '출고완료'
+                WHEN o.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN o.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN o.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN o.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN o.STATUS_CD = '54' THEN '통관대기'
+                WHEN o.STATUS_CD = '55' THEN '통관완료'
+                WHEN o.STATUS_CD = '56' THEN '배송시작'
+                WHEN o.STATUS_CD = '57' THEN '배송중'
+                WHEN o.STATUS_CD = '60' THEN '배송완료'
+                WHEN o.STATUS_CD = '80' THEN 'API오류'
+                WHEN o.STATUS_CD = '98' THEN '입금취소'
+                WHEN o.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END               AS statusCdKr
+			, CASE
+				WHEN o.DEL_FLG = 'N' THEN 'APPLY'
+				WHEN o.DEL_FLG = 'Y' THEN 'DELETED'
+				ELSE '-'
+			 END AS delFlg
+			, o.RECV_CITY 			AS recvCity
+			, o.RECV_STATE			AS recvState
+			, CASE
+				WHEN o.PAYMENT_TYPE = '1' THEN '건당결제'
+				WHEN o.PAYMENT_TYPE = '2' THEN '월말결제'
+                WHEN o.PAYMENT_TYPE = '3' THEN '정기결제'
+                WHEN o.PAYMENT_TYPE = '4' THEN '신용결제'
+				ELSE '-'
+			 END AS paymentType
+			, PURCHASE_URL		AS purchaseUrl
+		FROM TORDER o WITH (NOLOCK)
+		WHERE 1 = 1
+		AND o.DEL_FLG = 'N'
+		AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate} 
+		<!-- AND o.UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate} -->
+		AND o.COMPCD = #{sCompCd}
+		<if test="sOrgCd != null and sOrgCd != ''">
+		AND o.ORGCD = #{sOrgCd}
+		</if>
+		<if test="sWhcd != null and sWhcd != ''">
+		AND o.WHCD = #{sWhcd}
+		</if>
+		<choose>
+			<when test="sKeyword != null and sKeyword != ''">
+				AND (o.XRT_INVC_SNO = #{sKeyword}
+				OR o.CART_NO = #{sKeyword}
+				OR o.ORD_NO = #{sKeyword}
+				OR o.SELLER_REF_NO1 = #{sKeyword}
+				OR o.SELLER_REF_NO2 = #{sKeyword} )
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<if test="sToNation != null and sToNation != ''">
+		AND o.S_NATION = #{sToNation}
+		</if>
+		<if test="sFromNation != null and sFromNation != ''">
+		AND o.E_NATION = #{sFromNation}
+		</if>
+		<if test="sFileSeq != null and sFileSeq != '' and sFileSeq != 0">
+		AND o.FILE_SEQ = #{sFileSeq}
+		</if>
+		Order by o.ORD_CD asc
+	</select>
+	
+
+
+	<!-- 하단부 페이지 조회 -->
+	<select id="getSeqdata" parameterType="commonSearchVo" resultType="LDataMap">
+		/* OrderListMapper.getSeqdata */
+		SELECT 
+			MIN(RELAY_SEQ) AS MIN_RELAY_SEQ
+			, MIN(FILE_RELAY_SEQ) AS MIN_FILE_RELAY_SEQ
+			, MAX(RELAY_SEQ) AS MAX_RELAY_SEQ
+			, MAX(FILE_RELAY_SEQ) AS MAX_FILE_RELAY_SEQ
+		FROM TORDER
+		WHERE UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+		AND COMPCD = #{sCompCd}
+		<if test="sOrgCd != null and sOrgCd != ''">
+		AND ORGCD = #{sOrgCd}
+		</if>
+		<if test="sWhcd != null and sWhcd != ''">
+		AND WHCD = #{sWhcd}
+		</if>
+		<choose>
+			<when test="sKeyword != null and sKeyword != ''">
+			AND (XRT_INVC_SNO = #{sKeyword} 
+			OR CART_NO = #{sKeyword}
+			OR ORD_NO = #{sKeyword}
+			OR SELLER_REF_NO1 = #{sKeyword}
+			OR SELLER_REF_NO2 = #{sKeyword})
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<if test="sToNation != null and sToNation != ''">
+		AND S_NATION = #{sToNation}
+		</if>
+		<if test="sFromNation != null and sFromNation != ''">
+		AND E_NATION = #{sFromNation}
+		</if>
+		<if test="sFileSeq != null and sFileSeq != '' and sFileSeq != 0">
+		AND FILE_SEQ = #{sFileSeq}
+		</if>
+	</select>
+
+	<!-- 지정송장의 품목 최대값 최소값 조회 -->
+	<select id='getCount' parameterType="commonSearchVo" resultType="LDataMap">
+		/* OrderListMapper.getCount */
+		SELECT 
+			MAX(A.CNT) AS MAXCNT
+			, MIN(A.CNT) AS LOWCNT
+			, MIN(A.WHY) AS WHY
+		FROM (
+			SELECT
+				B.ORD_CD
+				, B.CNT AS CNT
+				, CASE 
+					WHEN <![CDATA[ B.CNT > 6 ]]> <![CDATA[ AND B.CNT <= 22 THEN '0' ]]>
+					ELSE '1' 
+				END AS WHY 
+			FROM (
+				SELECT
+					ORD_CD
+					, ORGCD 
+				FROM TORDER 
+				WHERE 1 = 1 
+				AND UPLOAD_DATE BETWEEN ${sToDate} AND ${sFromDate}
+				AND DEL_FLG = 'N'
+			<choose>
+				<when test="sKeyword != null and sKeyword != ''">
+					AND (XRT_INVC_SNO = #{sKeyword}
+					OR CART_NO = #{sKeyword}
+					OR ORD_NO = #{sKeyword}
+					OR SELLER_REF_NO1 = #{sKeyword}
+					OR SELLER_REF_NO2 = #{sKeyword}
+					)
+				</when>
+				<otherwise>
+				</otherwise>
+		</choose>
+		<if test="sToNation != null and sToNation != ''">
+		AND S_NATION = #{sToNation}
+		</if>
+		<if test="sFromNation != null and sFromNation != ''">
+		AND E_NATION = #{sFromNation}
+		</if>
+		<if test="sFileSeq != null and sFileSeq != '' and sFileSeq != 0">
+		AND FILE_SEQ = #{sFileSeq}
+		</if>
+		<if test="sOrgCd != null and sOrgCd != ''">
+		AND ORGCD = #{sOrgCd}
+		</if>
+		<if test="sWhcd != null and sWhcd != ''">
+		AND WHCD = #{sWhcd}
+		</if>
+		AND RELAY_SEQ BETWEEN #{sInvcStart} AND #{sInvcEnd}) A,
+		(SELECT
+			ORD_CD
+			, COUNT(ORD_CD) AS CNT 
+		FROM TORDERDTL 
+		GROUP BY ORD_CD) B 
+		WHERE A.ORD_CD = B.ORD_CD 
+		AND A.ORGCD = A.ORGCD 
+		GROUP BY B.ORD_CD, B.CNT) A 
+	</select>
+	
+	<!-- 오더CD검색 -->
+	<select id="getOrdCd" parameterType="LDataMap" resultType="LDataMap">
+		/* OrderListMapper.getOrdCd */
+		SELECT
+			ORD_CD
+		FROM TORDER
+		WHERE XRT_INVC_SNO = #{xrtInvcSno}
+		AND STOCK_USERCD IS NULL
+		AND STOCK_DATE IS NULL
+		AND DEL_FLG = 'N'
+	</select>
+	
+	<!-- 삭제(오더마스터) -->
+	<update id="delOrder" parameterType="LDataMap">
+		/* OrderListMapper.delOrder */
+		UPDATE TORDER WITH (ROWLOCK)
+		SET DEL_FLG = 'Y'
+		WHERE ORD_CD = #{ORD_CD}
+	</update>
+	
+	<!-- 삭제(오더마스터) -->
+	<update id="delOrderDtl" parameterType="LDataMap">
+		/* OrderListMapper.delOrderDtl */
+		UPDATE TORDERDTL WITH (ROWLOCK)
+		SET DEL_FLG = 'Y'
+		WHERE ORD_CD = #{ORD_CD}
+	</update>
+</mapper>

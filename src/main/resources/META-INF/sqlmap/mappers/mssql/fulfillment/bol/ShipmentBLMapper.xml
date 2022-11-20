@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="shipmentBlMapper">
+    <!-- 선적 조회 -->
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.bol.ShipmentBLVO">
+        /* shipmentBlMapper.getSearch */
+        SELECT
+            SHIPMENT_BL_SEQ     AS shipmentBlSeq,
+            COMPCD              AS compcd,
+            SHIPMENT_BL_NO      AS shipmentBlNo,
+            HOUSE_BL_NO         AS houseBlNo,
+            COUNTRY             AS country,
+            CUSTOMS_CLEARANCE   AS customsClearance,
+            CASE
+                WHEN CUSTOMS_CLEARANCE = 'G' THEN '일반'
+                WHEN CUSTOMS_CLEARANCE = 'L' THEN '목록'
+                ELSE ''
+            END                 AS customsClearanceNm,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            CLOSE_YN            AS closeYn,
+            REMARK              AS remark,
+            ADDUSERCD           AS addusercd,
+            CONVERT(CHAR(19), ADDDATETIME, 20) AS adddatetime,
+            UPDUSERCD           AS updusercd,
+            CONVERT(CHAR(19), UPDDATETIME, 20) AS upddatetime
+        FROM SHIPMENT_BL WITH (NOLOCK)
+        <choose>
+            <when test="sKeywordType =='PREMIUM'">
+                WHERE SHIPMENT_BL_NO IN(
+		            SELECT SHIPMENT_BL_NO
+		            FROM TORDER
+		            WHERE SHIP_METHOD_CD = 'PREMIUM'
+		        )
+            </when>
+            <when test="sKeywordType =='DHL'">
+                WHERE SHIPMENT_BL_NO IN(
+                    SELECT SHIPMENT_BL_NO
+                    FROM TORDER
+                    WHERE SHIP_METHOD_CD = 'DHL'
+                )
+            </when>
+            <otherwise>
+                WHERE SHIPMENT_BL_NO IN(
+                    SELECT SHIPMENT_BL_NO
+                    FROM TORDER
+                    WHERE SHIP_METHOD_CD = 'PREMIUM'
+                )
+            </otherwise>
+        </choose>
+        <if test="sKeyword != null and sKeyword != ''">
+            AND SHIPMENT_BL_NO = #{sKeyword} OR HOUSE_BL_NO = #{sKeyword}
+        </if>
+        <if test="sStatusCd != null and sStatusCd != ''">
+            AND CLOSE_YN = #{sStatusCd} 
+        </if>
+        AND ADDDATETIME BETWEEN #{sToDate} + ' 00:00:00' AND #{sFromDate} + ' 23:59:59'
+        ORDER BY ADDDATETIME ASC
+    </select>
+    
+    <select id="getShipmentBL" parameterType="LDataMap" resultType="xrt.fulfillment.bol.ShipmentBLVO">
+        /* shipmentBlMapper.getShipmentBL */
+        SELECT
+            SHIPMENT_BL_SEQ     AS shipmentBlSeq,
+            COMPCD              AS compcd,
+            SHIPMENT_BL_NO      AS shipmentBlNo,
+            HOUSE_BL_NO         AS houseBlNo,
+            COUNTRY             AS country,
+            CUSTOMS_CLEARANCE   AS customsClearance,
+            CASE
+                WHEN CUSTOMS_CLEARANCE = 'G' THEN '일반'
+                WHEN CUSTOMS_CLEARANCE = 'L' THEN '목록'
+                ELSE ''
+            END                 AS customsClearanceNm,
+            CLOSE_YN            AS closeYn,
+            CASE
+                WHEN CLOSE_YN = 'Y' THEN '완료'
+                ELSE '진행 중'
+            END                 AS closeYnNm,
+            REMARK              AS remark
+        FROM SHIPMENT_BL WITH (NOLOCK)
+        WHERE 1 = 1
+        <if test="compcd != null and compcd =! ''">
+            AND COMPCD = #{compcd}
+        </if>
+        <if test="shipmentBlNo != null and shipmentBlNo != ''">
+            AND SHIPMENT_BL_NO = #{shipmentBlNo}
+        </if>
+    </select>
+    
+    <select id="getOrderList" parameterType="LDataMap" resultType="shippingListVo">
+        /* shipmentWaitMapper.getOrderList */
+        SELECT
+            o.XRT_INVC_SNO      AS xrtInvcSno,
+            o.ORGCD             AS orgcd,
+            CONVERT(NVARCHAR, o.STOCK_DATE, 23) AS stockDate,
+            CASE
+                WHEN o.STATUS_CD = '10' THEN '주문등록'
+                WHEN o.STATUS_CD = '11' THEN '발송대기'
+                WHEN o.STATUS_CD = '12' THEN '발송완료'
+                WHEN o.STATUS_CD = '20' THEN '입금대기'
+                WHEN o.STATUS_CD = '21' THEN '결제완료'
+                WHEN o.STATUS_CD = '22' THEN '결제대기'
+                WHEN o.STATUS_CD = '23' THEN '결제실패'
+                WHEN o.STATUS_CD = '30' THEN '입고완료'
+                WHEN o.STATUS_CD = '31' THEN '창고보관'
+                WHEN o.STATUS_CD = '32' THEN '출고대기'
+                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                WHEN o.STATUS_CD = '34' THEN '검수취소'
+                WHEN o.STATUS_CD = '35' THEN '선적대기'
+                WHEN o.STATUS_CD = '40' THEN '출고완료'
+                WHEN o.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN o.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN o.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN o.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN o.STATUS_CD = '54' THEN '통관대기'
+                WHEN o.STATUS_CD = '55' THEN '통관완료'
+                WHEN o.STATUS_CD = '56' THEN '배송시작'
+                WHEN o.STATUS_CD = '57' THEN '배송중'
+                WHEN o.STATUS_CD = '60' THEN '배송완료'
+                WHEN o.STATUS_CD = '80' THEN 'API오류'
+                WHEN o.STATUS_CD = '98' THEN '입금취소'
+                WHEN o.STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END               AS statusCdKr,
+            o.SHIP_METHOD_CD    AS shipMethodCd,
+            o.E_NATION          AS eNation,
+            o.SHIP_NAME         AS shipName,
+            o.SHIP_TEL          AS shipTel,
+            o.SHIP_ADDR         AS shipAddr,
+            o.RECV_NAME         AS recvName,
+            o.RECV_TEL          AS recvTel,
+            o.RECV_MOBILE       AS recvMobile,
+            o.RECV_ADDR1        AS recvAddr1,
+            o.RECV_ADDR2        AS recvAddr2,
+            o.RECV_POST         AS recvPost,
+            o.RECV_CITY         AS recvCity,
+            o.RECV_STATE        AS recvState,
+            o.RECV_CURRENCY     AS recvCurrency
+        FROM TORDER o WITH (NOLOCK)
+        WHERE 1 = 1
+        <if test="shipmentBlNo != null and shipmentBlNo != ''">
+            AND o.SHIPMENT_BL_NO = #{shipmentBlNo}
+        </if>
+    </select>
+    
+    <select id="getTorder" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            SHIPMENT_BL_NO AS shipmentBlNo,
+            XRT_INVC_SNO AS xrtInvcSno
+        FROM TORDER
+        WHERE 1 = 1
+        AND SHIPMENT_BL_NO IN
+            <foreach collection="dataList" item="item" open="(" close=")" separator=",">
+                #{item.shipmentBlNos}
+            </foreach>
+        ORDER BY SHIPMENT_BL_NO ASC
+    </select>
+    
+    <insert id="insertTrackingHistory" parameterType="LDataMap">
+        /* shipmentBlMapper.insertTrackingHistory */
+        <selectKey resultType="java.lang.String" keyProperty="trackingSeq" order="BEFORE">
+            /* trackingHistoryMapper.getSEQ_TRACKING_HISTORY */
+            SELECT 
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_TRACKING_HISTORY), 20) AS trackingSeq
+        </selectKey>
+        INSERT INTO TRACKING_HISTORY (
+            TRACKING_SEQ,
+            XRT_INVC_SNO,
+            E_NATION,
+            STATUS_CD,
+            STATUS_NM,
+            STATUS_EN_NM,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        )
+        SELECT
+            #{trackingSeq}, 
+            XRT_INVC_SNO,
+            E_NATION,
+            #{statusCd},
+            #{statusNm},
+            #{statusEnNm},
+            #{usercd},
+            GETDATE(),
+            #{usercd},
+            GETDATE(),
+            #{terminalcd}
+        FROM TORDER
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </insert>
+    
+    <update id="updateTOrder" parameterType="LDataMap">
+        /* shipmentBlMapper.updateTOrder */
+        UPDATE TORDER
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="statusCd != null and statusCd != ''">
+                STATUS_CD = #{statusCd},
+            </if>
+            <if test="shipmentBlNo != null and shipmentBlNo != ''">
+                SHIPMENT_BL_NO = #{shipmentBlNo},
+            </if>
+            <if test='deleteYn == "Y"'>
+                SHIPMENT_BL_NO = NULL,
+            </if>
+            UPDUSERCD = #{usercd},
+            UPDDATETIME = getDate()
+        </trim>
+        WHERE 1 = 1
+        AND XRT_INVC_SNO = #{xrtInvcSno}
+    </update>
+    
+    <update id="updateShipmentBL" parameterType="xrt.fulfillment.bol.ShipmentBLVO">
+        /* shipmentBlMapper.updateShipmentBL */
+        UPDATE SHIPMENT_BL
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="country != null and country != ''">
+                COUNTRY = #{country},
+            </if>
+            <if test="customsClearance != null and customsClearance != ''">
+                CUSTOMS_CLEARANCE = #{customsClearance},
+            </if>
+            <if test="remark != null and remark != ''">
+                REMARK = #{remark},
+            </if>
+            <if test="closeYn != null and closeYn != ''">
+                CLOSE_YN = #{closeYn},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND SHIPMENT_BL_NO = #{shipmentBlNo}
+    </update>
+</mapper>

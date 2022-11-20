@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 품목분류 팝업 -->
+<mapper namespace="PopP017Mapper">
+	<!-- 트리 검색 -->
+	<select id="getSearchTree" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP017Mapper.getSearchTree */
+		WITH T1 (
+			COMPCD, CATEGORYCD, NAME, PCATEGORYCD
+		  , SORTNO, REMARK, LVL, LVLNAME, TREE, SORTTREE
+		) AS (
+			SELECT A.COMPCD
+				 , A.CATEGORYCD
+				 , A.NAME
+				 , A.PCATEGORYCD
+			     , A.SORTNO
+			     , A.REMARK
+			     , 1 AS LVL
+			     , CONVERT(NVARCHAR, '대분류') AS LVLNAME
+			     , CONVERT(NVARCHAR(200), A.CATEGORYCD) AS TREE
+			     , CONVERT(NVARCHAR(200), dbo.UFX_Lpad(A.SORTNO, 10, '0') + A.CATEGORYCD) AS SORTTREE
+			FROM P017 A WITH (NOLOCK)
+			JOIN P001 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD
+			WHERE A.PCATEGORYCD = '*'
+			  AND B.ISUSING = 'Y'
+			UNION ALL
+			SELECT T2.COMPCD
+				 , T2.CATEGORYCD
+				 , T2.NAME
+			     , T2.PCATEGORYCD
+			     , T2.SORTNO
+			     , T2.REMARK
+			     , T1.LVL + 1 AS LVL
+			     , CONVERT(NVARCHAR, CASE T1.LVL + 1 WHEN 1 THEN '대분류' WHEN 2 THEN '중분류' WHEN 3 THEN '소분류' ELSE '회사' END) AS LVLNAME
+			     , CONVERT(NVARCHAR(200), T1.TREE + '.' + T2.CATEGORYCD) AS TREE
+			     , CONVERT(NVARCHAR(200), T1.SORTTREE + '.' + CONVERT(NVARCHAR(200), dbo.UFX_Lpad(T2.SORTNO, 10, '0')) + T2.CATEGORYCD) AS SORTTREE
+			FROM P017 T2 WITH (NOLOCK)
+			JOIN T1
+			  ON T1.COMPCD = T2.COMPCD AND T1.CATEGORYCD = T2.PCATEGORYCD
+		)
+		SELECT T1.COMPCD
+			 , B.NAME AS COMPNM
+			 , T1.CATEGORYCD AS ITEMCATCD
+			 , T1.NAME AS NAME
+			 , T1.NAME AS ITEMCATINFO
+			 , T1.PCATEGORYCD AS PITEMCATCD
+			 , T1.SORTNO AS SORTNO
+			 , T1.REMARK AS REMARK
+			 , T1.LVL
+			 , T1.LVLNAME
+			 , T1.COMPCD + '.' + T1.TREE AS TREE
+			 , T1.SORTTREE AS SORTTREE
+		FROM T1
+		JOIN P001 B WITH (NOLOCK)
+		  ON T1.COMPCD = B.COMPCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+				AND T1.COMPCD = #{S_COMPCD}
+			</if>
+		</trim>
+		UNION ALL
+		SELECT COMPCD
+			 , NAME AS COMPNM
+			 , NULL AS ITEMCATCD
+			 , NULL AS NAME
+			 , NAME AS ITEMCATINFO
+			 , NULL AS PITEMCATCD
+			 , 0 AS SORTNO
+			 , NULL AS REMARK
+			 , 0 AS LVL
+			 , '회사' AS LVLNAME
+			 , COMPCD + '.' AS TREE
+			 , NULL AS SORTTREE
+		FROM P001 WITH (NOLOCK)
+		WHERE ISUSING = 'Y'
+		<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND COMPCD = #{S_COMPCD}
+		</if>
+		ORDER BY COMPCD, SORTTREE, TREE
+	</select>
+
+	<!-- 품목분류 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP017Mapper.getSearch */
+		SELECT A.COMPCD
+			 , D.NAME AS COMPNM
+			 , A.CATEGORYCD AS ITEMCATCD
+			 , A.NAME
+			 , A.CATEGORYCD AS ITEMCAT3CD
+			 , A.NAME AS ITEMCAT3NM
+			 , B.CATEGORYCD AS ITEMCAT2CD
+			 , B.NAME AS ITEMCAT2NM
+			 , C.CATEGORYCD AS ITEMCAT1CD
+			 , C.NAME AS ITEMCAT1NM
+			 , A.LVL
+			 , A.ISUSING
+			 , A.REMARK
+			 , A.ADDUSERCD										
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+		     , A.UPDUSERCD										
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM P017 A WITH (NOLOCK)
+		  LEFT OUTER JOIN P017 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD AND A.PCATEGORYCD = B.CATEGORYCD		
+		  LEFT OUTER JOIN P017 C WITH (NOLOCK)
+		    ON B.COMPCD = C.COMPCD AND B.PCATEGORYCD = C.CATEGORYCD		
+		  JOIN P001 D WITH (NOLOCK)
+		    ON A.COMPCD = D.COMPCD		
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.CATEGORYCD = #{S_ITEMCAT}
+		ORDER BY A.CATEGORYCD
+	</select>
+
+</mapper>

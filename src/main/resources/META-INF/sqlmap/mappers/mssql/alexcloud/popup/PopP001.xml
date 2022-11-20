@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopP001Mapper">
+
+	<!-- 회사 팝업 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP001Mapper.getSearch */
+		SELECT A.COMPCD		
+		     , A.NAME		
+		     , A.SNAME		
+		     , A.TEL1		
+		     , A.TEL2		
+		     , A.FAX1		
+		     , A.FAX2		
+		     , A.POST		
+		     , A.ADDR		
+		     , A.ADDR2		
+		     , A.CEO		
+		     , A.BIZDATE		
+		     , A.BIZNO1		
+		     , A.BIZNO2		
+		     , A.BIZKIND		
+		     , A.BIZTYPE		
+		     , A.EMAIL		
+		     , A.WEBADDR		
+		     , A.NATION		
+		     , A.REMARKS		
+		     , A.ISUSING
+		     , A.ADDUSERCD		
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME	
+			 , A.UPDUSERCD	
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME	
+			 , A.TERMINALCD	
+		  FROM P001 A WITH (NOLOCK)		
+		 WHERE A.ISUSING = 'Y'
+		<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND ((A.COMPCD LIKE #{S_COMPCD} + '%')
+				OR (A.NAME LIKE '%' + #{S_COMPCD} + '%'))
+		</if>
+		ORDER BY A.COMPCD
+	</select>
+
+	<!-- 회사 팝업 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP001Mapper.getCheck */
+		SELECT A.COMPCD		
+		     , A.NAME		
+		     , A.SNAME		
+		     , A.TEL1		
+		     , A.TEL2		
+		     , A.FAX1		
+		     , A.FAX2		
+		     , A.POST		
+		     , A.ADDR		
+		     , A.ADDR2		
+		     , A.CEO		
+		     , A.BIZDATE		
+		     , A.BIZNO1		
+		     , A.BIZNO2		
+		     , A.BIZKIND		
+		     , A.BIZTYPE		
+		     , A.EMAIL		
+		     , A.WEBADDR		
+		     , A.NATION		
+		     , A.REMARKS		
+		     , A.ISUSING
+		     , A.ADDUSERCD		
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME	
+			 , A.UPDUSERCD	
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME	
+			 , A.TERMINALCD	
+		  FROM P001 A WITH (NOLOCK)		
+		 WHERE A.ISUSING = 'Y'
+		   AND A.COMPCD = #{S_COMPCD}
+		    
+	</select>
+</mapper>

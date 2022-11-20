@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AtomyStockListMapper">
+	<select id="getSearch" parameterType="LDataMap" resultType="stockListVo">
+		/* AtomyStockListMapper.getSearch */
+		SELECT
+			CONVERT(DATE ,UPLOAD_DATE)	AS uploadDate
+			, FILE_SEQ					AS fileSeq
+			, XRT_INVC_SNO 				AS xrtInvcSno
+			, SHIP_NAME 				AS shipName
+			, SHIP_METHOD_CD 			AS shipMethodCd
+			, E_NATION 					AS eNation
+			, STATUS 					AS status
+			, STOCK_DATE 				AS stockDate
+			, STOCK_USERCD 				AS stockUserCd
+			, INVC_SNO1					AS invcSno1
+			, INVC_SNO2					AS invcSno2
+			, ORD_CNT					AS ordCnt
+			, GOODS_NM					AS goodsNm
+			, GOODS_OPTION				AS goodsOption
+			, GOODS_CNT					AS goodsCnt
+			, TOT_PAYMENT_PRICE			AS totPaymentPrice
+			, WGT						AS wgt
+			, BOX_WIDTH					AS boxWidth
+			, BOX_LENGTH				AS boxLength
+			, BOX_HEIGHT				AS boxHeight
+			, PAYMENT_TYPE				AS paymentType
+			, STATUS_CD					AS statusCd
+			, statusCdKr
+			, statusCdEn
+			, ADDUSERCD 				AS addusercd
+		FROM (
+			SELECT
+				o.UPLOAD_DATE
+				, o.FILE_SEQ
+				, o.XRT_INVC_SNO
+				, o.SHIP_NAME
+				, o.SHIP_METHOD_CD
+				, o.E_NATION
+				, o.STOCK_USERCD
+				, CASE
+					WHEN o.STOCK_DATE IS NULL THEN o.STOCK_DATE
+					WHEN o.STOCK_DATE IS NOT NULL THEN CONVERT(VARCHAR,o.STOCK_DATE, 120)
+				END AS STOCK_DATE
+				, CASE
+					WHEN o.STOCK_DATE IS NULL THEN 'N'
+					WHEN o.STOCK_DATE IS NOT NULL THEN 'Y'
+				END AS STATUS
+				, o.INVC_SNO1
+				, o.INVC_SNO2
+				, o.ORD_CNT
+				, (SELECT TOP 1 STUFF(
+					(SELECT ', ' + od.GOODS_NM + ' ' + od.GOODS_CNT +'ea'
+					 FROM TORDERDTL od
+					 WHERE 1 = 1
+					 AND o.ORD_CD = od.ORD_CD
+					 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				  FROM TORDERDTL
+				)			AS GOODS_NM
+				, (SELECT TOP 1 STUFF(
+					(SELECT ', ' + od.GOODS_OPTION
+					 FROM TORDERDTL od
+					 WHERE 1 = 1
+					 AND o.ORD_CD = od.ORD_CD
+					 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				  FROM TORDERDTL
+				)			AS GOODS_OPTION
+				, (SELECT TOP 1 STUFF(
+					(SELECT ', ' + od.GOODS_CNT
+					 FROM TORDERDTL od
+					 WHERE 1 = 1
+					 AND o.ORD_CD = od.ORD_CD
+					 FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+				  FROM TORDERDTL
+				)			AS GOODS_CNT
+				, o.TOT_PAYMENT_PRICE
+				, o.WGT
+				, o.BOX_WIDTH
+				, o.BOX_LENGTH
+				, o.BOX_HEIGHT
+				, o.STATUS_CD
+				, CASE
+	                WHEN o.STATUS_CD = '10' THEN '주문등록'
+	                WHEN o.STATUS_CD = '11' THEN '발송대기'
+	                WHEN o.STATUS_CD = '12' THEN '발송완료'
+	                WHEN o.STATUS_CD = '20' THEN '입금대기'
+	                WHEN o.STATUS_CD = '21' THEN '결제완료'
+	                WHEN o.STATUS_CD = '22' THEN '결제대기'
+	                WHEN o.STATUS_CD = '23' THEN '결제실패'
+	                WHEN o.STATUS_CD = '30' THEN '입고완료'
+	                WHEN o.STATUS_CD = '31' THEN '창고보관'
+	                WHEN o.STATUS_CD = '32' THEN '출고대기'
+	                WHEN o.STATUS_CD = '33' THEN '검수완료'
+                    WHEN o.STATUS_CD = '34' THEN '검수취소'
+                    WHEN o.STATUS_CD = '35' THEN '선적대기'
+	                WHEN o.STATUS_CD = '40' THEN '출고완료'
+	                WHEN o.STATUS_CD = '50' THEN '공항출발(예정)'
+	                WHEN o.STATUS_CD = '51' THEN '공항출발(완료)'
+	                WHEN o.STATUS_CD = '52' THEN '해외공항도착(예정)'
+	                WHEN o.STATUS_CD = '53' THEN '해외공항도착(완료)'
+	                WHEN o.STATUS_CD = '54' THEN '통관대기'
+	                WHEN o.STATUS_CD = '55' THEN '통관완료'
+	                WHEN o.STATUS_CD = '56' THEN '배송시작'
+	                WHEN o.STATUS_CD = '57' THEN '배송중'
+	                WHEN o.STATUS_CD = '60' THEN '배송완료'
+	                WHEN o.STATUS_CD = '80' THEN 'API오류'
+	                WHEN o.STATUS_CD = '98' THEN '입금취소'
+	                WHEN o.STATUS_CD = '99' THEN '주문취소'
+	                ELSE '오류'
+	            END               AS statusCdKr
+	            , CASE
+	                WHEN o.STATUS_CD = '10' THEN 'register order'
+	                WHEN o.STATUS_CD = '11' THEN 'delivery standby'
+	                WHEN o.STATUS_CD = '12' THEN 'delivery completed'
+	                WHEN o.STATUS_CD = '20' THEN 'deposit standby'
+	                WHEN o.STATUS_CD = '21' THEN 'payment completed'
+	                WHEN o.STATUS_CD = '22' THEN 'payment standby'
+	                WHEN o.STATUS_CD = '23' THEN 'payment failed'
+	                WHEN o.STATUS_CD = '30' THEN 'receiving completed'
+	                WHEN o.STATUS_CD = '31' THEN 'storage'
+	                WHEN o.STATUS_CD = '32' THEN 'release standby'
+	                WHEN o.STATUS_CD = '40' THEN 'release completed'
+	                WHEN o.STATUS_CD = '50' THEN 'incheon airport departure (scheduled)'
+	                WHEN o.STATUS_CD = '51' THEN 'incheon airport departure (completed)'
+	                WHEN o.STATUS_CD = '52' THEN 'overseas airport arrival (scheduled)'
+	                WHEN o.STATUS_CD = '53' THEN 'overseas airport arrival (completed)'
+	                WHEN o.STATUS_CD = '54' THEN 'import customs clearance standby'
+	                WHEN o.STATUS_CD = '55' THEN 'import customs clearance completed'
+	                WHEN o.STATUS_CD = '56' THEN 'import country delivery initiated'
+	                WHEN o.STATUS_CD = '57' THEN 'import country delivery in progress'
+	                WHEN o.STATUS_CD = '60' THEN 'import country delivery completed'
+	                WHEN o.STATUS_CD = '80' THEN 'api error'
+	                WHEN o.STATUS_CD = '98' THEN 'cancel deposit'
+	                WHEN o.STATUS_CD = '99' THEN 'cancel order'
+	                ELSE '오류'
+	            END               AS statusCdEn
+				, CASE
+		 			WHEN o.PAYMENT_TYPE = '1' THEN '건당결제'
+		 			WHEN o.PAYMENT_TYPE = '2' THEN '월말결제'
+                    WHEN o.PAYMENT_TYPE = '3' THEN '정기결제'
+                    WHEN o.PAYMENT_TYPE = '4' THEN '신용결제'
+		 			ELSE '-'
+				 END AS PAYMENT_TYPE
+				, ADDUSERCD 
+			FROM TORDER o
+			WHERE 1 = 1
+			AND o.DEL_FLG = 'N'
+            AND o.ORGCD = #{atomyOrgcd}
+		) A
+		WHERE 1 = 1
+		<if test="STATUS != null and STATUS != ''">
+			<if test='STATUS == "0"'>
+			AND A.STATUS IN ('Y', 'N')
+			</if>
+			<if test='STATUS != "0"'>
+			AND A.STATUS = #{STATUS}
+			</if>
+		</if>
+		<if test="XRTSNO != null and XRTSNO != ''">
+		AND A.XRT_INVC_SNO = #{XRTSNO}
+		</if>
+		AND CONVERT(VARCHAR(10),STOCK_DATE,112) BETWEEN #{sToStock} AND #{sFromStock}
+		ORDER BY A.XRT_INVC_SNO
+	</select>
+</mapper>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 로그인이력조회 -->
+<mapper namespace="S000013Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* sys.S000013.getSearch */
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , C.ORGCD
+			 , D.NAME AS ORGNM
+			 , C.DEPTCD
+			 , E.NAME AS DEPTNM
+			 , A.USERCD
+			 , C.NAME AS USERNM
+			 , A.HISTORYTYPE
+			 , CONVERT(VARCHAR, A.HISTORYDATETIME, 20) AS HISTORYDATETIME
+			 , A.USERIP
+			 , A.USERLOCALIP
+			 , A.USEROS
+			 , A.USERBROWSER
+			 , A.STATUS
+			 , A.REMARK
+		FROM S013 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD
+		JOIN S010 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.USERCD = C.USERCD
+		LEFT OUTER JOIN P002 D WITH (NOLOCK)
+		  ON C.COMPCD = D.COMPCD AND C.ORGCD = D.ORGCD
+		LEFT OUTER JOIN P016 E WITH (NOLOCK)
+		  ON C.COMPCD = E.COMPCD AND C.ORGCD = E.ORGCD AND C.DEPTCD = E.DEPTCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+			   AND A.COMPCD = #{S_COMPCD}
+			</if> 	
+			<if test="S_ORGCD != null and S_ORGCD != ''">
+			   AND C.ORGCD = #{S_ORGCD}
+			</if>
+			<if test="S_DEPTCD != null and S_DEPTCD != ''">
+			   AND C.DEPTCD = #{S_DEPTCD}
+			</if>
+			<if test="S_USER != null and S_USER != ''">
+			   AND (A.USERCD LIKE '%' + UPPER(#{S_USER}) + '%' OR C.NAME LIKE '%' + #{S_USER} + '%')
+			</if>
+			<if test="S_HISTORYDATETIME_FROM != null and S_HISTORYDATETIME_FROM != ''">
+				AND A.HISTORYDATETIME <![CDATA[>=]]> REPLACE(#{S_HISTORYDATETIME_FROM}, '-', '')
+			</if>
+			<if test="S_HISTORYDATETIME_TO != null and S_HISTORYDATETIME_TO != ''">
+				AND A.HISTORYDATETIME <![CDATA[<]]> DATEADD(DAY, 1, REPLACE(#{S_HISTORYDATETIME_TO}, '-', ''))
+			</if>
+		</trim>
+		ORDER BY A.COMPCD, A.HISTORYDATETIME DESC
+	</select>
+	
+</mapper>

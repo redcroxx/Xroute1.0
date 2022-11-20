@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="KSERateMapper">
+
+    <select id="getSearch" parameterType="xrt.fulfillment.system.KSERateVO" resultType="xrt.fulfillment.system.KSERateVO">
+        SELECT
+            WGT AS wgt
+            , SAGAWA AS sagawa
+            , NEKOPOS AS nekopos
+            , SMALL_CARGO AS smallCargo
+            , K_PACKET AS kPacket
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM KSE_RATE
+        WHERE 1 = 1
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <insert id="insertKSERate" parameterType="xrt.fulfillment.system.KSERateVO">
+        INSERT INTO KSE_RATE
+        (
+            WGT
+            , SAGAWA
+            , NEKOPOS
+            , SMALL_CARGO
+            , K_PACKET
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{wgt}
+            , #{sagawa}
+            , #{nekopos}
+            , #{smallCargo}
+            , #{kPacket}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+     <update id="updateKSERate" parameterType="xrt.fulfillment.system.KSERateVO">
+        UPDATE KSE_RATE
+        SET
+            WGT = #{wgt},
+            SAGAWA = #{sagawa},
+            NEKOPOS = #{nekopos},
+            SMALL_CARGO = #{smallCargo},
+            K_PACKET = #{kPacket},
+            UPDUSERCD = #{updusercd},
+            UPDDATETIME = getDate()
+         WHERE 1 = 1
+         AND WGT = #{wgt}
+     </update>
+     
+    <delete id="deleteKSERate" parameterType="LDataMap">
+        DELETE FROM KSE_RATE
+        WHERE 1 = 1
+    </delete>
+
+</mapper>

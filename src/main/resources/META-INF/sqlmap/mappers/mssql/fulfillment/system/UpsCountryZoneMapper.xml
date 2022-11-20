@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="UpsCountryZoneMapper">
+
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.system.UpsCountryZoneVO">
+        SELECT
+            UPS_COUNTRY_ZONE_SEQ AS upsCountryZoneSeq
+            , COUNTRY_NAME AS countryName
+            , COUNTRY_CODE AS countryCode
+            , ZONE AS zone
+            , ESS AS ess
+            , ADDUSERCD AS addusercd
+            , CONVERT(CHAR(19), ADDDATETIME, 120) AS adddatetime
+            , UPDUSERCD AS updusercd
+            , CONVERT(CHAR(19), UPDDATETIME, 120) AS upddatetime
+        FROM
+            UPS_COUNTRY_ZONE
+        WHERE 1 = 1
+        <if test='sKeyword != null and sKeyword != ""'>
+            AND COUNTRY_NAME LIKE '%' + dbo.UFX_TRIM(#{sKeyword}) + '%'
+        </if>
+        <if test='sCountryCode != null and sCountryCode != ""'>
+            AND COUNTRY_CODE = #{sCountryCode}
+        </if>
+        <if test='sZone != null and sZone != ""'>
+            AND ZONE = #{sZone}
+        </if>
+        ORDER BY UPS_COUNTRY_ZONE_SEQ ASC
+    </select>
+    
+    <insert id="insertCountryZone" parameterType="xrt.fulfillment.system.UpsCountryZoneVO">
+        <selectKey resultType="java.util.HashMap" keyProperty="upsCountryZoneSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR UPS_COUNTRY_ZONE_SEQ), 20) AS upsCountryZoneSeq
+        </selectKey>
+        INSERT INTO UPS_COUNTRY_ZONE(
+            UPS_COUNTRY_ZONE_SEQ
+            , COUNTRY_NAME
+            , COUNTRY_CODE
+            , ZONE
+            , ESS
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES(
+            #{upsCountryZoneSeq}
+            , #{countryName}
+            , #{countryCode}
+            , #{zone}
+            , #{ess}
+            , #{addusercd}
+            , getDate()
+            , #{updusercd}
+            , getDate()
+            , #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updateCountryZone" parameterType="xrt.fulfillment.system.UpsCountryZoneVO">
+        UPDATE UPS_COUNTRY_ZONE
+        SET
+            COUNTRY_NAME = #{countryName}
+            , COUNTRY_CODE = #{countryCode}
+            , ZONE = #{zone}
+            , ESS = #{ess}
+            , UPDUSERCD = #{updusercd}
+            , UPDDATETIME = getDate()
+            , TERMINALCD = #{terminalcd}
+         WHERE 1 = 1
+         AND UPS_COUNTRY_ZONE_SEQ = #{upsCountryZoneSeq}
+    </update>
+    
+    <delete id="deleteCountryZone" parameterType="LDataMap">
+        DELETE FROM UPS_COUNTRY_ZONE
+        WHERE 1 = 1
+    </delete>
+    
+    <select id="getUpsCountryCode" parameterType="LDataMap" resultType="codeVO">
+        SELECT
+            COUNTRY_CODE AS code
+            , COUNTRY_NAME + ', 비상상황수수료 : ' + ESS + '원' AS value
+        FROM UPS_COUNTRY_ZONE
+        ORDER BY UPS_COUNTRY_ZONE_SEQ ASC
+    </select>
+    
+    <select id="getUpsCountryName" parameterType="LDataMap" resultType="codeVO">
+        SELECT
+            COUNTRY_CODE AS code
+            , COUNTRY_NAME AS value
+        FROM UPS_COUNTRY_ZONE
+        ORDER BY UPS_COUNTRY_ZONE_SEQ ASC
+    </select>
+    
+    <delete id="deleteCountryInfo" parameterType="LDataMap">
+        DELETE FROM UPS_COUNTRY_ZONE
+        WHERE COUNTRY_NAME = #{countryName}
+        AND COUNTRY_CODE = #{countryCode}
+    </delete>
+    
+</mapper>

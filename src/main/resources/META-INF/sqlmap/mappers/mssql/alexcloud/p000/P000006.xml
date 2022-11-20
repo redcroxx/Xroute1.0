@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 품목 관리 -->
+<mapper namespace="P000006Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000006.getSearch */
+		SELECT A.COMPCD
+		     , B.NAME AS COMPNM
+		     , A.ORGCD
+		     , I.NAME ORGNM
+		     , A.ITEMCD
+		     , A.NAME
+		     , A.SNAME
+		     , A.FNAME
+		     , A.ITEMTYPE
+		     , A.UNITCD
+		     , A.ITEMSIZE
+		     , A.CATEGORYCD AS ITEMCAT3CD
+		     , D.NAME AS ITEMCAT3NM
+		     , E.NAME AS ITEMCAT2NM
+		     , F.NAME AS ITEMCAT1NM
+		     , A.UNITTYPE
+		     , ISNULL(A.SETYN, 'N') AS SETYN
+		     , A.INBOXQTY
+		     , A.INPLTQTY
+		     , A.LENGTH
+		     , A.WIDTH
+		     , A.HEIGHT
+		     , A.CAPACITY
+		     , A.MANUFACTURE
+		     , A.MANUCOUNTRY
+		     , A.CUSTCD
+		     , C.NAME AS CUSTNM
+		     , A.F_USER01
+		     , A.F_USER02
+		     , A.F_USER03
+		     , A.F_USER04
+		     , A.F_USER05
+		     , A.F_USER11
+		     , A.F_USER12
+		     , A.F_USER13
+		     , A.F_USER14
+		     , A.F_USER15
+		     , A.IMG1_PATH
+		     , A.IMG1_REAL_PATH
+		     , A.REMARK
+		     , A.ISUSING
+			 , A.ADDUSERCD
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.UPDUSERCD
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+			 , DBO.UFX_GetUnitPrice(A.COMPCD, A.ORGCD, '*', A.ITEMCD, CONVERT(NVARCHAR, GETDATE(), 112)) AS UNITPRICE
+			 , DBO.UFX_GetUnitCost(A.COMPCD, A.ORGCD, '*', A.ITEMCD, CONVERT(NVARCHAR, GETDATE(), 112)) AS UNITCOST
+			 , A.SERIAL_SCAN_YN
+			 , A.EA_MAX
+			 , A.STKTMP
+			 , A.SUPRATE
+			 , A.SUPUNIT
+			 , A.EXPMONTH
+			 , ISNULL(G.MAX_CLGO_QTY, 0) AS MAX_CLGO_QTY
+			 , ISNULL(G.SMALL_YN, 0) AS SMALL_YN
+			 , ISNULL(G.SEVENTY, 0) AS SEVENTY
+			 , STUFF(( SELECT ','+Z.BARCODE 
+			             FROM SPRODBARCODE Z WITH(NOLOCK)
+			            WHERE A.COMPCD = Z.COMPCD 
+			              AND A.ORGCD = Z.ORGCD 
+			              AND A.ITEMCD = Z.ITEMCD 
+			            FOR XML PATH('')),1,1,'') AS BARCODE
+		  FROM P006 A WITH (NOLOCK)
+		  JOIN P001 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		  LEFT OUTER JOIN P003 C WITH (NOLOCK)
+		    ON A.COMPCD = C.COMPCD AND A.ORGCD = C.ORGCD AND A.CUSTCD = C.CUSTCD
+		  LEFT OUTER JOIN P017 D WITH (NOLOCK)
+		    ON A.COMPCD = D.COMPCD AND A.CATEGORYCD = D.CATEGORYCD
+		  LEFT OUTER JOIN P017 E WITH (NOLOCK)
+		    ON D.COMPCD = E.COMPCD AND D.PCATEGORYCD = E.CATEGORYCD
+		  LEFT OUTER JOIN P017 F WITH (NOLOCK)
+		    ON E.COMPCD = F.COMPCD AND E.PCATEGORYCD = F.CATEGORYCD
+		  JOIN P002 I WITH (NOLOCK)
+		    ON I.COMPCD = A.COMPCD
+		   AND I.ORGCD = A.ORGCD
+		  JOIN PRODUCT G WITH(NOLOCK)
+		    ON A.COMPCD = G.COMPCD
+		   AND A.ORGCD = G.ORGCD
+		   AND A.ITEMCD = G.PROD_CD
+		   AND G.PROD_TYPE_CD = '00001'
+		 WHERE A.COMPCD = #{S_COMPCD}	
+		    <if test="S_ORGCD != null and S_ORGCD != ''">
+				AND A.ORGCD = #{S_ORGCD}
+			</if>
+			<if test="S_ITEM != null and S_ITEM != ''">
+				AND ((A.ITEMCD LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%')
+					OR (A.NAME LIKE '%' + dbo.UFX_Trim(#{S_ITEM}) + '%'))
+			</if>
+			<if test="S_ITEMCATCD != null and S_ITEMCATCD != ''">
+				AND ((A.CATEGORYCD = #{S_ITEMCATCD})
+					OR (E.CATEGORYCD = #{S_ITEMCATCD})
+					OR (F.CATEGORYCD = #{S_ITEMCATCD}))
+			</if>
+			<if test="S_ISUSING != null and S_ISUSING != ''">
+				AND A.ISUSING = #{S_ISUSING}
+			</if>
+			<if test="S_F_USER01 != null and S_F_USER01 != ''">
+				AND A.F_USER01 = #{S_F_USER01}
+			</if>
+			<if test="S_F_USER02 != null and S_F_USER02 != ''">
+				AND A.F_USER02 = #{S_F_USER02}
+			</if>
+			<if test="S_F_USER03 != null and S_F_USER03 != ''">
+				AND A.F_USER03 = #{S_F_USER03}
+			</if>
+			<if test="S_F_USER04 != null and S_F_USER04 != ''">
+				AND A.F_USER04 = #{S_F_USER04}
+			</if>
+			<if test="S_F_USER05 != null and S_F_USER05 != ''">
+				AND A.F_USER05 = #{S_F_USER05}
+			</if>
+			<if test="S_F_USER11 != null and S_F_USER11 != ''">
+				AND A.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+			</if>
+			<if test="S_F_USER12 != null and S_F_USER12 != ''">
+				AND A.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+			</if>
+			<if test="S_F_USER13 != null and S_F_USER13 != ''">
+				AND A.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+			</if>
+			<if test="S_F_USER14 != null and S_F_USER14 != ''">
+				AND A.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+			</if>
+			<if test="S_F_USER15 != null and S_F_USER15 != ''">
+				AND A.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+			</if>
+
+			<if test="S_MAX_CLGO_QTY != null and S_MAX_CLGO_QTY != ''">
+				AND G.MAX_CLGO_QTY = #{S_MAX_CLGO_QTY}
+			</if>
+			<if test="S_SMALL_YN != null and S_SMALL_YN != ''">
+				AND G.SMALL_YN = #{S_SMALL_YN}
+			</if>
+			<if test="S_SEVENTY != null and S_SEVENTY != ''">
+				AND G.SEVENTY = #{S_SEVENTY}
+			</if>
+			<if test="S_SERIAL_SCAN_YN != null and S_SERIAL_SCAN_YN != ''">
+				AND A.SERIAL_SCAN_YN = #{S_SERIAL_SCAN_YN}
+			</if>
+			<if test="S_STKTMP != null and S_STKTMP != ''">
+				AND A.STKTMP = #{S_STKTMP}
+			</if>
+			<if test="S_BARCODE != null and S_BARCODE != ''">
+				AND EXISTS (SELECT 1
+		                      FROM SPRODBARCODE Z WITH (NOLOCK) 
+		                     WHERE A.COMPCD = Z.COMPCD
+		                       AND A.ORGCD = Z.ORGCD                   
+		                       AND A.ITEMCD = Z.ITEMCD                   
+		                       AND Z.BARCODE LIKE '%'+ #{S_BARCODE} + '%')
+			</if>
+		ORDER BY A.COMPCD, A.ORGCD, A.ITEMCD
+	</select>
+	
+	<!-- 상세 검색(기등록 체크용) -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000006.getDetail */
+		SELECT B.COMPCD
+		     , B.ORGCD
+		     , B.MAP_PROD_CD
+		     , B.PROD_TYPE_CD
+		     , A.ITEMCD
+		     , A.NAME
+		     , A.SNAME
+		     , A.FNAME
+		     , A.ITEMTYPE
+		     , A.UNITCD
+		     , A.ITEMSIZE
+		     , A.CATEGORYCD
+		     , A.SETYN
+		     , A.INBOXQTY
+		     , A.LENGTH
+		     , A.WIDTH
+		     , A.HEIGHT
+		     , A.CAPACITY
+		     , A.MANUFACTURE
+		     , A.MANUCOUNTRY
+		     , A.CUSTCD
+		     , A.F_USER01
+		     , A.F_USER02
+		     , A.F_USER03
+		     , A.F_USER04
+		     , A.F_USER05
+		     , A.F_USER11
+		     , A.F_USER12
+		     , A.F_USER13
+		     , A.F_USER14
+		     , A.F_USER15
+		     , A.IMG1_PATH
+		     , A.IMG1_REAL_PATH
+		     , A.REMARK
+		     , A.ISUSING
+		  FROM PRODUCTMAP B WITH (NOLOCK)
+		  LEFT OUTER JOIN P006 A WITH (NOLOCK)
+		    ON B.COMPCD = A.COMPCD
+		   AND B.ORGCD = A.ORGCD
+		   AND B.MAP_PROD_CD = A.ITEMCD
+		 WHERE B.COMPCD = #{COMPCD}
+		   AND B.ORGCD = #{ORGCD}
+		   AND B.MAP_PROD_CD = #{ITEMCD}
+	</select>
+	
+	<!-- 품목 바코드  검색 -->
+	<select id="getSearchBarcode" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000006.getSearchBarcode */
+		SELECT A.BARCODE
+		     , A.BARCODE_NM
+		     , A.ITEMCD
+		     , A.ADDUSERCD
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 120) AS ADDDATETIME
+			 , A.UPDUSERCD
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 120) AS UPDDATETIME
+			 , A.TERMINALCD
+			 , A.COMPCD
+			 , A.ORGCD
+		  FROM SPRODBARCODE A WITH (NOLOCK)
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.ORGCD = #{ORGCD}
+		   AND A.ITEMCD = #{ITEMCD}
+	</select>
+	
+	<!-- 대입코드 검색 -->
+	<select id="getSearchCItem" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000006.getSearchCItem */
+		SELECT A.MAP_PROD_CD
+		     , A.PROD_TYPE_CD
+		     , A.PROD_CD AS ITEMCD
+		     , A.ADDUSERCD
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 120) AS ADDDATETIME
+			 , A.UPDUSERCD
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 120) AS UPDDATETIME
+			 , A.TERMINALCD
+			 , A.COMPCD
+			 , A.ORGCD
+		  FROM PRODUCTMAP A WITH (NOLOCK)
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.ORGCD = #{ORGCD}
+		   AND A.PROD_CD = #{ITEMCD}
+		   AND A.PROD_TYPE_CD = '00003'
+	</select>
+
+	<!-- 추가  P006-->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.insertMst */
+		INSERT INTO P006 WITH (ROWLOCK)(
+			COMPCD, ORGCD, ITEMCD, NAME, SNAME, FNAME
+		  , ITEMTYPE, UNITCD, ITEMSIZE, CATEGORYCD, SETYN, UNITTYPE
+		  , INBOXQTY, INPLTQTY, LENGTH, WIDTH, HEIGHT, CAPACITY
+		  , MANUFACTURE, MANUCOUNTRY, CUSTCD, F_USER01, F_USER02
+		  , F_USER03, F_USER04, F_USER05, F_USER11, F_USER12
+		  , F_USER13, F_USER14, F_USER15, IMG1_PATH, IMG1_REAL_PATH
+		  , REMARK, ISUSING
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		  , SERIAL_SCAN_YN, EA_MAX, STKTMP, SUPRATE, SUPUNIT, EXPMONTH
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{ITEMCD}), #{NAME}
+		  , CASE WHEN #{SNAME} IS NULL THEN #{NAME} WHEN #{SNAME} = '' THEN #{NAME} ELSE #{SNAME} END
+	      , CASE WHEN #{FNAME} IS NULL THEN #{NAME} WHEN #{FNAME} = '' THEN #{NAME} ELSE #{FNAME} END
+		  , #{ITEMTYPE}, #{UNITCD}, #{ITEMSIZE}, #{ITEMCAT3CD}, #{SETYN}, #{UNITTYPE}
+		  , #{INBOXQTY}, #{INPLTQTY}, #{LENGTH}, #{WIDTH}, #{HEIGHT}, #{CAPACITY}
+		  , #{MANUFACTURE}, #{MANUCOUNTRY}, #{CUSTCD}, #{F_USER01}, #{F_USER02}
+		  , #{F_USER03}, #{F_USER04}, #{F_USER05}, #{F_USER11}, #{F_USER12}
+		  , #{F_USER13}, #{F_USER14}, #{F_USER15}, #{IMG1_PATH}, #{IMG1_REAL_PATH}
+		  , #{REMARK}, ISNULL(CONVERT(NVARCHAR, #{ISUSING}), 'Y')
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		  , #{SERIAL_SCAN_YN}, #{EA_MAX}, #{STKTMP}, #{SUPRATE}, #{SUPUNIT}, #{EXPMONTH}
+		)
+	</insert>
+
+	<!-- 수정  P006 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.updateMst */
+		UPDATE P006 WITH (ROWLOCK)
+		   SET NAME = #{NAME}
+		     , SNAME = #{SNAME}
+		     , FNAME = #{FNAME}
+		     , ITEMTYPE = #{ITEMTYPE}
+		     , UNITCD = #{UNITCD}
+		     , ITEMSIZE = #{ITEMSIZE}
+		     , CATEGORYCD = #{ITEMCAT3CD}
+		     , SETYN = #{SETYN}
+		     , UNITTYPE = #{UNITTYPE}
+		     , INBOXQTY = #{INBOXQTY}
+		     , INPLTQTY = #{INPLTQTY}
+		     , LENGTH = #{LENGTH}
+		     , WIDTH = #{WIDTH}
+		     , HEIGHT = #{HEIGHT}
+		     , CAPACITY = #{CAPACITY}
+		     , MANUFACTURE = #{MANUFACTURE}
+		     , MANUCOUNTRY = #{MANUCOUNTRY}
+		     , CUSTCD = #{CUSTCD}
+		     , F_USER01 = #{F_USER01}
+		     , F_USER02 = #{F_USER02}
+		     , F_USER03 = #{F_USER03}
+		     , F_USER04 = #{F_USER04}
+		     , F_USER05 = #{F_USER05}
+		     , F_USER11 = #{F_USER11}
+		     , F_USER12 = #{F_USER12}
+		     , F_USER13 = #{F_USER13}
+		     , F_USER14 = #{F_USER14}
+		     , F_USER15 = #{F_USER15}
+		     , IMG1_PATH = #{IMG1_PATH}
+		     , IMG1_REAL_PATH = #{IMG1_REAL_PATH}
+		     , REMARK = #{REMARK}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+			 , SERIAL_SCAN_YN = #{SERIAL_SCAN_YN}
+			 , EA_MAX = #{EA_MAX}
+			 , STKTMP = #{STKTMP}
+			 , SUPRATE = #{SUPRATE}
+			 , SUPUNIT = #{SUPUNIT}
+			 , EXPMONTH = #{EXPMONTH}
+		WHERE COMPCD = #{COMPCD}
+		  AND ORGCD = #{ORGCD}
+		  AND ITEMCD = #{ITEMCD}
+	</update>
+
+	<!-- 삭제 (사용/미사용) P006 -->
+	<update id="updateIsusing" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.updateIsusing */
+		UPDATE P006 WITH (ROWLOCK)
+		   SET ISUSING = #{ISUSING}
+		     , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+		     , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND ORGCD = #{ORGCD}
+		  AND ITEMCD = #{ITEMCD}
+	</update>
+	
+	<!-- 추가  PRODUCTMAP -->
+	<insert id="insertPRODUCTMAP" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.insertPRODUCTMAP */
+		INSERT INTO PRODUCTMAP(
+			COMPCD, ORGCD, MAP_PROD_CD, PROD_CD, PROD_TYPE_CD
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{MAP_PROD_CD}), dbo.UFX_Trim(#{ITEMCD}), #{PROD_TYPE_CD}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 추가  PRODUCT -->
+	<insert id="insertPRODUCT" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.insertPRODUCT */
+		INSERT INTO PRODUCT(
+			COMPCD, ORGCD, PROD_CD, PROD_NM, PROD_TYPE_CD
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		  , MAX_CLGO_QTY, SMALL_YN, SEVENTY
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{ITEMCD}), #{NAME}, '00001'
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		  , #{MAX_CLGO_QTY}, #{SMALL_YN}, #{SEVENTY}
+		)
+	</insert>
+	
+	<!-- 추가  PRODSPROD -->
+	<insert id="insertPRODSPROD" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.insertPRODSPROD */
+		INSERT INTO PRODSPROD(
+			COMPCD, ORGCD, PROD_CD, ITEMCD, SPROD_QTY
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{ITEMCD}), dbo.UFX_Trim(#{ITEMCD}), 1
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 수정  PRODUCT -->
+	<update id="updatePRODUCT" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.updatePRODUCT */
+		UPDATE PRODUCT
+		   SET PROD_NM = #{NAME}
+		     , MAX_CLGO_QTY = #{MAX_CLGO_QTY}
+		     , SMALL_YN = #{SMALL_YN}
+		     , SEVENTY = #{SEVENTY}
+		     , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		   AND PROD_CD = #{ITEMCD}
+	</update>
+	
+	<!-- 상세 검색(기등록 체크용) SPRODBARCODE -->
+	<select id="getBarDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000006.getBarDetail */
+		SELECT A.BARCODE
+             , A.BARCODE_NM
+             , A.COMPCD
+             , A.ORGCD
+             , A.ITEMCD
+		  FROM SPRODBARCODE A WITH (NOLOCK)
+		 WHERE A.BARCODE = #{BARCODE}
+	</select>
+	
+	<!-- 추가  SPRODBARCODE -->
+	<insert id="insertSPRODBARCODE" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.insertSPRODBARCODE */
+		INSERT INTO SPRODBARCODE(
+			BARCODE, BARCODE_NM, COMPCD, ORGCD, ITEMCD
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			dbo.UFX_Trim(#{BARCODE}), #{BARCODE_NM}, #{COMPCD}, #{ORGCD}, dbo.UFX_Trim(#{ITEMCD})
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+	
+	<!-- 수정  SPRODBARCODE -->
+	<update id="updateSPRODBARCODE" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.updateSPRODBARCODE */
+		UPDATE SPRODBARCODE
+		   SET BARCODE_NM = #{BARCODE_NM}
+		     , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		 WHERE BARCODE = #{BARCODE}
+	</update>
+
+	<!-- 삭제  SPRODBARCODE -->
+	<delete id="deleteSPRODBARCODE" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.deleteSPRODBARCODE */
+		DELETE FROM SPRODBARCODE
+		 WHERE BARCODE = #{BARCODE}
+	</delete>
+	
+	<!-- 상세 검색(기등록 체크용) PRODUCTMAP -->
+	<select id="getCItemDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000006.getCItemDetail */
+		SELECT A.COMPCD
+             , A.ORGCD
+             , A.MAP_PROD_CD
+		  FROM PRODUCTMAP A WITH (NOLOCK)
+		 WHERE A.COMPCD = #{COMPCD}
+		   AND A.ORGCD = #{ORGCD}
+		   AND A.MAP_PROD_CD = #{MAP_PROD_CD}
+	</select>
+	
+	<!-- 삭제  PRODUCTMAP -->
+	<delete id="deletePRODUCTMAP" parameterType="LDataMap">
+		/* alexcloud.p000.P000006.deletePRODUCTMAP */
+		DELETE FROM PRODUCTMAP
+		 WHERE COMPCD = #{COMPCD}
+		   AND ORGCD = #{ORGCD}
+		   AND MAP_PROD_CD = #{MAP_PROD_CD}
+	</delete>
+</mapper>

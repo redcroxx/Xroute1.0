@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P700200Mapper">
+	<!-- 로케이션이동등록 : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p700.p700200.getSearch */
+		SELECT A.IMKEY 		/*재고이동번호*/,
+		       A.IMSTS 		/*재고이동상태(99:취소, 100:예정, 200:확정)*/,
+		       A.IMTYPE 	/*재고이동타입(WH:창고간, LOC1:로케이션간, LOC2:로케이션변경) */,
+		       A.IMDT 		/*재고이동요청날짜*/,
+		       A.IMCFMDT 	/*재고이동확정날짜*/,
+		       A.BEFOREWHCD WHCD 	/*이동전 창고코드*/,
+		       A.MVTYPE     /*이동타입*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.BEFOREWHCD) WHNM 	/*이동전 창고명 */,
+		       (SELECT COUNT(DISTINCT ITEMCD) FROM P711 WITH (NOLOCK) WHERE IMKEY = A.IMKEY) ITEMCNT 		/* 품목수 */,
+		       (SELECT CASE
+		                 WHEN A.IMSTS = '100' THEN
+		                  SUM(IMSCHQTY)
+		                 ELSE
+		                  SUM(IMQTY)
+		               END
+		          FROM P711 WITH(NOLOCK)
+		         WHERE IMKEY = A.IMKEY) TOTQTY 	/* 상태에 따른 총수량 */,
+		       A.IMWHCD 		/*이동중 창고코드*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.IMWHCD) IMWHNM 	/*이동중 창고명 */,
+		       A.COMPCD 		/*회사코드*/,
+		       (SELECT NAME FROM P001 WITH (NOLOCK) WHERE COMPCD = A.COMPCD) COMPNM 	/*회사명 */,
+		       A.ORGCD 			/*화주코드*/,
+		       (SELECT NAME FROM P002 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM 		/*화주명 */,
+		       A.CFMUSERCD 		/*확정자*/,
+		       D.NAME CFMUSERNM /* 확정자명 */,
+		       A.REMARK 		/*전표비고*/,
+		       A.ADDUSERCD 		/*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD 		/*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD 	/*IP*/
+		  FROM P710 A WITH (NOLOCK) 
+		  LEFT OUTER JOIN S010 D WITH (NOLOCK) 
+		    ON D.COMPCD = A.COMPCD
+		   AND D.ORGCD = A.ORGCD 
+		   AND D.USERCD = A.CFMUSERCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		   AND A.IMTYPE IN ('LOC1', 'LOC2')
+		   AND A.MVTYPE = 'STD' <!-- 일반 이동만 조회되도록 함 -->
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+			AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_IMDT_FROM != null and S_IMDT_FROM != ''">
+			AND A.IMDT >= REPLACE(#{S_IMDT_FROM},'-','')
+		</if>
+		<if test="S_IMDT_TO != null and S_IMDT_TO != ''">
+			AND A.IMDT <![CDATA[ <= ]]> REPLACE(#{S_IMDT_TO},'-','')
+		</if>      
+		<if test="S_IMSTS != null and S_IMSTS != ''">
+			<if test="S_IMSTS == 'NOT99' ">
+			   AND A.IMSTS <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_IMSTS != 'NOT99' ">
+			   AND A.IMSTS = #{S_IMSTS}
+			</if>   
+		</if>
+		<if test="S_MVTYPE != null and S_MVTYPE != ''">
+			AND A.MVTYPE = #{S_MVTYPE}
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+			AND A.BEFOREWHCD = #{S_WHCD}
+		</if>
+		<if test="S_BEFORELOCCD != null and S_BEFORELOCCD != ''"> 
+			AND EXISTS (SELECT 1
+						  FROM P711 F WITH (NOLOCK)
+						 WHERE F.IMKEY = A.IMKEY
+						   AND F.BEFORELOCCD LIKE '%' + dbo.UFX_TRIM(#{S_BEFORELOCCD}) + '%')
+		</if>
+		<if test="S_AFTERLOCCD != null and S_AFTERLOCCD != ''">
+			AND EXISTS (SELECT 1
+						  FROM P711 F WITH (NOLOCK)
+						 WHERE F.IMKEY = A.IMKEY
+						   AND F.AFTERLOCCD LIKE '%' + dbo.UFX_TRIM(#{S_AFTERLOCCD}) + '%')
+		</if>
+		<if test="S_LOCGROUP != null and S_LOCGROUP != ''">
+			AND EXISTS (SELECT 1
+						  FROM P711 F WITH (NOLOCK)
+						  JOIN P005 G WITH (NOLOCK)
+						    ON G.COMPCD = F.COMPCD
+						   AND G.LOCCD = F.BEFORELOCCD
+						   AND G.WHCD = F.BEFOREWHCD
+						 WHERE F.IMKEY = A.IMKEY
+						   AND G.LOCGROUP = #{S_LOCGROUP})
+		</if>
+		AND EXISTS (SELECT 1
+		                 FROM P711 F WITH (NOLOCK) 
+		                 JOIN P006 G WITH (NOLOCK) 
+		                   ON G.COMPCD = F.COMPCD
+		                  AND G.ORGCD = F.ORGCD 
+		                  AND G.ITEMCD = F.ITEMCD                   
+		                WHERE F.IMKEY = A.IMKEY
+		<if test="S_ITEM != null and S_ITEM != ''">
+		                  AND (G.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%' 
+		                   OR G.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND G.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND G.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND G.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND G.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND G.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND G.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND G.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND G.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND G.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND G.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		                   )
+		<if test="S_SEARCH != null and S_SEARCH != ''">
+		   	AND A.IMKEY LIKE '%' + dbo.UFX_TRIM(#{S_SEARCH}) + '%'
+		</if>
+			ORDER BY A.IMKEY DESC
+	</select>
+	
+	<!-- 로케이션이동등록 : 디테일 그리드 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p700.p700200.getDetailList */
+		SELECT A.IMKEY 			 /*재고이동번호*/,
+		       A.SEQ 			 /*SEQ*/,
+		       A.ITEMCD 		 /*이동할 품목코드*/,
+		       B.NAME ITEMNM 	 /* 품명 */,
+		       B.UNITCD 		 /* 단위 */,
+		       B.ITEMSIZE 		 /* 규격 */,
+		       B.UNITTYPE 		 /*관리단위*/,
+		       B.INBOXQTY 		 /*박스입수량*/,
+		       dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'BOX', B.INBOXQTY, A.IMSCHQTY)  AS IMSCHQTY_BOX 		/*지시BOX*/,
+		       dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'EA', B.INBOXQTY, A.IMSCHQTY)  AS IMSCHQTY_EA 		/*지시EX*/,
+		       dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'BOX', B.INBOXQTY, ISNULL(A.IMQTY,0))  AS IMQTY_BOX  /*이동BOX*/,
+		       dbo.UFX_GetBoxEaQty(B.UNITTYPE, 'EA', B.INBOXQTY, ISNULL(A.IMQTY,0))  AS IMQTY_EA    /*이동EX*/,
+		       A.LOTKEY 		 /*이동할 품목의 로트키*/,
+		       A.IMSCHQTY 		 /*이동지시 수량*/,
+		       ISNULL(A.IMQTY,0) /*이동 수량*/,
+		       A.BEFOREWHCD WHCD /*이동전 창고코드 (마스터와 동일)*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.BEFOREWHCD) BEFOREWHNM /*이동전 창고명*/,
+		       A.AFTERWHCD 		 /*이동후 창고코드 (마스터와 동일)*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.AFTERWHCD) AFTERWHNM 	/*이동후 창고명*/,
+		       A.BEFORELOCCD 	 /*이동전 로케이션코드*/,
+		       A.AFTERLOCCD 	 /*이동후 로케이션코드*/,
+		       A.IMWHCD 		 /*이동중 창고코드*/,
+		       (SELECT NAME FROM P004 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND WHCD = A.IMWHCD) IMWHNM 		/*이동중 창고명*/,
+		       A.IMLOCCD 		 /*이동중 로케이션*/,
+		       A.COMPCD 		 /*회사코드*/,
+		       (SELECT NAME FROM P001 WITH (NOLOCK) WHERE COMPCD = A.COMPCD) COMPNM /*회사명 */,
+		       A.ORGCD 			 /*화주 코드*/,
+		       (SELECT NAME FROM P002 WITH (NOLOCK) WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM /*화주명 */,
+		       A.REMARK 		 /*품목 비고*/,
+		       A.ADDUSERCD 		 /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD 		 /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD 	 /*IP*/,
+		       B.F_USER01,
+		       B.F_USER02,
+		       B.F_USER03,
+		       B.F_USER04,
+		       B.F_USER05,
+		       B.F_USER11,
+		       B.F_USER12,
+		       B.F_USER13,
+		       B.F_USER14,
+		       B.F_USER15,
+		       C.LOT1,
+		       C.LOT2,
+		       C.LOT3,
+		       C.LOT4,
+		       C.LOT5,
+		       ISNULL(E.QTY, 0) - ISNULL(E.ALLOCQTY, 0) BEFAVAILQTY /* 이동전가용수량 */
+		  FROM P711 A WITH (NOLOCK) 
+		  JOIN P006 B WITH (NOLOCK) 
+		    ON B.COMPCD = A.COMPCD
+		   AND B.ORGCD = A.ORGCD 
+		   AND B.ITEMCD = A.ITEMCD
+		  JOIN P007 C WITH (NOLOCK) 
+		    ON C.COMPCD = A.COMPCD
+		   AND C.ORGCD = A.ORGCD 
+		   AND C.ITEMCD = A.ITEMCD
+		   AND C.LOTKEY = A.LOTKEY
+		  LEFT OUTER JOIN P810 E WITH (NOLOCK) 
+		    ON E.COMPCD = A.COMPCD
+		   AND E.ORGCD = A.ORGCD
+		   AND E.WHCD = A.BEFOREWHCD
+		   AND E.LOCCD = A.BEFORELOCCD
+		   AND E.LOTKEY = A.LOTKEY
+		   AND E.ITEMCD = A.ITEMCD
+		 WHERE A.IMKEY = #{IMKEY}
+	</select>
+	
+	<!-- 로케이션이동등록 : 마스터 신규 저장 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p700.p700200.insertMst */
+		INSERT INTO P710 WITH (ROWLOCK)
+		  (IMKEY,
+		   IMSTS,
+		   IMTYPE,
+		   MVTYPE,
+		   IMDT,
+		   BEFOREWHCD,
+		   AFTERWHCD,
+		   IMWHCD,
+		   COMPCD,
+		   ORGCD,
+		   USERCD,
+		   REMARK,
+		   ADDUSERCD,
+		   UPDUSERCD,
+		   TERMINALCD)
+		VALUES
+		  (#{IMKEY},
+		   '100',
+		   'LOC1',
+		   'STD',
+		   REPLACE(#{IMDT},'-',''),
+		   #{WHCD},
+		   #{WHCD},
+		   #{IMWHCD},
+		   #{COMPCD},
+		   #{ORGCD},
+		   #{USERCD},
+		   #{REMARK},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_IP})
+	</insert>
+	
+	<!-- 로케이션이동등록 : 마스터 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p700.p700200.updateMst */
+		UPDATE P710 WITH (ROWLOCK)
+		   SET IMDT     = #{IMDT},
+		       BEFOREWHCD  = #{WHCD},
+		       AFTERWHCD   = #{WHCD},
+		       IMWHCD	   = #{WHCD},
+		       USERCD      = #{USERCD},
+		       REMARK      = #{REMARK},
+		       UPDUSERCD   = #{LOGIN_USERCD},
+		       UPDDATETIME = GETDATE(),
+		       TERMINALCD  = #{LOGIN_IP}
+		 WHERE IMKEY = #{IMKEY}
+		   AND IMSTS = '100'
+	</update>
+	
+	<!-- 로케이션이동등록 : 디테일 신규 저장 -->
+	<insert id="insertDet" parameterType="LDataMap">
+		/* alexcloud.p700.p700300.insertDet */
+		INSERT INTO P711 WITH (ROWLOCK)
+		  (IMKEY,
+		   SEQ,
+		   ITEMCD,
+		   LOTKEY,
+		   IMSCHQTY,
+		   BEFOREWHCD,
+		   AFTERWHCD,
+		   BEFORELOCCD,
+		   AFTERLOCCD,
+		   IMWHCD,
+		   IMLOCCD,
+		   COMPCD,
+		   ORGCD,
+		   REMARK,
+		   ADDUSERCD,
+		   UPDUSERCD,
+		   TERMINALCD)
+		VALUES
+		  (#{IMKEY},
+		   (SELECT ISNULL(MAX(SEQ), 0) + 1 FROM P711 WHERE IMKEY = #{IMKEY}),
+		   #{ITEMCD},
+		   #{LOTKEY},
+		   #{IMSCHQTY},
+		   #{WHCD},
+		   #{WHCD},
+		   #{BEFORELOCCD},
+		   #{AFTERLOCCD},
+		   #{IMWHCD},
+		   #{IMLOCCD},
+		   #{COMPCD},
+		   #{ORGCD},
+		   #{REMARK},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_IP})
+	</insert>
+	
+	<!-- 로케이션이동등록 : 디테일 수정 -->
+	<update id="updateDet" parameterType="LDataMap">
+		/* alexcloud.p700.p700200.updateDet */
+		UPDATE P711 WITH (ROWLOCK)
+		   SET ITEMCD      = #{ITEMCD},
+		       LOTKEY      = #{LOTKEY},
+		       IMSCHQTY    = #{IMSCHQTY},
+		       AFTERLOCCD  = #{AFTERLOCCD},
+		       IMLOCCD	   = #{AFTERLOCCD},
+		       REMARK      = #{REMARK},
+		       UPDUSERCD   = #{LOGIN_USERCD},
+		       UPDDATETIME = GETDATE(),
+		       TERMINALCD  = #{LOGIN_IP}
+		 WHERE IMKEY = #{IMKEY}
+		   AND SEQ = #{SEQ}
+	</update>
+	
+	<!-- 로케이션이동등록 : 디테일  삭제 -->
+	<delete id="deleteDet" parameterType="LDataMap">
+		/* alexcloud.p700.p700200.deleteDet */
+		DELETE FROM P711 WITH (ROWLOCK)
+		 WHERE IMKEY = #{IMKEY}
+		   AND SEQ = #{SEQ}
+	</delete>	
+	
+	<!-- 로케이션이동등록 : 취소  -->
+	<update id="updateCancel" parameterType="LDataMap">
+		/* alexcloud.p700.p700200.updateCancel */
+		UPDATE P710 WITH (ROWLOCK)
+		   SET IMSTS       = '99',
+		       UPDUSERCD   = #{LOGIN_USERCD},
+		       UPDDATETIME = GETDATE(),
+		       TERMINALCD  = #{LOGIN_IP}
+		 WHERE IMKEY = #{IMKEY}
+
+	</update>
+</mapper>

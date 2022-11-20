@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100382Mapper">
+	<!-- 입고현황(발주/미발주)  : 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100382.getSearch */
+		SELECT A.WIKEY					
+			 , A.WITYPE				
+			 , A.WISTS				
+			 , A.WISCHDT				
+			 , A.WIDT				
+			 , A.COMPCD				
+			 , A.WHCD				
+			 , G.NAME AS WHNM				
+			 , A.CUSTCD				
+			 , F.NAME AS CUSTNM				
+			 , A.ORGCD				
+			 , E.NAME AS ORGNM				
+			 , A.WDKEY				
+			 , A.REMARK				
+			 , B.SEQ				
+			 , B.ITEMCD				
+			 , C.NAME AS ITEMNM				
+			 , B.ORIGINQTY				
+			 , B.WISCHQTY				
+			 , B.WIQTY				
+			 , B.EXCHCD				
+			 , B.EXCHRATE				
+			 , B.UNITPRICE				
+			 , B.EXCHAMT				
+			 , B.SUPPLYAMT				
+			 , B.LOT1				
+			 , B.LOT2				
+			 , B.LOT3				
+			 , B.LOT4				
+			 , B.LOT5				
+			 , B.ADDUSERCD				
+			 , CONVERT(VARCHAR, B.ADDDATETIME, 20) AS ADDDATETIME				
+			 , B.UPDUSERCD				
+			 , CONVERT(VARCHAR, B.UPDDATETIME, 20) AS UPDDATETIME				
+			 , B.TERMINALCD		
+			 , ISNULL(B.IFORDERNO, '-') AS IFORDERNO
+			 , ISNULL(B.IFORDERSUBNO, '-') AS IFORDERSUBNO
+			 , ISNULL(B.IFORDERSEQ, 0) AS IFORDERSEQ
+			 , ISNULL(B.IFPOQTY, 0) AS IFPOQTY
+		  FROM P130 A WITH (NOLOCK)					
+		  JOIN P131 B WITH (NOLOCK) ON A.WIKEY = B.WIKEY					
+		  JOIN P006 C WITH (NOLOCK) ON B.COMPCD = C.COMPCD AND B.ORGCD = C.ORGCD AND B.ITEMCD = C.ITEMCD 					
+		  JOIN P002 E WITH (NOLOCK) ON A.COMPCD = E.COMPCD AND A.ORGCD = E.ORGCD					
+		  JOIN P003 F WITH (NOLOCK) ON A.COMPCD = F.COMPCD AND A.ORGCD = F.ORGCD AND A.CUSTCD = F.CUSTCD 					
+		  JOIN P004 G WITH (NOLOCK) ON A.COMPCD = G.COMPCD AND A.WHCD = G.WHCD					
+		 WHERE A.WISTS 	<![CDATA[ <> ]]> '99'			
+ 		   AND A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_IFYN != null and S_IFYN != ''">
+		   <if test='S_IFYN == "Y"'>
+		   	   AND B.IFORDERNO IS NOT NULL
+		   </if>
+		   <if test='S_IFYN == "N"'>
+			   AND B.IFORDERNO IS NULL
+		   </if>
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND A.WHCD = #{S_WHCD}
+		</if>
+		<if test="S_ORDERDATE_FROM != null and S_ORDERDATE_FROM != ''">
+		   AND A.WISCHDT = ''
+		</if>
+		<if test="S_ORDERDATE_TO != null and S_ORDERDATE_TO != ''">
+		   AND A.WISCHDT = ''
+		</if>	 
+		<if test="S_WIKEY != null and S_WIKEY != ''">
+  		   AND B.WIKEY LIKE '%' + dbo.UFX_TRIM(#{S_WIKEY}) + '%'
+		</if>
+		<if test="S_WISCHDT_FROM != null and S_WISCHDT_FROM != ''">
+		   AND A.WISCHDT >= REPLACE(#{S_WISCHDT_FROM},'-','')
+		</if>
+		<if test="S_WISCHDT_TO != null and S_WISCHDT_TO != ''">
+		   AND A.WISCHDT <![CDATA[ <= ]]> REPLACE(#{S_WISCHDT_TO},'-','')
+		</if>  
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.CUSTCD = #{S_CUSTCD}
+		</if>
+		<if test="S_ITEMCD != null and S_ITEMCD != ''">
+                  AND (C.ITEMCD LIKE '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%' 
+                   OR C.NAME LIKE  '%' + dbo.UFX_TRIM(#{S_ITEMCD}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+                  AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+                  AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+                  AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+                  AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+                  AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+                  AND C.F_USER11 = dbo.UFX_TRIM(#{S_F_USER11})
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+                  AND C.F_USER12 = dbo.UFX_TRIM(#{S_F_USER12})
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+                  AND C.F_USER13 = dbo.UFX_TRIM(#{S_F_USER13})
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+                  AND C.F_USER14 = dbo.UFX_TRIM(#{S_F_USER14})
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+                  AND C.F_USER15 = dbo.UFX_TRIM(#{S_F_USER15})
+		</if>
+		 ORDER BY A.WIKEY DESC
+	</select>	
+</mapper>

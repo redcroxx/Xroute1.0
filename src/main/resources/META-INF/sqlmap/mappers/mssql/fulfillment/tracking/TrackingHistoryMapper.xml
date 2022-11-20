@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="trackingHistoryMapper">
+    <insert id="insertTrackingHistory" parameterType="xrt.fulfillment.tracking.TrackingHistorytVO">
+        /* trackingHistoryMapper.insertTrackingHistory */
+        <selectKey resultType="java.lang.String" keyProperty="trackingSeq" order="BEFORE">
+            /* trackingHistoryMapper.getSEQ_TRACKING_HISTORY */
+            SELECT
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_TRACKING_HISTORY), 20) AS trackingSeq
+        </selectKey>
+        INSERT INTO TRACKING_HISTORY (
+            TRACKING_SEQ,
+            XRT_INVC_SNO,
+            E_NATION,
+            STATUS_CD,
+            STATUS_NM,
+            STATUS_EN_NM,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{trackingSeq},
+            #{xrtInvcSno},
+            #{eNation},
+            #{statusCd},
+            #{statusNm},
+            #{statusEnNm},
+            #{addusercd},
+            <choose>
+                 <when test='adddatetime != null and adddatetime != ""'>
+                    #{adddatetime},
+                 </when>
+                 <otherwise>
+                    GETDATE(),
+                 </otherwise>
+            </choose>
+            #{updusercd},
+            GETDATE(),
+            #{terminalcd}
+        )
+    </insert>
+</mapper>

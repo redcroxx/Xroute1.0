@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="paymentListMapper">
+    <select id="getSearch" parameterType="commonSearchVo" resultType="shippingListVo">
+        /* paymentListMapper.getSearch */
+        SELECT
+            XRT_INVC_SNO          AS xrtInvcSno,
+            XRT_SHIPPING_PRICE    AS xrtShippingPrice,
+            CASE
+                WHEN STATUS_CD = '10' THEN '주문등록'
+                WHEN STATUS_CD = '11' THEN '발송대기'
+                WHEN STATUS_CD = '12' THEN '발송완료'
+                WHEN STATUS_CD = '20' THEN '입금대기'
+                WHEN STATUS_CD = '21' THEN '결제완료'
+                WHEN STATUS_CD = '22' THEN '결제대기'
+                WHEN STATUS_CD = '23' THEN '결제실패'
+                WHEN STATUS_CD = '30' THEN '입고완료'
+                WHEN STATUS_CD = '31' THEN '창고보관'
+                WHEN STATUS_CD = '32' THEN '출고대기'
+                WHEN STATUS_CD = '33' THEN '검수완료'
+                WHEN STATUS_CD = '34' THEN '검수취소'
+                WHEN STATUS_CD = '35' THEN '선적대기'
+                WHEN STATUS_CD = '40' THEN '출고완료'
+                WHEN STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN STATUS_CD = '54' THEN '통관대기'
+                WHEN STATUS_CD = '55' THEN '통관완료'
+                WHEN STATUS_CD = '56' THEN '배송시작'
+                WHEN STATUS_CD = '57' THEN '배송중'
+                WHEN STATUS_CD = '60' THEN '배송완료'
+                WHEN STATUS_CD = '80' THEN 'API오류'
+                WHEN STATUS_CD = '98' THEN '입금취소'
+                WHEN STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END                   AS statusCdKr,
+            SHIP_METHOD_CD        AS shipMethodCd,
+            S_NATION              AS sNation,
+            E_NATION              AS eNation,
+            RECV_CURRENCY         AS recvCurrency,
+            ORD_CNT               AS ordCnt,
+            WGT                   AS xWgt,
+            BOX_WIDTH             AS xBoxWidth,
+            BOX_LENGTH            AS xBoxLength,
+            BOX_HEIGHT            AS xBoxHeight,
+            ORD_NO                AS ordNo,
+            TOT_PAYMENT_PRICE     AS totPaymentPrice
+        FROM TORDER WITH (NOLOCK)
+        WHERE 1 = 1
+        AND DEL_FLG = 'N'
+        AND STATUS_CD = '20'
+        AND UPLOAD_DATE BETWEEN #{sToDate} AND #{sFromDate}
+        <if test='sCompCd != null and sCompCd !=""'>
+            AND COMPCD = #{sCompCd}
+        </if>
+        <if test='sOrgCd != null and sOrgCd !=""'>
+            AND ORGCD = #{sOrgCd}
+        </if>
+        <if test='sToNation != null and sToNation !=""'>
+            AND S_NATION = #{sToNation}
+        </if>
+        <if test='sFromNation != null and sFromNation !=""'>
+            AND E_NATION = #{sFromNation}
+        </if>
+        <choose>
+            <when test="sKeywordType == 'total'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND XRT_INVC_SNO = #{sKeyword}
+                    OR CART_NO = #{sKeyword}
+                    OR ORD_NO = #{sKeyword}
+                    OR SHIP_NAME = #{sKeyword}
+                    OR RECV_NAME LIKE '%' + dbUFX_TRIM(#{sKeyword}) + '%'
+                    OR ORD_CD IN (
+                        SELECT
+                            ORD_CD
+                        FROM TORDERDTL
+                        WHERE 1 = 1
+                        <if test="sOrgCd != null and sOrgCd != ''">
+                            AND ORGCD = #{sOrgCd}
+                        </if>
+                        AND GOODS_NM LIKE '%' + dbUFX_TRIM(#{sKeyword}) + '%'
+                    )
+                </if>
+            </when>
+            <when test="sKeywordType == 'xrtInvcSno'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND XRT_INVC_SNO = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'cartNo'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND CART_NO = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'orderNo'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND ORD_NO = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'shipName'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND SHIP_NAME = #{sKeyword}
+                </if>
+            </when>
+            <when test="sKeywordType == 'recvName'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND RECV_NAME LIKE '%' + dbUFX_TRIM(#{sKeyword}) + '%'
+                </if>
+            </when>
+            <when test="sKeywordType == 'goodsNm'">
+                <if test="sKeyword != null and sKeyword != ''">
+                    AND ORD_CD IN (
+                        SELECT
+                            ORD_CD
+                        FROM TORDERDTL
+                        WHERE 1 = 1 
+                        AND GOODS_NM LIKE '%' + dbUFX_TRIM(#{sKeyword}) + '%'
+                        <if test="sOrgCd != null and sOrgCd != ''">
+                            AND ORGCD = #{sOrgCd}
+                        </if>
+                    )
+                </if>
+            </when>
+            <otherwise>
+            </otherwise>
+        </choose>
+        ORDER BY XRT_INVC_SNO
+    </select>
+    
+    <select id="getPopSearch" parameterType="LDataMap" resultType="shippingListVo">
+        /* paymentListMapper.getPopSearch */
+        SELECT
+            XRT_INVC_SNO          AS xrtInvcSno,
+            XRT_SHIPPING_PRICE    AS xrtShippingPrice,
+            CASE
+                WHEN STATUS_CD = '10' THEN '주문등록'
+                WHEN STATUS_CD = '11' THEN '발송대기'
+                WHEN STATUS_CD = '12' THEN '발송완료'
+                WHEN STATUS_CD = '20' THEN '입금대기'
+                WHEN STATUS_CD = '21' THEN '결제완료'
+                WHEN STATUS_CD = '22' THEN '결제대기'
+                WHEN STATUS_CD = '23' THEN '결제실패'
+                WHEN STATUS_CD = '30' THEN '입고완료'
+                WHEN STATUS_CD = '31' THEN '창고보관'
+                WHEN STATUS_CD = '32' THEN '출고대기'
+                WHEN STATUS_CD = '33' THEN '검수완료'
+                WHEN STATUS_CD = '34' THEN '검수취소'
+                WHEN STATUS_CD = '35' THEN '선적대기'
+                WHEN STATUS_CD = '40' THEN '출고완료'
+                WHEN STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN STATUS_CD = '54' THEN '통관대기'
+                WHEN STATUS_CD = '55' THEN '통관완료'
+                WHEN STATUS_CD = '56' THEN '배송시작'
+                WHEN STATUS_CD = '57' THEN '배송중'
+                WHEN STATUS_CD = '60' THEN '배송완료'
+                WHEN STATUS_CD = '80' THEN 'API오류'
+                WHEN STATUS_CD = '98' THEN '입금취소'
+                WHEN STATUS_CD = '99' THEN '주문취소'
+                ELSE '오류'
+            END                   AS statusCdKr,
+            SHIP_METHOD_CD        AS shipMethodCd,
+            S_NATION              AS sNation,
+            E_NATION              AS eNation,
+            RECV_CURRENCY         AS recvCurrency,
+            ORD_CNT               AS ordCnt,
+            WGT                   AS xWgt,
+            BOX_WIDTH             AS xBoxWidth,
+            BOX_LENGTH            AS xBoxLength,
+            BOX_HEIGHT            AS xBoxHeight,
+            ORD_NO                AS ordNo,
+            TOT_PAYMENT_PRICE     AS totPaymentPrice
+        FROM TORDER WITH (NOLOCK)
+        WHERE 1 = 1
+        AND DEL_FLG = 'N'
+        AND XRT_INVC_SNO IN
+        <foreach collection="xrtInvcSnos" item="xrtInvcSno" open="(" close=")" separator=",">
+            #{xrtInvcSno}
+        </foreach>
+    </select>
+    
+    <select id="getTCartCount" parameterType="LDataMap" resultType="LDataMap">
+        /* paymentListMapper.getTCartCount */
+        SELECT 
+            COUNT(*) AS "count" 
+        FROM TCART
+        WHERE 1 = 1
+        AND ORGCD = #{orgcd}
+        AND USERCD = #{usercd}
+    </select>
+    
+    <select id="getTCartList" parameterType="LDataMap" resultType="LDataMap">
+    /* paymentListMapper.getTCartList */
+        SELECT
+            A.*
+            , B.* 
+        FROM (
+            SELECT 
+                A.ORD_CD              AS "ordCd",
+                A.XRT_INVC_SNO        AS "xrtInvcSno",
+                A.XRT_SHIPPING_PRICE  AS "xrtShippingPrice"
+            FROM (      
+                SELECT
+                    O.ORD_CD,
+                    O.XRT_INVC_SNO,
+                    O.XRT_SHIPPING_PRICE
+                FROM TORDER O
+                WHERE 1 = 1
+                AND O.XRT_INVC_SNO IN
+                <foreach collection="xrtInvcSnos" item="xrtInvcSno" open="(" close=")" separator=",">
+                    #{xrtInvcSno}
+                </foreach>
+            ) A
+            GROUP BY  A.ORD_CD, A.XRT_INVC_SNO, A.XRT_SHIPPING_PRICE
+        ) A,
+        (
+            SELECT 
+                A.NAME                    AS "name",
+                A.EMAIL                   AS "email",
+                A.TEL1                    AS "tel1",
+                SUM(A.XRT_SHIPPING_PRICE) AS "totalPrice"
+            FROM (      
+                SELECT
+                    (SELECT EMAIL FROM P002 P2 WHERE 1=1 AND P2.ORGCD = O.ORGCD)  AS EMAIL,
+                    (SELECT TEL1 FROM P002 P2 WHERE 1=1 AND P2.ORGCD = O.ORGCD)   AS TEL1,
+                    (SELECT "NAME" FROM P002 P2 WHERE 1=1 AND P2.ORGCD = O.ORGCD) AS "NAME",
+                    O.XRT_SHIPPING_PRICE
+                FROM TORDER O
+                WHERE 1 = 1
+                AND O.DEL_FLG = 'N'
+                AND O.XRT_INVC_SNO IN
+                <foreach collection="xrtInvcSnos" item="xrtInvcSno" open="(" close=")" separator=",">
+                    #{xrtInvcSno}
+                </foreach>
+            ) A
+            GROUP BY A.NAME, A.EMAIL, A.TEL1
+        ) B
+    </select>
+    
+    <insert id="insertTCart" parameterType="xrt.alexcloud.api.settlebank.vo.TCartVo">
+        /* paymentListMapper.insertTCart */
+        <selectKey resultType="String" keyProperty="poid" order="BEFORE">
+            SELECT
+                FORMAT(getdate(), 'yyMMdd')+'P'+ REPLICATE('0', 5 - LEN('0')) + CONVERT(NVARCHAR(10), NEXT VALUE FOR SEQ_PAYMENT) AS poid
+        </selectKey>
+        INSERT INTO TCART (
+            POID
+            , COMPCD
+            , ORGCD
+            , PAMT
+            , PMNAME
+            , PUNAME
+            , PENAME
+            , PGOODS
+            , PBNAME
+            , USERCD
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES (
+            #{poid}
+            , #{compcd}
+            , #{orgcd}
+            , #{pamt}
+            , #{pmname}
+            , #{puname}
+            , #{pename}
+            , #{pgoods}
+            , #{pbname}
+            , #{usercd}
+            , #{addusercd}
+            , GETDATE()
+            , #{updusercd}
+            , GETDATE()
+            , #{terminalcd}
+        ) 
+    </insert>
+    
+    <insert id="insertTCartDtl" parameterType="xrt.alexcloud.api.settlebank.vo.TCartDtlVo">
+        /* paymentListMapper.insertTCartDtl */
+        INSERT INTO TCARTDTL (
+            POID
+            , PSEQ
+            , COMPCD
+            , ORGCD
+            , ORD_CD
+            , XRT_INVC_SNO
+            , XRT_SHIPPING_PRICE
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        ) VALUES (
+            #{poid}
+            , #{pseq}
+            , #{compcd}
+            , #{orgcd}
+            , #{ordCd}
+            , #{xrtInvcSno}
+            , #{xrtShippingPrice}
+            , #{addusercd}
+            , GETDATE()
+            , #{updusercd}
+            , GETDATE()
+            , #{terminalcd}
+        )
+    </insert>
+    
+    <delete id="deleteTCart" parameterType="LDataMap">
+        /* paymentListMapper.deleteTCart */
+        DELETE FROM TCART
+        WHERE 1 = 1
+        AND ORGCD = #{orgcd}
+        AND USERCD = #{usercd}
+    </delete>
+    
+    <delete id="deleteTCartDtl" parameterType="LDataMap">
+        /* paymentListMapper.deleteTCartDtl */
+        DELETE FROM TCARTDTL
+        WHERE 1 = 1
+        AND ORGCD = #{orgcd}
+        AND ADDUSERCD = #{usercd}
+    </delete>
+</mapper>

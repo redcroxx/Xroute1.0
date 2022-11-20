@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopP025Mapper">
+
+	<!-- 품목(복합,단품) 팝업 : 검색 -->
+	<select id="getSearch1" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP025Mapper.getSearch1 */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , B.NAME AS ORGNM
+			 , A.PROD_CD
+			 , A.PROD_NM
+			 , A.PROD_TYPE_CD
+			 , A.MAX_CLGO_QTY
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM PRODUCT A WITH (NOLOCK)
+		  JOIN P002 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>	
+		<if test="S_PROD_CD != null and S_PROD_CD != ''">
+			AND (A.PROD_CD LIKE '%' + dbo.UFX_Trim(#{S_PROD_CD}) + '%' 
+				OR A.PROD_NM LIKE '%' + dbo.UFX_Trim(#{S_PROD_CD}) + '%')
+		</if>
+		<if test="S_PROD_TYPE_CD != null and S_PROD_TYPE_CD != ''">
+		   AND A.PROD_TYPE_CD = #{S_PROD_TYPE_CD}
+		</if>	
+		ORDER BY A.ORGCD
+	</select>
+	
+	
+	<!-- 품목(복합,단품) 팝업 : 상세검색 -->
+	<select id="getSearch2" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP025Mapper.getSearch2 */
+		<if test="PROD_TYPE_CD == '00001'">
+			SELECT COMPCD
+				 , ORGCD
+				 , ITEMCD
+				 , NAME AS ITEMNM
+				 , 1 AS SPROD_QTY
+			  FROM P006 WITH (NOLOCK)
+			 WHERE COMPCD = #{COMPCD}
+			   AND ORGCD = #{ORGCD}
+			<if test="PROD_CD != null and PROD_CD != ''">
+			   AND ITEMCD = #{PROD_CD}
+			</if>	
+			ORDER BY ORGCD, ITEMCD
+		</if>
+		<if test="PROD_TYPE_CD == '00002'">
+			SELECT A.COMPCD
+				 , A.ORGCD
+				 , A.ITEMCD
+				 , B.NAME AS ITEMNM
+				 , A.SPROD_QTY
+			  FROM PRODSPROD A WITH (NOLOCK)
+			  JOIN P006 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD AND A.ITEMCD = B.ITEMCD
+			 WHERE A.COMPCD = #{COMPCD}
+			   AND A.ORGCD = #{ORGCD}
+			<if test="PROD_CD != null and PROD_CD != ''">
+			   AND A.PROD_CD = #{PROD_CD}
+			</if>
+			ORDER BY A.ORGCD, A.ITEMCD
+		</if>
+	</select>
+	
+	<!-- 품목(복합,단품) 팝업 : 코드 유효성 -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopP025Mapper.getCheck */
+		SELECT A.COMPCD
+			 , A.ORGCD
+			 , B.NAME AS ORGNM
+			 , A.PROD_CD
+			 , A.PROD_NM
+			 , A.PROD_TYPE_CD
+			 , A.MAX_CLGO_QTY
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME 
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		  FROM PRODUCT A WITH (NOLOCK)
+		  JOIN P002 B WITH (NOLOCK) ON A.COMPCD = B.COMPCD AND A.ORGCD = B.ORGCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+	       AND A.ORGCD = #{S_ORGCD}
+	       AND A.PROD_CD = #{S_PROD_CD}
+	</select>
+
+</mapper>

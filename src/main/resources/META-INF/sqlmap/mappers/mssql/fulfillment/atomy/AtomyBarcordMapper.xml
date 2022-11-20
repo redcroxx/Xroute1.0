@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="atomyBarcordMapper">
+
+    <select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+        SELECT
+            ATOMY_BARCORD_SEQ       AS "atomyBarcordSeq",
+            COMPCD                  AS "compcd",
+            KR_PRODUCT_CODE         AS "krProductCode",
+            KR_PRODUCT_NAME         AS "krProductName",
+            BARCORD                 AS "barcord",
+            ADDUSERCD               AS "addusercd",
+            CONVERT(CHAR(19), ADDDATETIME, 120) AS "adddatetime",
+            UPDUSERCD               AS "updusercd",
+            CONVERT(CHAR(19), UPDDATETIME, 120) AS "upddatetime"
+        FROM ATOMY_BARCORD
+        WHERE 1 = 1
+        <if test='barcord != null and barcord != ""'>
+            AND BARCORD = #{barcord}
+        </if>
+        ORDER BY ADDDATETIME
+    </select>
+    
+    <insert id="insertAtomyBarcord" parameterType="LDataMap">
+        <selectKey resultType="java.util.HashMap" keyProperty="atomyBarcordSeq" order="BEFORE">
+            SELECT RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR ATOMY_BARCORD_SEQ), 20) AS "atomyBarcordSeq"
+        </selectKey>
+        INSERT INTO ATOMY_BARCORD (
+            ATOMY_BARCORD_SEQ,
+            COMPCD,
+            KR_PRODUCT_CODE,
+            KR_PRODUCT_NAME,
+            BARCORD,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        ) VALUES (
+            #{atomyBarcordSeq},
+            #{compcd},
+            #{krProductCode},
+            #{krProductName},
+            #{barcord},
+            #{addusercd},
+            GETDATE(),
+            #{updusercd},
+            GETDATE(),
+            #{terminalcd}
+        )
+    </insert>
+    
+    <update id="updateAtomyBarcord" parameterType="LDataMap">
+        UPDATE ATOMY_BARCORD
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="krProductCode != null and krProductCode != ''">
+                KR_PRODUCT_CODE = #{krProductCode},
+            </if>
+            <if test="krProductName != null and krProductName != ''">
+                KR_PRODUCT_NAME = #{krProductName},
+            </if>
+            <if test="barcord != null and barcord != ''">
+                BARCORD = #{barcord},
+            </if>
+            <if test="updusercd != null and updusercd != ''">
+                UPDUSERCD = #{updusercd},
+                UPDDATETIME = getDate()
+            </if>
+        </trim>
+         WHERE 1 = 1
+         AND ATOMY_BARCORD_SEQ = #{atomyBarcordSeq}
+    </update>
+    
+    <delete id="deleteAtomyBarcord" parameterType="LDataMap">
+        DELETE FROM ATOMY_BARCORD
+        WHERE 1 = 1
+    </delete>
+</mapper>

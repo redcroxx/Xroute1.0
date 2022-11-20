@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 품목분류 -->
+<mapper namespace="P000017Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000017.getSearch */
+		WITH T1 (
+			COMPCD, CATEGORYCD, NAME, PCATEGORYCD
+		  , SORTNO, REMARK, LVL, LVLNAME, TREE, SORTTREE
+		) AS (
+			SELECT A.COMPCD
+				 , A.CATEGORYCD
+				 , A.NAME
+				 , A.PCATEGORYCD
+			     , A.SORTNO
+			     , A.REMARK
+			     , 1 AS LVL
+			     , CONVERT(NVARCHAR, '대분류') AS LVLNAME
+			     , CONVERT(NVARCHAR(200), A.CATEGORYCD) AS TREE
+			     , CONVERT(NVARCHAR(200), dbo.UFX_Lpad(A.SORTNO, 10, '0') + A.CATEGORYCD) AS SORTTREE
+			FROM P017 A WITH (NOLOCK)
+			JOIN P001 B WITH (NOLOCK)
+			  ON A.COMPCD = B.COMPCD
+			WHERE A.PCATEGORYCD = '*'
+			  AND B.ISUSING = 'Y'
+			UNION ALL
+			SELECT T2.COMPCD
+				 , T2.CATEGORYCD
+				 , T2.NAME
+			     , T2.PCATEGORYCD
+			     , T2.SORTNO
+			     , T2.REMARK
+			     , T1.LVL + 1 AS LVL
+			     , CONVERT(NVARCHAR, CASE T1.LVL + 1 WHEN 1 THEN '대분류' WHEN 2 THEN '중분류' WHEN 3 THEN '소분류' ELSE '회사' END) AS LVLNAME
+			     , CONVERT(NVARCHAR(200), T1.TREE + '.' + T2.CATEGORYCD) AS TREE
+			     , CONVERT(NVARCHAR(200), T1.SORTTREE + '.' + CONVERT(NVARCHAR(200), dbo.UFX_Lpad(T2.SORTNO, 10, '0')) + T2.CATEGORYCD) AS SORTTREE
+			FROM P017 T2 WITH (NOLOCK)
+			JOIN T1
+			  ON T1.COMPCD = T2.COMPCD AND T1.CATEGORYCD = T2.PCATEGORYCD
+		)
+		SELECT T1.COMPCD
+			 , B.NAME AS COMPNM
+			 , T1.CATEGORYCD
+			 , T1.NAME
+			 , T1.NAME AS CATEGORYINFO
+			 , T1.PCATEGORYCD
+			 , T1.SORTNO
+			 , T1.REMARK
+			 , T1.LVL
+			 , T1.LVLNAME
+			 , T1.COMPCD + '.' + T1.TREE AS TREE
+			 , T1.SORTTREE AS SORTTREE
+			 , (SELECT COUNT(1) FROM P006 WITH (NOLOCK)
+				WHERE COMPCD = T1.COMPCD
+				  AND CATEGORYCD IN (
+					SELECT A1.CATEGORYCD AS CATEGORY1CD
+					FROM P017 A1 WITH (NOLOCK)
+					JOIN P017 A2 WITH (NOLOCK)
+  					  ON A1.COMPCD = A2.COMPCD AND A1.PCATEGORYCD = A2.CATEGORYCD
+					JOIN P017 A3 WITH (NOLOCK)
+  					  ON A2.COMPCD = A3.COMPCD AND A2.PCATEGORYCD = A3.CATEGORYCD
+					WHERE A1.CATEGORYCD = T1.CATEGORYCD OR A2.CATEGORYCD = T1.CATEGORYCD OR A3.CATEGORYCD = T1.CATEGORYCD)
+				) AS ITEMCNT
+		FROM T1
+		JOIN P001 B WITH (NOLOCK)
+		  ON T1.COMPCD = B.COMPCD
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="S_COMPCD != null and S_COMPCD != ''">
+				AND T1.COMPCD = #{S_COMPCD}
+			</if>
+		</trim>
+		UNION ALL
+		SELECT COMPCD
+			 , NAME AS COMPNM
+			 , NULL AS CATEGORYCD
+			 , NULL AS NAME
+			 , NAME AS CATEGORYINFO
+			 , NULL AS PCATEGORYCD
+			 , 0 AS SORTNO
+			 , NULL AS REMARK
+			 , 0 AS LVL
+			 , '회사' AS LVLNAME
+			 , COMPCD + '.' AS TREE
+			 , NULL AS SORTTREE
+			 , NULL AS ITEMCNT
+		FROM P001 WITH (NOLOCK)
+		WHERE ISUSING = 'Y'
+		<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND COMPCD = #{S_COMPCD}
+		</if>
+		ORDER BY COMPCD, SORTTREE, TREE
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000017.getDetail */
+		SELECT A.COMPCD
+			 , C.NAME AS COMPNM
+			 , A.CATEGORYCD
+			 , A.NAME
+			 , A.PCATEGORYCD
+			 , B.NAME AS PCATEGORYNM
+			 , A.LVL
+			 , CASE A.LVL WHEN 1 THEN '대분류' WHEN 2 THEN '중분류' WHEN 3 THEN '소분류' ELSE '회사' END AS LVLNAME
+			 , A.SORTNO
+			 , A.REMARK
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.UPDUSERCD
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		FROM P017 A WITH (NOLOCK)
+		LEFT OUTER JOIN P017 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.PCATEGORYCD = B.CATEGORYCD
+		JOIN P001 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.CATEGORYCD = #{CATEGORYCD}
+	</select>
+	
+	<!-- 분류별 품목 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000017.getDetailList */
+		SELECT COMPCD 
+			 , ITEMCD
+			 , NAME
+		FROM P006 WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		  AND CATEGORYCD IN (
+			SELECT A1.CATEGORYCD AS CATEGORY1CD
+			FROM P017 A1 WITH (NOLOCK)
+			JOIN P017 A2 WITH (NOLOCK)
+			  ON A1.COMPCD = A2.COMPCD AND A1.PCATEGORYCD = A2.CATEGORYCD
+			JOIN P017 A3 WITH (NOLOCK)
+			  ON A2.COMPCD = A3.COMPCD AND A2.PCATEGORYCD = A3.CATEGORYCD
+			WHERE A1.CATEGORYCD = #{CATEGORYCD} OR A2.CATEGORYCD = #{CATEGORYCD} OR A3.CATEGORYCD = #{CATEGORYCD}
+		)
+		ORDER BY COMPCD, ITEMCD
+	</select>
+	
+	<!-- 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000017.insertMst */
+		INSERT INTO P017 WITH (ROWLOCK)(
+			COMPCD, CATEGORYCD, NAME, PCATEGORYCD
+		  , LVL, SORTNO, REMARK
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, dbo.UFX_Trim(#{CATEGORYCD}), #{NAME}, #{PCATEGORYCD}
+		  , #{LVL}, #{SORTNO}, #{REMARK}
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000017.updateMst */
+		UPDATE P017 WITH (ROWLOCK)
+		   SET NAME = #{NAME}
+			 , SORTNO = #{SORTNO}
+			 , REMARK = #{REMARK}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+			 , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND CATEGORYCD = #{CATEGORYCD}
+	</update>
+
+	<!-- 삭제 -->
+	<delete id="deleteMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000017.deleteMst */
+		DELETE FROM P017 WITH (ROWLOCK)
+		 WHERE COMPCD = #{COMPCD} AND CATEGORYCD = #{CATEGORYCD}
+	</delete>
+	
+</mapper>

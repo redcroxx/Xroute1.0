@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="EtsyUploadMapper">
+
+	<!-- 주문서양식설정 : 양식명 SEELCTBOX -->
+	<select id="getSiteCd" parameterType="LDataMap" resultType="LDataMap">
+		/* EtsyUploadMapper.getSiteCd */
+		SELECT 
+			SITE_CD AS CODE
+			, SITE_NM AS VALUE
+		FROM MKTSITE WITH (NOLOCK)
+		WHERE 1 = 1
+		AND COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		AND SITE_NM = #{SITE_NM}
+		ORDER BY SITE_CD
+	</select>
+	
+	<!-- US 주 리스트 조회 -->
+	<select id="getUsStateList" parameterType="LDataMap" resultType="java.lang.String">
+		/* EtsyUploadMapper.getUsStateList */
+		SELECT
+			A.CODE AS STATE_CD
+		FROM S002 A WITH(NOLOCK)
+		WHERE 1 = 1 
+		AND A.COMPCD = #{LOGIN_COMPCD}
+		AND A.CODEKEY IN ( 'US_STATE_EAST', 'US_STATE_WEST')
+		AND A.STATUS = 'Y'
+		ORDER BY A.COMPCD, A.CODEKEY, A.SORTNO 
+	</select>
+	
+	<!-- Seller 정보 조회 -->
+	<select id="getSeller" parameterType="java.util.HashMap" resultType="LDataMap">
+		/* EtsyUploadMapper.getSeller */
+		SELECT
+			A.NAME
+			, A.TEL1
+			, A.TEL2
+			, A.ENG_ADDR
+			, A.POST
+            , A.COMPANY_EN
+		FROM P002 A
+		WHERE 1 = 1
+		AND A.COMPCD = #{compcd}
+		AND A.ORGCD = #{orgcd} 
+	</select>
+
+	<!-- FileSeq 조회 -->
+	<select id="getTorderFileSeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		/* EtsyUploadMapper.getTorderFileSeq */
+		SELECT
+			MAX(a.fileCount) fileCount
+		FROM (
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDERFILE
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM TEMP_SHOPEE_ORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND CONVERT(CHAR(8), ADDDATETIME, 112) = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_AMAZON
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_ETSY
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_EBAY
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM API_ORDER_MASTER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+		) a
+	</select>
+	
+	<!-- RelaySeq 조회  -->
+	<select id="getTorderRelaySeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		/* EtsyUploadMapper.getRelaySeq */
+		SELECT
+			CASE
+				WHEN a.relaySeq IS NULL THEN 0
+				ELSE a.relaySeq
+			END AS relaySeq
+		FROM (
+			SELECT
+				MAX(RELAY_SEQ) AS relaySeq
+			FROM TORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND UPLOAD_DATE = #{fileYmd}
+		) a
+	</select>
+	
+	<!-- 해당일자 파일 시퀀스 조회 -->
+	<select id="getFileSeq" parameterType="xrt.fulfillment.order.manual.etsy.EtsyVo" resultType="java.lang.Integer">
+		/* EtsyUploadMapper.getFileSeq */
+		SELECT
+			CASE 
+				WHEN a.maxFileSeq IS NULL THEN 0
+				ELSE a.maxFileSeq
+			END maxFileSeq
+		FROM (
+			SELECT
+				MAX(FILE_SEQ) AS maxFileSeq
+			FROM ORDER_ETSY
+			WHERE 1 = 1
+			AND COMPCD = #{LOGIN_COMPCD}
+			AND ORGCD = #{LOGIN_ORGCD}
+			AND WHCD = #{LOGIN_WHCD}
+			AND FILE_YMD = #{fileYmd}
+		) a
+	</select>
+	
+	<!-- 묶음배송 OrderId 조회  -->
+	<select id="getOrderList" parameterType="java.util.HashMap" resultType="xrt.fulfillment.order.manual.etsy.EtsyVo">
+		/* EtsyUploadMapper.getOrderList */
+		SELECT
+			a.COMPCD			AS compcd
+			, a.ORGCD			AS orgcd
+			, a.WHCD			AS whcd
+			, a.FILE_YMD		AS fileYmd
+			, a.FILE_SEQ		AS fileSeq
+			, a.ORDER_ID		AS orderId
+			, a.CURRENCY		AS currency
+			, a.SHIP_NAME		AS shipName
+			, a.SHIP_ADDRESS1	AS shipAddress1
+			, a.SHIP_ADDRESS2	AS shipAddress2
+			, a.SHIP_CITY		AS shipCity
+			, a.SHIP_STATE		AS shipState
+			, a.SHIP_ZIPCODE	AS shipZipcode
+			, a.SHIP_COUNTRY	AS shipCountry
+			, a.ADDUSERCD		AS addusercd
+			, a.UPDUSERCD		AS updusercd
+			, a.TERMINALCD		AS terminacd
+			, a.PRICE            AS price
+            , SUM(CONVERT(float, ITEM_TOTAL)) AS itemTotal
+            , SUM(CONVERT(int, QUANTITY)) AS itemCount
+		FROM ORDER_ETSY a
+		WHERE 1 = 1
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+		AND WHCD = #{whcd}
+		AND FILE_YMD = #{fileYmd}
+		AND FILE_SEQ = #{fileSeq}
+		AND REG_YN = 'N'
+		GROUP BY a.COMPCD, a.ORGCD, a.WHCD, a.FILE_YMD, a.FILE_SEQ, a.ORDER_ID, a.CURRENCY, a.SHIP_NAME, a.SHIP_ADDRESS1
+			, a.SHIP_ADDRESS2, a.SHIP_CITY, a.SHIP_STATE, a.SHIP_ZIPCODE, a.SHIP_COUNTRY, a.ADDUSERCD, a.UPDUSERCD, a.TERMINALCD, a.PRICE
+	</select>
+	
+	<!-- 묶음배송 OrderId 조회  -->
+	<select id="getItemList" parameterType="xrt.fulfillment.order.manual.etsy.EtsyVo" resultType="xrt.fulfillment.order.manual.etsy.EtsyVo">
+		/* EtsyUploadMapper.getItemList */
+		SELECT
+			COMPCD			AS compcd
+			, ORGCD			AS orgcd
+			, ORDER_ID		AS orderId
+			, ITEM_NAME		AS itemName
+			, VARIATIONS	AS varidations
+			, ITEM_TOTAL	AS itemTotal
+			, QUANTITY		AS quantity
+			, ADDUSERCD		AS addusercd
+			, UPDUSERCD		AS updusercd
+			, TERMINALCD	AS terminacd
+		FROM ORDER_ETSY
+		WHERE 1 = 1
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+		AND ORDER_ID = #{orderId}
+		AND REG_YN = 'N'
+	</select>
+	
+	<!-- 아마존 주문 파일 저장 -->
+	<insert id="insertOrderEtsy" parameterType="xrt.fulfillment.order.manual.etsy.EtsyVo">
+		/* EtsyUploadMapper.insertOrderEtsy */
+		<selectKey resultType="java.util.HashMap" keyProperty="orderEtsySeq" order="BEFORE">
+			SELECT RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDER_ETSY), 10) AS orderEtsySeq
+		</selectKey>
+		INSERT INTO ORDER_ETSY (
+			ORDER_ETSY_SEQ
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, FILE_YMD
+			, FILE_SEQ
+			, ORDER_ID
+			, SALE_DATE
+			, ITEM_NAME
+			, BUYER
+			, QUANTITY
+			, PRICE
+			, COUPON_CODE
+			, COUPON_DETAILS
+			, DISCOUNT_AMOUNT
+			, SHIPPING_DISCOUNT
+			, ORDER_SHIPPING
+			, ORDER_SALES_TAX
+			, ITEM_TOTAL
+			, CURRENCY
+			, TRANSACTION_ID
+			, LISTING_ID
+			, DATE_PAID
+			, DATE_SHIPPED
+			, SHIP_NAME
+			, SHIP_ADDRESS1
+			, SHIP_ADDRESS2
+			, SHIP_CITY
+			, SHIP_STATE
+			, SHIP_ZIPCODE
+			, SHIP_COUNTRY
+			, VARIATIONS
+			, ORDER_TYPE
+			, LISTINGS_TYPE
+			, PAYMENT_TYPE
+			, INPERSON_DISCOUNT
+			, INPERSON_LOCATION
+			, VAT_PAID_BY_BUYER
+			, SKU
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+		) VALUES (
+			#{orderEtsySeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{fileYmd}
+			, #{fileSeq}
+			, #{orderId}
+			, #{saleDate}
+			, #{itemName}
+			, #{buyer}
+			, #{quantity}
+			, #{price}
+			, #{couponCode}
+			, #{couponDetails}
+			, #{discountAmount}
+			, #{shippingDiscount}
+			, #{orderShipping}
+			, #{orderSalesTax}
+			, #{itemTotal}
+			, #{currency}
+			, #{transactionId}
+			, #{listingId}
+			, #{datePaid}
+			, #{dateShipped}
+			, #{shipName}
+			, #{shipAddress1}
+			, #{shipAddress2}
+			, #{shipCity}
+			, #{shipState}
+			, #{shipZipcode}
+			, #{shipCountry}
+			, #{variations}
+			, #{orderType}
+			, #{listingsType}
+			, #{paymentType}
+			, #{inpersonDiscount}
+			, #{inpersonLocation}
+			, #{vatPaidByBuyer}
+			, #{sku}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+		)
+	</insert>
+	
+	<!--  -->
+	<insert id="insertTorder" parameterType="xrt.fulfillment.interfaces.vo.TOrderVo">
+		/* EtsyUploadMapper.insertTorder */
+		<selectKey resultType="java.util.HashMap" keyProperty="xrtInvcSno,ordCd" order="BEFORE">
+			SELECT
+				'XLF' + RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_XLF_INVC_SNOKEY), 10) AS xrtInvcSno
+				, 'W' + RIGHT('0000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDCD_KEY), 13) AS ordCd
+		</selectKey>
+		INSERT INTO TORDER (
+			ORD_CD
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, UPLOAD_DATE
+			, FILE_SEQ
+			, FILE_NM
+			, FILE_NM_REAL
+			, SITE_CD
+			, STATUS_CD
+			, STOCK_TYPE
+			, MALL_NM
+			, SHIP_METHOD_CD
+			, ORD_NO
+			, CART_NO
+			, ORD_CNT
+			, XRT_INVC_SNO
+			, INVC_SNO1
+			, INVC_SNO2
+			, S_NATION
+			, E_NATION
+			, WGT
+			, BOX_WIDTH
+			, BOX_LENGTH
+			, BOX_HEIGHT
+			, BOX_VOLUME
+			, C_WGT_CHARGE
+			, C_WGT_REAL
+			, C_BOX_WIDTH
+			, C_BOX_LENGTH
+			, C_BOX_HEIGHT
+			, C_WGT_VOLUME
+			, SHIP_NAME
+			, SHIP_TEL
+			, SHIP_MOBILE
+			, SHIP_ADDR
+			, SHIP_POST
+			, RECV_NAME
+			, RECV_TEL
+			, RECV_MOBILE
+			, RECV_ADDR1
+			, RECV_ADDR2
+			, RECV_CITY
+			, RECV_STATE
+			, RECV_POST
+			, RECV_NATION
+			, RECV_CURRENCY
+			, TOT_PAYMENT_PRICE
+			, INVC_PRINT_CNT
+			, INVC_PRINT_DATE
+			, STOCK_USERCD
+			, STOCK_DATE
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+			, RELAY_SEQ
+			, FILE_RELAY_SEQ
+			, PAYMENT_TYPE
+		) VALUES (
+			#{ordCd}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{uploadDate}
+			, #{fileSeq}
+			, #{fileNm}
+			, #{fileNmReal}
+			, #{siteCd}
+			, #{statusCd}
+			, #{stockType}
+			, #{mallNm}
+			, #{shipMethodCd}
+			, #{ordNo}
+			, #{cartNo}
+			, #{ordCnt}
+			, #{xrtInvcSno}
+			, #{invcSno1}
+			, #{invcSno2}
+			, #{sNation}
+			, #{eNation}
+			, #{wgt}
+			, #{boxWidth}
+			, #{boxLength}
+			, #{boxHeight}
+			, #{boxVolume}
+			, #{cWgtCharge}
+			, #{cWgtReal}
+			, #{cBoxWidth}
+			, #{cBoxLength}
+			, #{cBoxHeight}
+			, #{cWgtVolume}
+			, #{shipName}
+			, #{shipTel}
+			, #{shipMobile}
+			, #{shipAddr}
+			, #{shipPost}
+			, #{recvName}
+			, #{recvTel}
+			, #{recvMobile}
+			, #{recvAddr1}
+			, #{recvAddr2}
+			, #{recvCity}
+			, #{recvState}
+			, #{recvPost}
+			, #{recvNation}
+			, #{recvCurrency}
+			, #{totPaymentPrice}
+			, #{invcPrintCnt}
+			, #{invcPrintDate}
+			, #{stockUsercd}
+			, #{stockDate}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+			, #{relaySeq}
+			, #{fileRelaySeq}
+			, #{paymentType}
+		)
+	</insert>
+	
+	<!--  -->
+	<insert id="insertTOrderDtl" parameterType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+		/* EtsyUploadMapper.insertTOrderDtl */
+		INSERT INTO TORDERDTL (
+			ORD_CD
+			, ORD_SEQ
+			, COMPCD
+			, ORGCD
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_OPTION
+			, GOODS_CNT
+			, PAYMENT_PRICE
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, ORD_NO
+		) VALUES (
+			#{ordCd}
+			, #{ordSeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{goodsCd}
+			, #{goodsNm}
+			, #{goodsOption}
+			, #{goodsCnt}
+			, #{paymentPrice}
+			, #{addusercd}
+			, getdate()
+			, #{updusercd}
+			, getdate()
+			, #{terminalcd}
+			, #{ordNo}
+		)
+	</insert>
+	
+	<!--  -->
+	<update id="updateOrderEtsy" parameterType="xrt.fulfillment.order.manual.etsy.EtsyVo">
+		/* EtsyUploadMapper.updateOrderEtsy */
+		UPDATE ORDER_ETSY
+		SET
+			REG_YN = 'Y'
+			, UPDDATETIME = getdate()
+		WHERE 1 = 1
+		AND ORDER_ID = #{orderId}
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+	</update>
+	
+	<update id="updateTorder" parameterType="java.util.HashMap">
+		/* EtsyUploadMapper.updateTorder */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="invcSno1 != null and invcSno1 != ''">INVC_SNO1 = #{invcSno1},</if>
+			<if test="localShipper != null and localShipper != ''">LOCAL_SHIPPER = #{localShipper},</if>
+			<if test="statusCd != null and statusCd != ''">STATUS_CD = #{statusCd}</if>
+			<if test="shippingCompany != null and shippingCompany != ''">SHIPPING_COMPANY = #{shippingCompany}</if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+</mapper>

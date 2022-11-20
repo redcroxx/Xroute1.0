@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 박스 관리 -->
+<mapper namespace="xrt.alexcloud.api.settlebank.mapper.SettleBankMapper">
+
+    <select id="getConfirmCount" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO" resultType="java.lang.Integer">
+        /* SettleBankMapper.getConfirmCount */
+        SELECT COUNT(POID) AS COUNT
+        FROM TPAYMENT
+        WHERE 1 = 1
+        AND POID = #{POid}
+        <if test='PStateCd == "0021"'>
+        AND VBANK_CONFIRM_DATE = #{PAuthDt}
+        </if>
+    </select>
+    
+    <insert id="insertTPayment" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.insertTPayment */
+        INSERT INTO TPAYMENT (
+            POID
+            , COMPCD
+            , ORGCD
+            , PSTATUS_CD
+            , PAMT
+            , PMNAME
+            , PUNAME
+            , PENAME
+            , PNOTI
+            , PGOODS
+            , PVTRANSDT
+            , PPHONE
+            , PBNAME
+            , PEMAIL
+            , PPRDTERM
+            , VBANK_CREATE_DATE
+            , USERCD
+            , ADDUSERCD
+            , UPDUSERCD
+            , TERMINALCD
+        ) 
+        SELECT
+            POID
+            , COMPCD
+            , ORGCD
+            , '0051'
+            , PAMT
+            , PMNAME
+            , PUNAME
+            , PENAME
+            , PNOTI
+            , PGOODS
+            , PVTRANSDT
+            , PPHONE
+            , PBNAME
+            , PEMAIL
+            , PPRDTERM
+            , CONVERT(CHAR(8), GETDATE(), 112)
+            , USERCD
+            , ADDUSERCD
+            , UPDUSERCD
+            , TERMINALCD
+        FROM TCART
+        WHERE 1 = 1
+        AND POID = #{POid}
+    </insert>
+    
+    <insert id="insertTPaymentDtl" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.insertTPaymentDtl */
+        INSERT INTO TPAYMENTDTL (
+            POID
+            , PSEQ
+            , COMPCD
+            , ORGCD
+            , ORD_CD
+            , XRT_INVC_SNO
+            , XRT_SHIPPING_PRICE
+            , ADDUSERCD
+            , UPDUSERCD
+            , TERMINALCD
+        ) 
+        SELECT
+            POID
+            , PSEQ
+            , COMPCD
+            , ORGCD
+            , ORD_CD
+            , XRT_INVC_SNO
+            , XRT_SHIPPING_PRICE
+            , ADDUSERCD
+            , UPDUSERCD
+            , TERMINALCD
+        FROM TCARTDTL
+        WHERE 1 = 1
+        AND POID = #{POid}
+    </insert>
+    
+    <insert id="insertTStockHistory" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.insertTStockHistory */
+        INSERT INTO TSTOCK_HISTORY  
+        (   
+            ORD_CD
+            , INVC_SNO
+            , EVENT_CD
+            , STATUS_CD
+            , ADDUSERCD
+            , ADDDATETIME
+            , UPDUSERCD
+            , UPDDATETIME
+            , TERMINALCD
+        )   
+        SELECT
+            ORD_CD          AS ordCd 
+            , XRT_INVC_SNO  AS xrtInvcSno
+            , 'DEPOSIT COMPLETED'   AS eventCd
+            , '21'                  AS statusCd
+            , 'VBANK'       AS addusercd
+            , GETDATE()     AS adddatetie
+            , 'VBANK'       AS updusercd
+            , GETDATE()     AS upddatetime
+            , TERMINALCD    AS terminalcd
+        FROM TPAYMENTDTL
+        WHERE 1 = 1
+        AND POID = #{POid}
+    </insert>
+    
+    <insert id="insertTrackingHistory" parameterType="LDataMap">
+        <selectKey resultType="java.lang.String" keyProperty="trackingSeq" order="BEFORE">
+            SELECT 
+                RIGHT('00000000000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_TRACKING_HISTORY), 20) AS trackingSeq
+        </selectKey>
+        INSERT INTO TRACKING_HISTORY(
+            TRACKING_SEQ,
+            XRT_INVC_SNO,
+            E_NATION,
+            STATUS_CD,
+            STATUS_NM,
+            ADDUSERCD,
+            ADDDATETIME,
+            UPDUSERCD,
+            UPDDATETIME,
+            TERMINALCD
+        )
+        SELECT
+            #{trackingSeq},
+            XRT_INVC_SNO,
+            E_NATION,
+            #{statusCd},
+            #{statusNm},
+            'VBANK' AS addusercd,
+            GETDATE(),
+            'VBANK' AS updusercd,
+            GETDATE(),
+            #{terminalcd}
+        FROM TORDER
+        WHERE 1 = 1
+        AND XRT_INVC_SNO IN (
+            SELECT
+                XRT_INVC_SNO
+            FROM TPAYMENTDTL
+            WHERE POID = #{POid}
+        )
+    </insert>
+    
+    <update id="updateTPayment" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.updateTPayment */
+        UPDATE TPAYMENT
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="PStateCd != null and PStateCd != ''">
+                PSTATUS_CD = #{PStateCd},
+            </if>
+            <if test="PAuthDt != null and PAuthDt != ''">
+                VBANK_CONFIRM_DATE = #{PAuthDt},
+            </if>
+            <if test="PStateCd != null and PStateCd != ''">
+                UPDUSERCD = 'VBANK',
+            </if>
+            <if test="PStateCd != null and PStateCd != ''">
+                UPDDATETIME = GETDATE()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND POID = #{POid}
+    </update>
+    
+    <update id="updateTPaymentDtl" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.updateTPaymentDtl */
+        UPDATE TPAYMENTDTL
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="PStateCd != null and PStateCd != ''">
+                STATUS_CD = '21',
+            </if>
+            <if test="PStateCd != null and PStateCd != ''">
+                UPDUSERCD = 'VBANK',
+            </if>
+            <if test="PStateCd != null and PStateCd != ''">
+                UPDDATETIME = GETDATE()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND POID = #{POid}
+    </update>
+    
+    <update id="updateTOrder" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.updateTOrder */
+        UPDATE TORDER
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="statusCd != null and statusCd != ''">
+                STATUS_CD = #{statusCd},
+            </if>
+            <if test="POid != null and POid != ''">
+                UPDUSERCD = 'VBANK',
+                UPDDATETIME = GETDATE()
+            </if>
+        </trim>
+        WHERE 1 = 1
+        AND XRT_INVC_SNO IN (SELECT XRT_INVC_SNO FROM TPAYMENTDTL WHERE POID = #{POid})
+    </update>
+    
+    <delete id="deleteTCart" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.deleteTCart */
+        DELETE FROM TCART
+        WHERE 1 = 1
+        AND POID = #{POid}
+    </delete>
+    
+    <delete id="deleteTCartDtl" parameterType="xrt.alexcloud.api.settlebank.vo.SettleBankResNotiVO">
+        /* SettleBankMapper.deleteTCartDtl */
+        DELETE FROM TCARTDTL
+        WHERE 1 = 1
+        AND POID = #{POid}
+    </delete>
+
+</mapper>

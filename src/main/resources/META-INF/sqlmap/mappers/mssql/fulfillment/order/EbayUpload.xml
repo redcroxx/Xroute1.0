@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="EbayUploadMapper">
+
+	<!-- 주문서양식설정 : 양식명 SEELCTBOX -->
+	<select id="getSiteCd" parameterType="LDataMap" resultType="LDataMap">
+		/* EbayUploadMapper.getSiteCd */
+		SELECT 
+			SITE_CD AS CODE
+			, SITE_NM AS VALUE
+		FROM MKTSITE WITH (NOLOCK)
+		WHERE 1 = 1
+		AND COMPCD = #{COMPCD}
+		AND ORGCD = #{ORGCD}
+		AND SITE_NM = #{SITE_NM}
+		ORDER BY SITE_CD
+	</select>
+	
+	<!-- US 주 리스트 조회 -->
+	<select id="getUsStateList" parameterType="LDataMap" resultType="java.lang.String">
+		/* EbayUploadMapper.getUsStateList */
+		SELECT
+			A.CODE AS STATE_CD
+		FROM S002 A WITH(NOLOCK)
+		WHERE 1 = 1 
+		AND A.COMPCD = #{LOGIN_COMPCD}
+		AND A.CODEKEY IN ( 'US_STATE_EAST', 'US_STATE_WEST')
+		AND A.STATUS = 'Y'
+		ORDER BY A.COMPCD, A.CODEKEY, A.SORTNO 
+	</select>
+	
+	<!-- Seller 정보 조회 -->
+	<select id="getSeller" parameterType="java.util.HashMap" resultType="LDataMap">
+		/* EbayUploadMapper.getSeller */
+		SELECT
+			A.NAME
+			, A.TEL1
+			, A.TEL2
+			, A.ENG_ADDR
+			, A.POST
+            , A.COMPANY_EN
+		FROM P002 A
+		WHERE 1 = 1
+		AND A.COMPCD = #{compcd}
+		AND A.ORGCD = #{orgcd} 
+	</select>
+
+	<!-- FileSeq 조회 -->
+	<select id="getTorderFileSeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		/* EbayUploadMapper.getTorderFileSeq */
+		SELECT
+			MAX(a.fileCount) fileCount
+		FROM (
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDERFILE
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM TEMP_SHOPEE_ORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND CONVERT(CHAR(8), ADDDATETIME, 112) = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_EBAY
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_ETSY
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM ORDER_EBAY
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+			UNION ALL
+			SELECT
+				ISNULL(MAX(FILE_SEQ), 0) AS fileCount
+			FROM API_ORDER_MASTER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND FILE_YMD = #{fileYmd}
+		) a
+	</select>
+	
+	<!-- RelaySeq 조회  -->
+	<select id="getTorderRelaySeq" parameterType="java.util.HashMap" resultType="java.lang.Integer">
+		/* EbayUploadMapper.getRelaySeq */
+		SELECT
+			CASE
+				WHEN a.relaySeq IS NULL THEN 0
+				ELSE a.relaySeq
+			END AS relaySeq
+		FROM (
+			SELECT
+				MAX(RELAY_SEQ) AS relaySeq
+			FROM TORDER
+			WHERE 1 = 1
+			AND COMPCD = #{compcd}
+			AND ORGCD = #{orgcd}
+			AND UPLOAD_DATE = #{fileYmd}
+		) a
+	</select>
+	
+	<!-- 해당일자 파일 시퀀스 조회 -->
+	<select id="getFileSeq" parameterType="xrt.fulfillment.order.manual.ebay.EbayVo" resultType="java.lang.Integer">
+		/* EbayUploadMapper.getFileSeq */
+		SELECT
+			CASE 
+				WHEN a.maxFileSeq IS NULL THEN 0
+				ELSE a.maxFileSeq
+			END maxFileSeq
+		FROM (
+			SELECT
+				MAX(FILE_SEQ) AS maxFileSeq
+			FROM ORDER_EBAY
+			WHERE 1 = 1
+			AND COMPCD = #{LOGIN_COMPCD}
+			AND ORGCD = #{LOGIN_ORGCD}
+			AND WHCD = #{LOGIN_WHCD}
+			AND FILE_YMD = #{amazonFileYmd}
+		) a
+	</select>
+	
+	<!-- 등록되어있는 OrderId 조회  -->
+	<select id="getInsertCheck" parameterType="xrt.fulfillment.order.manual.ebay.EbayVo" resultType="xrt.fulfillment.order.manual.ebay.EbayVo">
+		/* EbayUploadMapper.getInsertCheck */
+		SELECT
+			ORDER_EBAY_SEQ	AS orderEbaySeq
+			, ORDER_NUMBER		AS orderNumber
+		FROM ORDER_EBAY
+		WHERE 1 = 1
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+		AND WHCD = #{whcd}
+		AND ORDER_NUMBER = #{orderNumber}
+	</select>
+	
+	<!-- 상품정보 조회 -->
+	<select id="getOrderDtlList" parameterType="xrt.fulfillment.interfaces.vo.TOrderVo" resultType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+		/* EbayUploadMapper.getOrderDtlList */
+		SELECT
+			ISNULL(ORD_CD			, '')	AS ordCd
+			, ISNULL(ORD_SEQ		, '')	AS ordSeq
+			, ISNULL(GOODS_CD		, '')	AS goodsCd
+			, ISNULL(GOODS_NM		, '')	AS goodsNm
+			, ISNULL(GOODS_OPTION	, '')	AS goodsOption
+			, ISNULL(GOODS_CNT		, 0)	AS goodsCnt
+			, ISNULL(PAYMENT_PRICE	, 0)	AS paymentPrice
+			, ISNULL(ORD_NO			, '')	AS ordNo
+		FROM TORDERDTL
+		WHERE 1 = 1
+		<if test="ordCd != null and ordCd != ''">
+		AND ORD_CD = #{ordCd}
+		</if>
+	</select>
+	
+	<!-- 아마존 주문 파일 저장 -->
+	<insert id="insertOrderEbay" parameterType="xrt.fulfillment.order.manual.ebay.EbayVo">
+		/* EbayUploadMapper.insertOrderAmazon */
+		<selectKey resultType="java.util.HashMap" keyProperty="orderEbaySeq" order="BEFORE">
+			SELECT RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDER_EBAY), 10) AS orderEbaySeq
+		</selectKey>
+		INSERT INTO ORDER_EBAY (
+			ORDER_EBAY_SEQ
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, FILE_YMD
+			, FILE_SEQ
+			, SALES_RECORD_NUMBER
+			, ORDER_NUMBER
+			, BUYER_USERNAME
+			, BUYER_NAME
+			, BUYER_EMAIL
+			, BUYER_NOTE
+			, BUYER_ADDRESS1
+			, BUYER_ADDRESS2
+			, BUYER_CITY
+			, BUYER_STATE
+			, BUYER_ZIP
+			, BUYER_COUNTRY
+			, SHIP_TO_NAME
+			, SHIP_TO_PHONE
+			, SHIP_TO_ADDRESS1
+			, SHIP_TO_ADDRESS2
+			, SHIP_TO_CITY
+			, SHIP_TO_STATE
+			, SHIP_TO_ZIP
+			, SHIP_TO_COUNTRY
+			, ITEM_NUMBER
+			, ITEM_TITLE
+			, CUSTOM_LABEL
+			, SOLD_VIA_PROMOTED_LISTINGS
+			, QUANTITY
+			, SOLD_FOR
+			, SHIPPING_AND_HANDLING
+			, SELLER_COLLECTED_TAX
+			, EBAY_COLLECTED_TAX
+			, ELECTRONIC_WASTE_RECYCLING_FEE
+			, MATTRESS_RECYCLING_FEE
+			, ADDITIONAL_FEE
+			, TOTAL_PRICE
+			, EBAY_COLLECTED_TAX_AND_FEES_INCLUDED_IN_TOTAL
+			, PAYMENT_METHOD
+			, SALE_DATE
+			, PAID_ON_DATE
+			, SHIP_BY_DATE
+			, MINIMUM_ESTIMATED_DELIVERY_DATE
+			, MAXIMUM_ESTIMATED_DELIVERY_DATE
+			, SHIPPED_ON_DATE
+			, FEEDBACK_LEFT
+			, FEEDBACK_RECEIVED
+			, MY_ITEM_NOTE
+			, PAYPAL_TRANSACTION_ID
+			, SHIPPING_SERVICE
+			, TRACKING_NUMBER
+			, TRANSACTION_ID
+			, VARIATION_DETAILS
+			, GLOBAL_SHIPPING_PROGRAM
+			, GLOBAL_SHIPPING_REFERENCE_ID
+			, CLICK_AND_COLLECT
+			, CLICK_AND_COLLECT_REFERENCE_NUMBER
+			, EBAY_PLUS
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+		) VALUES (
+			#{orderEbaySeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{fileYmd}
+			, #{fileSeq}
+			, #{salesRecordNumber}
+			, #{orderNumber}
+			, #{buyerUsername}
+			, #{buyerName}
+			, #{buyerEmail}
+			, #{buyerNote}
+			, #{buyerAddress1}
+			, #{buyerAddress2}
+			, #{buyerCity}
+			, #{buyerState}
+			, #{buyerZip}
+			, #{buyerCountry}
+			, #{shipToName}
+			, #{shipToPhone}
+			, #{shipToAddress1}
+			, #{shipToAddress2}
+			, #{shipToCity}
+			, #{shipToState}
+			, #{shipToZip}
+			, #{shipToCountry}
+			, #{itemNumber}
+			, #{itemTitle}
+			, #{customLabel}
+			, #{soldViaPromotedListings}
+			, #{quantity}
+			, #{soldFor}
+			, #{shippingAndHandling}
+			, #{sellerCollectedTax}
+			, #{eBayCollectedTax}
+			, #{electronicWasteRecyclingFee}
+			, #{mattressRecyclingFee}
+			, #{additionalFee}
+			, #{totalPrice}
+			, #{eBayCollectedTaxAndFeesIncludedInTotal}
+			, #{paymentMethod}
+			, #{saleDate}
+			, #{paidOnDate}
+			, #{shipByDate}
+			, #{minimumEstimatedDeliveryDate}
+			, #{maximumEstimatedDeliveryDate}
+			, #{shippedOnDate}
+			, #{feedbackLeft}
+			, #{feedbackReceived}
+			, #{myItemNote}
+			, #{payPalTransactionId}
+			, #{shippingService}
+			, #{trackingNumber}
+			, #{transactionId}
+			, #{variationDetails}
+			, #{globalShippingProgram}
+			, #{globalShippingReferenceId}
+			, #{clickAndCollect}
+			, #{clickAndCollectReferenceNumber}
+			, #{eBayPlus}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+		)
+	</insert>
+	
+	<!--  -->
+	<insert id="insertTorder" parameterType="xrt.fulfillment.interfaces.vo.TOrderVo">
+		/* EbayUploadMapper.insertTorder */
+		<selectKey resultType="java.util.HashMap" keyProperty="xrtInvcSno,ordCd" order="BEFORE">
+			SELECT
+				'XLF' + RIGHT('0000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_XLF_INVC_SNOKEY), 10) AS xrtInvcSno
+				, 'W' + RIGHT('0000000000000' + CONVERT(NVARCHAR, NEXT VALUE FOR SEQ_ORDCD_KEY), 13) AS ordCd
+		</selectKey>
+		INSERT INTO TORDER (
+			ORD_CD
+			, COMPCD
+			, ORGCD
+			, WHCD
+			, UPLOAD_DATE
+			, FILE_SEQ
+			, FILE_NM
+			, FILE_NM_REAL
+			, SITE_CD
+			, STATUS_CD
+			, STOCK_TYPE
+			, MALL_NM
+			, SHIP_METHOD_CD
+			, ORD_NO
+			, CART_NO
+			, ORD_CNT
+			, XRT_INVC_SNO
+			, INVC_SNO1
+			, INVC_SNO2
+			, S_NATION
+			, E_NATION
+			, WGT
+			, BOX_WIDTH
+			, BOX_LENGTH
+			, BOX_HEIGHT
+			, BOX_VOLUME
+			, C_WGT_CHARGE
+			, C_WGT_REAL
+			, C_BOX_WIDTH
+			, C_BOX_LENGTH
+			, C_BOX_HEIGHT
+			, C_WGT_VOLUME
+			, SHIP_NAME
+			, SHIP_TEL
+			, SHIP_MOBILE
+			, SHIP_ADDR
+			, SHIP_POST
+			, RECV_NAME
+			, RECV_TEL
+			, RECV_MOBILE
+			, RECV_ADDR1
+			, RECV_ADDR2
+			, RECV_CITY
+			, RECV_STATE
+			, RECV_POST
+			, RECV_NATION
+			, RECV_CURRENCY
+			, TOT_PAYMENT_PRICE
+			, INVC_PRINT_CNT
+			, INVC_PRINT_DATE
+			, STOCK_USERCD
+			, STOCK_DATE
+			, ADDUSERCD
+			, UPDUSERCD
+			, TERMINALCD
+			, RELAY_SEQ
+			, FILE_RELAY_SEQ
+			, PAYMENT_TYPE
+		) VALUES (
+			#{ordCd}
+			, #{compcd}
+			, #{orgcd}
+			, #{whcd}
+			, #{uploadDate}
+			, #{fileSeq}
+			, #{fileNm}
+			, #{fileNmReal}
+			, #{siteCd}
+			, #{statusCd}
+			, #{stockType}
+			, #{mallNm}
+			, #{shipMethodCd}
+			, #{ordNo}
+			, #{cartNo}
+			, #{ordCnt}
+			, #{xrtInvcSno}
+			, #{invcSno1}
+			, #{invcSno2}
+			, #{sNation}
+			, #{eNation}
+			, #{wgt}
+			, #{boxWidth}
+			, #{boxLength}
+			, #{boxHeight}
+			, #{boxVolume}
+			, #{cWgtCharge}
+			, #{cWgtReal}
+			, #{cBoxWidth}
+			, #{cBoxLength}
+			, #{cBoxHeight}
+			, #{cWgtVolume}
+			, #{shipName}
+			, #{shipTel}
+			, #{shipMobile}
+			, #{shipAddr}
+			, #{shipPost}
+			, #{recvName}
+			, #{recvTel}
+			, #{recvMobile}
+			, #{recvAddr1}
+			, #{recvAddr2}
+			, #{recvCity}
+			, #{recvState}
+			, #{recvPost}
+			, #{recvNation}
+			, #{recvCurrency}
+			, #{totPaymentPrice}
+			, #{invcPrintCnt}
+			, #{invcPrintDate}
+			, #{stockUsercd}
+			, #{stockDate}
+			, #{addusercd}
+			, #{updusercd}
+			, #{terminalcd}
+			, #{relaySeq}
+			, #{fileRelaySeq}
+			, #{paymentType}
+		)
+	</insert>
+	
+	<!--  -->
+	<insert id="insertTOrderDtl" parameterType="xrt.fulfillment.interfaces.vo.TOrderDtlVo">
+		/* EbayUploadMapper.insertTOrderDtl */
+		INSERT INTO TORDERDTL (
+			ORD_CD
+			, ORD_SEQ
+			, COMPCD
+			, ORGCD
+			, GOODS_CD
+			, GOODS_NM
+			, GOODS_OPTION
+			, GOODS_CNT
+			, PAYMENT_PRICE
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+			, ORD_NO
+		) VALUES (
+			#{ordCd}
+			, #{ordSeq}
+			, #{compcd}
+			, #{orgcd}
+			, #{goodsCd}
+			, #{goodsNm}
+			, #{goodsOption}
+			, #{goodsCnt}
+			, #{paymentPrice}
+			, #{addusercd}
+			, getdate()
+			, #{updusercd}
+			, getdate()
+			, #{terminalcd}
+			, #{ordNo}
+		)
+	</insert>
+	
+	<!--  -->
+	<update id="updateOrderEbay" parameterType="xrt.fulfillment.order.manual.ebay.EbayVo">
+		/* EbayUploadMapper.updateOrderEbay */
+		UPDATE ORDER_EBAY
+		SET
+			REG_YN = 'Y'
+			, UPDDATETIME = getdate()
+		WHERE 1 = 1
+		AND ORDER_EBAY_SEQ = #{orderEbaySeq}
+		AND COMPCD = #{compcd}
+		AND ORGCD = #{orgcd}
+	</update>
+	
+	<update id="updateTorder" parameterType="java.util.HashMap">
+		/* EbayUploadMapper.updateTorder */
+		UPDATE TORDER
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="invcSno2 != null and invcSno2 != ''">INVC_SNO2 = #{invcSno2},</if>
+			<if test="localShipper != null and localShipper != ''">LOCAL_SHIPPER = #{localShipper},</if>
+			<if test="statusCd != null and statusCd != ''">STATUS_CD = #{statusCd}</if>
+			<if test="shippingCompany != null and shippingCompany != ''">SHIPPING_COMPANY = #{shippingCompany}</if>
+		</trim>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+	</update>
+</mapper>

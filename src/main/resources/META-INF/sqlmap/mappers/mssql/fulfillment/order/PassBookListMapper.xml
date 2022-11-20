@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 박스 관리 -->
+<mapper namespace="passBookListMapper">
+
+    <select id="getSearch" parameterType="commonSearchVo" resultType="xrt.fulfillment.order.payment.PassBookMasterVO">
+        /* passBookListMapper.getSearch */
+        SELECT
+            PASS_BOOK_MASTER_SEQ    AS passBookMasterSeq,
+            COMPCD          AS compcd,
+            ORGCD           AS orgcd,
+            USERCD          AS usercd,
+            (SELECT SNAME FROM P002 B WHERE B.ORGCD = A.ORGCD ) AS userName,
+            ORD_NO          AS ordNo,
+            PRODUCT_NM      AS productNm,
+            CANCEL_TR_NO    AS cancelTrNo,
+            REQ_DAY         AS reqDay,
+            REQ_TIME        AS reqTime,
+            CANCEL_REQ_DAY  AS cancelReqDay,
+            PRICE           AS price,
+            CUST_PARAM1     AS custParam1,
+            ADDUSERCD       AS addusercd,
+            ADDDATETIME     AS adddatetime,
+            UPDUSERCD       AS updusercd,
+            UPDDATETIME     AS upddatetime,
+            TERMINALCD      AS terminalcd
+        FROM PASS_BOOK_MASTER A
+        WHERE 1 = 1
+        <if test='sCompCd != null and sCompCd != ""'>
+            AND COMPCD = #{sCompCd}
+        </if>
+        <if test='sOrgCd != null and sOrgCd != ""'>
+            AND ORGCD = #{sOrgCd}
+        </if>
+        <if test='sKeyword != null and sKeyword != ""'>
+            AND CUST_PARAM1 = #{sKeyword}
+        </if>
+        AND REQ_DAY BETWEEN #{sToDate} AND #{sFromDate}
+    </select>
+
+    <select id="getRegularSearch" parameterType="LDataMap" resultType="LDataMap">
+        /* passBookListMapper.getRegularSearch */
+        SELECT
+            A.COMPCD        AS "compcd",
+            A.ORGCD         AS "orgcd",
+            A.USERCD        AS "usercd",
+            A.ORD_NO        AS "ordNo",
+            B.BANK_ACCT_NO  AS "bankAcctNo",
+            CONVERT(CHAR(19), B.ADDDATETIME, 120) AS "adddatetime"
+        FROM PASS_BOOK_AUTH A
+        LEFT JOIN PASS_BOOK_REGULAR B
+        ON A.ORGCD = B.ORGCD
+        WHERE 1 = 1
+        AND A.COMPLETE_YN = 'Y'
+        <if test='compcd != null and compcd != ""'>
+            AND A.COMPCD = #{compcd}
+        </if>
+        <if test='orgcd != null and orgcd != ""'>
+            AND A.ORGCD = #{orgcd}
+        </if>
+        <if test='usercd != null and usercd != ""'>
+            AND A.USERCD LIKE '%' + #{usercd} + '%'
+        </if>
+    </select>
+    
+    <select id="getOrgcd" parameterType="LDataMap" resultType="java.lang.String">
+        /* passBookListMapper.getOrgcd */
+        SELECT 
+            ORGCD
+        FROM TORDER
+        WHERE XRT_INVC_SNO = #{xrtInvcSno}
+    </select>
+
+</mapper>

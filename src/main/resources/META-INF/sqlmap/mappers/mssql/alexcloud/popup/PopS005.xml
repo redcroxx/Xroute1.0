@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PopS005Mapper">
+	<!--프로그램코드 팝업 : 검색  -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/*alexcloud.popup.PopS005Mapper.getSearch*/																					
+		SELECT A.APPKEY			/*프로그램코드*/																		
+		     , A.APPNM			/*프로그램명*/																		
+			 , A.APPURL			/*APPURL*/																
+			 , A.REMARK			/*비고*/														
+			 , A.ADDUSERCD		/*등록자*/																
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME		/*등록일시*/																	
+			 , A.UPDUSERCD		/*수정자*/																	
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME		/*수정일시*/															
+			 , A.TERMINALCD		/*IP*/																
+		FROM S005 A WITH (NOLOCK)
+		WHERE A.USEYN = 'Y'
+	<if test="S_APPITEM != null and S_APPITEM !=''">
+		 AND ( A.APPKEY LIKE '%' + dbo.UFX_TRIM(#{S_APPITEM}) + '%'  
+			OR A.APPNM LIKE '%' + dbo.UFX_TRIM(#{S_APPITEM}) + '%')
+	</if>
+	 ORDER BY A.APPKEY 
+	</select>
+	
+	<!--프로그램코드 팝업 : 코드 유효성 검사  -->
+	<select id="getCheck" parameterType="LDataMap" resultType="LDataMap">
+		/*alexcloud.popup.PopS005Mapper.getCheck*/																					
+		SELECT A.APPKEY			/*프로그램코드*/																		
+		     , A.APPNM			/*프로그램명*/																		
+			 , A.APPURL			/*APPURL*/																
+			 , A.REMARK			/*비고*/														
+			 , A.ADDUSERCD		/*등록자*/																
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME		/*등록일시*/																	
+			 , A.UPDUSERCD		/*수정자*/																	
+			 , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME		/*수정일시*/															
+			 , A.TERMINALCD		/*IP*/																
+		FROM S005 A WITH (NOLOCK)
+	   WHERE A.APPKEY = #{S_APPITEM} AND A.USEYN = 'Y'
+	</select>
+</mapper>

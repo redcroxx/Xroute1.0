@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="P100302Mapper">
+	<!-- 입고등록 : 마스터 그리드 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100302.getSearch */
+		SELECT A.WIKEY,
+		       A.EAKEY,
+		       A.WITYPE,
+		       A.WISTS,
+		       A.WISCHDT,
+		       A.WIDT,
+		       A.COMPCD,
+		       (SELECT NAME FROM P001 WHERE COMPCD = A.COMPCD) COMPNM,
+		       A.WHCD,
+		       (SELECT NAME FROM P004 WHERE COMPCD = A.COMPCD AND WHCD = A.WHCD) WHNM,
+		       A.CUSTCD,
+		       D.NAME AS CUSTNM,
+		       D.POST AS CUSTPOST,
+		       D.ADDR1 AS CUSTADDR,
+		       D.REFUSERNM AS CUSTUSERNM,
+		       D.REFUSERPHONE AS CUSTTEL,
+		       A.ORGCD,
+		       (SELECT NAME FROM P002 WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD) ORGNM,
+		       A.DEPTCD /*부서코드*/,
+		       (SELECT NAME
+		          FROM P016
+		         WHERE COMPCD = A.COMPCD
+		           AND DEPTCD = A.DEPTCD) DEPTNM /* 부서명 */,
+		       A.USERCD /* 담당자코드 */,
+		       (SELECT NAME FROM S010 WHERE COMPCD = A.COMPCD AND ORGCD = A.ORGCD AND USERCD = A.USERCD) USERNM /* 담당자명 */,
+		       A.VATFLG /* 과세구분 */,
+		       A.CARNO /*입고차량번호*/,
+		       A.DRIVER /*입고차량운전자*/,
+		       A.DRIVERTEL /*입고차량운전자 연락처*/,
+		       A.POKEY /*발주번호*/,
+		       A.WDKEY /*입고지시번호*/,
+		       A.REMARK /*비고 */,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD /*IP*/,
+		       (SELECT COUNT(DISTINCT ITEMCD)
+		          FROM P131
+		         WHERE WIKEY = A.WIKEY) ITEMCNT /* 품목수 */,
+		       (SELECT CASE
+		                 WHEN A.WISTS <![CDATA[ <> ]]> '400' THEN
+		                  SUM(WISCHQTY)
+		                 ELSE
+		                  SUM(WIQTY)
+		               END
+		          FROM P131
+		         WHERE WIKEY = A.WIKEY) TOTQTY /* 상태에 따른 총수량 */,
+		       (SELECT SUM(SUPPLYAMT)
+		          FROM P131
+		         WHERE WIKEY = A.WIKEY) TOTSUPPLYAMT /* 총공급가액 */
+		  FROM P130 A WITH (NOLOCK)
+		  JOIN P003 D
+		    ON A.COMPCD = D.COMPCD
+		   AND A.CUSTCD = D.CUSTCD
+		 WHERE A.COMPCD = #{S_COMPCD}
+		<if test="S_ORGCD != null and S_ORGCD != ''">
+		   AND A.ORGCD = #{S_ORGCD}
+		</if>
+		<if test="S_WISCHDT_FROM != null and S_WISCHDT_FROM != ''">
+		   AND A.WISCHDT >= REPLACE(#{S_WISCHDT_FROM},'-','')
+		</if>
+		<if test="S_WISCHDT_TO != null and S_WISCHDT_TO != ''">
+		   AND A.WISCHDT <![CDATA[ <= ]]> REPLACE(#{S_WISCHDT_TO},'-','')
+		</if>   
+		<if test="S_WIDT_FROM != null and S_WIDT_FROM != ''">
+		   AND A.WIDT >= REPLACE(#{S_WIDT_FROM},'-','')
+		</if>
+		<if test="S_WIDT_TO != null and S_WIDT_TO != ''">
+		   AND A.WIDT <![CDATA[ <= ]]> REPLACE(#{S_WIDT_TO},'-','')
+		</if>
+		<if test="S_DEPTCD != null and S_DEPTCD != ''">
+		   AND A.DEPTCD = #{S_DEPTCD}
+		</if>
+		<if test="S_CUSTCD != null and S_CUSTCD != ''">
+		   AND A.CUSTCD = #{S_CUSTCD}
+		</if>
+		<if test="S_USERCD != null and S_USERCD != ''">
+		   AND A.USERCD = #{S_USERCD}
+		</if>		   
+		<if test="S_WISTS != null and S_WISTS != ''">
+			<if test="S_WISTS == 'NOT99' ">
+			   AND A.WISTS <![CDATA[ <> ]]> '99'
+			</if>
+			<if test="S_WISTS != 'NOT99' ">
+			   AND A.WISTS = #{S_WISTS}
+			</if>   
+		</if>
+		<if test="S_WISTS2 != null and S_WISTS2 != ''">
+			<if test="S_WISTS2 == 'NOT99' ">
+			   AND A.WISTS NOT IN('99', '200', '300')
+			</if>
+			<if test="S_WISTS2 == 'ALL' ">
+			   AND A.WISTS NOT IN('200', '300')
+			</if>
+			<if test="S_WISTS2 != 'ALL' and S_WISTS2 != 'NOT99' ">
+			   AND A.WISTS = #{S_WISTS2}
+			</if>     
+		</if>
+		<if test="S_WHCD != null and S_WHCD != ''">
+		   AND A.WHCD = #{S_WHCD}
+		</if>
+		   AND EXISTS (SELECT 1
+		                 FROM P131 B
+		                 JOIN P006 C
+		                   ON C.COMPCD = B.COMPCD
+		                  AND C.ITEMCD = B.ITEMCD                   
+		                WHERE B.WIKEY = A.WIKEY
+		<if test="S_ITEM != null and S_ITEM != ''">
+		                  AND (C.ITEMCD LIKE '%' + UPPER(#{S_ITEM}) + '%' 
+		                   OR C.NAME LIKE  '%' + UPPER(#{S_ITEM}) + '%')
+		</if>
+		<if test="S_F_USER01 != null and S_F_USER01 != ''">
+		                  AND C.F_USER01 = #{S_F_USER01}
+		</if>
+		<if test="S_F_USER02 != null and S_F_USER02 != ''">
+		                  AND C.F_USER02 = #{S_F_USER02}
+		</if>
+		<if test="S_F_USER03 != null and S_F_USER03 != ''">
+		                  AND C.F_USER03 = #{S_F_USER03}
+		</if>
+		<if test="S_F_USER04 != null and S_F_USER04 != ''">
+		                  AND C.F_USER04 = #{S_F_USER04}
+		</if>
+		<if test="S_F_USER05 != null and S_F_USER05 != ''">
+		                  AND C.F_USER05 = #{S_F_USER05}
+		</if>
+		<if test="S_F_USER11 != null and S_F_USER11 != ''">
+		                  AND C.F_USER11 = #{S_F_USER11}
+		</if>
+		<if test="S_F_USER12 != null and S_F_USER12 != ''">
+		                  AND C.F_USER12 = #{S_F_USER12}
+		</if>
+		<if test="S_F_USER13 != null and S_F_USER13 != ''">
+		                  AND C.F_USER13 = #{S_F_USER13}
+		</if>
+		<if test="S_F_USER14 != null and S_F_USER14 != ''">
+		                  AND C.F_USER14 = #{S_F_USER14}
+		</if>
+		<if test="S_F_USER15 != null and S_F_USER15 != ''">
+		                  AND C.F_USER15 = #{S_F_USER15}
+		</if>
+		                   )
+		<if test="S_SEARCH != null and S_SEARCH != ''">
+		    <if test="S_SERACHCOMBO == 'WIKEY' ">
+		   		AND A.WIKEY LIKE '%' + UPPER(#{S_SEARCH}) + '%'
+			</if>
+			<if test="S_SERACHCOMBO == 'POKEY' ">
+		   		AND EXISTS (SELECT 1
+		                 	  FROM P131 B
+		                 	 WHERE B.WIKEY = A.WIKEY
+		                 	   AND B.POKEY LIKE '%' + UPPER(#{S_SEARCH}) + '%')
+			</if>
+		</if>
+		 ORDER BY A.WIKEY DESC
+	</select>
+	
+	<!-- 입고등록 : 디테일 그리드 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p100.p100302.getDetailList */
+		/* 입고 등록 DETAIL SELECT */
+		SELECT A.WIKEY /*입고번호*/,
+		       A.SEQ /*순번*/,
+		       A.ITEMCD /*품목코드*/,
+		       B.NAME AS ITEMNM /* 품목명 */,
+		       A.ORIGINQTY /*최초입고예정수량*/, 
+		       A.WISCHQTY /*입고예정수량*/,
+		       A.WIQTY /*입고수량*/,
+		       A.EXCHCD /*화폐단위*/,
+		       A.EXCHRATE /*환율*/,
+		       A.UNITPRICE /*화폐단위단가*/,
+		       A.EXCHAMT /*입고금액(화폐단위)*/,
+		       A.SUPPLYAMT /*입고금액(원화환산)*/,
+		       A.LOT1 /*로트속성1*/,
+		       A.LOT2 /*로트속성2*/,
+		       A.LOT3 /*로트속성3*/,
+		       A.LOT4 /*로트속성4*/,
+		       A.LOT5 /*로트속성5*/,
+		       A.COMPCD /*회사코드*/,
+		       A.WHCD /*창고코드*/,
+		       A.POKEY /*발주번호*/,
+		       A.POSEQ /*발주순번*/,
+		       A.PREDISTAMT /*배부전금액*/,
+		       A.DISTAMT /*배부비용금액*/,
+		       A.REMARK /*비고 */,
+		       A.ADDUSERCD /*등록자ID*/,
+		       CONVERT(VARCHAR(50), A.ADDDATETIME, 20) ADDDATETIME /*등록일시*/,
+		       A.UPDUSERCD /*수정자ID*/,
+		       CONVERT(VARCHAR(50), A.UPDDATETIME, 20) UPDDATETIME /*수정일시*/,
+		       A.TERMINALCD, /*IP*/
+		       B.F_USER01,
+		       B.F_USER02,
+		       B.F_USER03,
+		       B.F_USER04,
+		       B.F_USER05,
+		       B.F_USER11,
+		       B.F_USER12,
+		       B.F_USER13,
+		       B.F_USER14,
+		       B.F_USER15,
+		       B.ITEMSIZE, /* 규격 */
+		       B.UNITCD /* 단위 */,
+		       C.CUSTCD	
+		  FROM P131 A WITH (NOLOCK)
+		  JOIN P006 B WITH (NOLOCK)
+		    ON A.COMPCD = B.COMPCD
+		   AND A.ITEMCD = B.ITEMCD
+		  JOIN P130 C WITH (NOLOCK) 
+		    ON A.WIKEY = C.WIKEY
+		 WHERE A.WIKEY = #{WIKEY}
+	</select>
+	
+	<!-- 입고등록 : 입고번호 가져오기 -->
+	<select id="getWIKEY" parameterType="LDataMap" statementType="CALLABLE" resultType="LDataMap">
+		/* alexcloud.p100.p100302.getWIKEY */
+		DECLARE @DATE NVARCHAR(10);
+		SET @DATE = CONVERT(NVARCHAR(10), GETDATE(), 112);	
+	    EXEC USX_GETSEQ N'WAREHOUSE_IN', @DATE, NULL, NULL, NULL, NULL, #{LOGIN_USERCD}, #{LOGIN_IP}, #{WIKEY, mode=OUT, jdbcType=VARCHAR}
+    </select>
+
+	<!-- 입고등록 : 마스터 신규 저장 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p100.p100302.insertMst */
+		INSERT INTO P130
+		  (WIKEY,
+		   WITYPE,
+		   WISTS,
+		   WISCHDT,
+		   COMPCD,
+		   WHCD,
+		   CUSTCD,
+		   ORGCD,
+		   DEPTCD,
+		   USERCD,
+		   VATFLG,
+		   CARNO,
+		   DRIVER,
+		   DRIVERTEL,
+		   POKEY,
+		   REMARK,
+		   ADDUSERCD,
+		   UPDUSERCD,
+		   TERMINALCD)
+		VALUES
+		  (#{WIKEY},
+		   #{WITYPE},
+		   '100', /* 최초 입고 마스터 생성 예정상태(100) */
+		   REPLACE(#{WISCHDT},'-',''),
+		   #{COMPCD},
+		   #{WHCD},
+		   #{CUSTCD},
+		   #{ORGCD},
+		   #{DEPTCD},
+		   #{USERCD},
+		   #{VATFLG},
+		   #{CARNO},
+		   #{DRIVER},
+		   #{DRIVERTEL},
+		   NULLIF(#{POKEY},''), 
+		   #{REMARK},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_IP})
+	</insert>
+	
+	<!-- 입고등록 : 디테일 신규 저장 -->
+	<insert id="insertDet" parameterType="LDataMap">
+		/* alexcloud.p100.p100302.insertDet */
+		INSERT INTO P131
+		  (WIKEY,
+		   SEQ,
+		   ITEMCD,
+		   ORIGINQTY,
+		   WISCHQTY,
+		   EXCHCD,
+		   EXCHRATE,
+		   UNITPRICE,
+		   EXCHAMT,
+		   SUPPLYAMT,
+		   LOT1,
+		   LOT2,
+		   LOT3,
+		   LOT4,
+		   LOT5,
+		   COMPCD,
+		   WHCD,
+		   POKEY,
+		   POSEQ,
+		   PREDISTAMT,
+		   DISTAMT, 
+		   REMARK,
+		   ADDUSERCD,
+		   UPDUSERCD,
+		   TERMINALCD)
+		VALUES
+		  (#{WIKEY},
+		   (SELECT ISNULL(MAX(SEQ), 0) + 1 FROM P131 WHERE WIKEY = #{WIKEY}),
+		   #{ITEMCD},
+		   #{WISCHQTY},
+		   #{WISCHQTY},
+		   'KRW',
+		   1,
+		   1 * #{UNITPRICE},
+		   1 * #{UNITPRICE} * #{WISCHQTY},
+		   #{SUPPLYAMT}, 
+		   #{LOT1},
+		   #{LOT2},
+		   #{LOT3},
+		   #{LOT4},
+		   #{LOT5},
+		   #{COMPCD},
+		   #{WHCD},
+		   NULLIF(#{POKEY},''), 
+		   NULLIF(#{POSEQ},''), 
+		   #{PREDISTAMT}, /* 배부전 금액 추후 개발 */
+		   #{DISTAMT}, 
+		   #{REMARK},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_USERCD},
+		   #{LOGIN_IP})
+	</insert>
+	
+	<!-- 입고등록 : 디테일 수정 -->
+	<update id="updateDet" parameterType="LDataMap">
+		/* alexcloud.p100.p100302.updateDet */
+		UPDATE P131 WITH (ROWLOCK)
+		   SET ITEMCD     = #{ITEMCD},
+		       WISCHQTY   = #{WISCHQTY},
+		       EXCHRATE   = 1 * #{UNITPRICE},
+		       UNITPRICE  = #{UNITPRICE},
+		       EXCHAMT    = 1 * #{UNITPRICE} * #{WISCHQTY},
+		       SUPPLYAMT  = ISNULL(#{SUPPLYAMT}, 0.0),
+		       LOT1       = #{LOT1},
+		       LOT2       = #{LOT2},
+		       LOT3       = #{LOT3},
+		       LOT4       = #{LOT4},
+		       LOT5       = #{LOT5},
+		       WHCD       = #{WHCD},
+		       REMARK     = #{REMARK},
+		       UPDUSERCD  = #{LOGIN_USERCD},
+		       TERMINALCD = #{LOGIN_IP}
+		 WHERE WIKEY = #{WIKEY}
+		   AND SEQ = #{SEQ}
+	</update>
+	
+	<!-- 입고등록 : 저장전 STS 체크 -->
+	<select id="getWISTS" parameterType="LDataMap" resultType="String">
+	/* alexcloud.p100.p100302.getWISTS */
+		SELECT WISTS FROM P130 WHERE WIKEY = #{WIKEY}
+	</select>
+	
+	<!-- 입고등록 : 마스터 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p100.p100302.updateMst */
+		UPDATE P130 WITH (ROWLOCK)
+		   SET WITYPE      = #{WITYPE},
+		       WISCHDT     = REPLACE(#{WISCHDT},'-',''),
+		       WHCD        = #{WHCD},
+		       CUSTCD      = #{CUSTCD},
+		       DEPTCD      = #{DEPTCD},
+		       USERCD      = #{USERCD},
+		       VATFLG	   = #{VATFLG},
+		       CARNO       = #{CARNO},
+		       DRIVER      = #{DRIVER},
+		       DRIVERTEL   = #{DRIVERTEL},
+		       POKEY       = #{POKEY},
+		       REMARK      = #{REMARK},
+		       UPDUSERCD   = #{LOGIN_USERCD},
+		       UPDDATETIME = GETDATE(),
+		       TERMINALCD  = #{LOGIN_USERCD}
+		 WHERE WIKEY = #{WIKEY}
+		   AND WISTS = '100'
+	</update>
+
+	<!-- 입고등록 : 디테일  삭제 -->
+	<delete id="deleteDet" parameterType="LDataMap">
+		/* alexcloud.p100.p100302.deleteDet */
+		DELETE FROM P131 WITH (ROWLOCK) WHERE WIKEY = #{WIKEY} AND SEQ = #{SEQ}
+	</delete>
+	
+	<!-- 입고등록 : 마스터 삭제(상태값 취소로 변경) -->
+	<update id="updateMstSts" parameterType="LDataMap">
+	/* alexcloud.p100.p100302.updateMstSts */
+		UPDATE P130 WITH (ROWLOCK)
+		   SET WISTS = '99',
+		   	   POKEY = NULL,
+		   	   UPDUSERCD   = #{LOGIN_USERCD},
+		       UPDDATETIME = GETDATE(),
+		       TERMINALCD  = #{LOGIN_USERCD}
+		 WHERE WIKEY = #{WIKEY}
+		   AND WISTS = '100'
+	</update>
+	
+	<!-- 저장시 체크 프로시저 -->
+	<select id="setCheckWISave" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_CheckSave(#{TYPE, jdbcType = VARCHAR, mode = IN}
+		                  , #{KEY, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+</mapper>

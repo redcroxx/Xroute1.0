@@ -1,0 +1,1384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PopE000Mapper">
+
+	<!-- 업로드 초기화 -->
+	<select id="getInit" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.getInit */
+		SELECT PGM AS PGMID
+		     , PGMNM
+		     , COL_NM
+		     , VAL
+		     , (SELECT ISCHECK FROM E002 A WITH (NOLOCK) WHERE PGM = A.PGMID AND A.COL_ID = COL_NM) AS ISREQ
+		     , (SELECT MAXLEN FROM E002 A WITH (NOLOCK) WHERE PGM = A.PGMID AND A.COL_ID = COL_NM) AS MAXLEN
+		  FROM (SELECT PGMID AS PGM, PGMNM
+	  			    , COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+					, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+					, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+					, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+					, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+					, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+					, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+					, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+					, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+					, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+					, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+					, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+					, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+					, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+					, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+					, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+					, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+					, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+					, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+					, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+		          FROM E001 WITH (NOLOCK)
+				 WHERE PGMID = #{S_PGMID}) AS T UNPIVOT(VAL FOR COL_NM IN(
+				      COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+					, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+					, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+					, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+					, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+					, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+					, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+					, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+					, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+					, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+					, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+					, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+					, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+					, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+					, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+					, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+					, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+					, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+					, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+					, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ)) AS UNPVT 
+		ORDER BY COL_NM
+	</select>
+	
+	<select id="getMstData" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.getMstData */
+		SELECT URL, PGMNM, REMARK, USEORGCD, USEWHCD
+		  FROM E001 WITH (NOLOCK)
+		 WHERE PGMID = #{S_PGMID}
+	</select>
+
+	<!-- 삭제  -->
+	<update id="delete" parameterType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.delete */
+		DELETE FROM E003 WITH (ROWLOCK)
+		 WHERE PGMID = #{PGMID}
+		   AND USERCD = #{LOGIN_USERCD}
+	</update>
+	
+	<!-- 업로드 등록(현재미사용 2018 06 01)  -->
+	<insert id="insert" parameterType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.insert */
+		INSERT INTO E003 WITH (ROWLOCK) (PGMID, USERCD, SEQ, COMPCD, WHCD, ORGCD, DEPTCD
+						, COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+						, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+						, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+						, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+						, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+						, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+						, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+						, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+						, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+						, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+						, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+						, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+						, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+						, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+						, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+						, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+						, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+						, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+						, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+						, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+						, CHKMSG
+						, ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD)
+				   SELECT #{PGMID}, #{LOGIN_USERCD}, #{SEQ}, #{COMPCD}, #{WHCD}, #{ORGCD}, #{DEPTCD}
+						, #{COL_0A}, #{COL_0B}, #{COL_0C}, #{COL_0D}, #{COL_0E}
+						, #{COL_0F}, #{COL_0G}, #{COL_0H}, #{COL_0I}, #{COL_0J}
+						, #{COL_0K}, #{COL_0L}, #{COL_0M}, #{COL_0N}, #{COL_0O}
+						, #{COL_0P}, #{COL_0Q}, #{COL_0R}, #{COL_0S}, #{COL_0T}
+						, #{COL_0U}, #{COL_0V}, #{COL_0W}, #{COL_0X}, #{COL_0Y}, #{COL_0Z}
+						, #{COL_AA}, #{COL_AB}, #{COL_AC}, #{COL_AD}, #{COL_AE}
+						, #{COL_AF}, #{COL_AG}, #{COL_AH}, #{COL_AI}, #{COL_AJ}
+						, #{COL_AK}, #{COL_AL}, #{COL_AM}, #{COL_AN}, #{COL_AO}
+						, #{COL_AP}, #{COL_AQ}, #{COL_AR}, #{COL_AS}, #{COL_AT}
+						, #{COL_AU}, #{COL_AV}, #{COL_AW}, #{COL_AX}, #{COL_AY}, #{COL_AZ}
+						, #{COL_BA}, #{COL_BB}, #{COL_BC}, #{COL_BD}, #{COL_BE}
+						, #{COL_BF}, #{COL_BG}, #{COL_BH}, #{COL_BI}, #{COL_BJ}
+						, #{COL_BK}, #{COL_BL}, #{COL_BM}, #{COL_BN}, #{COL_BO}
+						, #{COL_BP}, #{COL_BQ}, #{COL_BR}, #{COL_BS}, #{COL_BT}
+						, #{COL_BU}, #{COL_BV}, #{COL_BW}, #{COL_BX}, #{COL_BY}, #{COL_BZ}
+						, #{COL_CA}, #{COL_CB}, #{COL_CC}, #{COL_CD}, #{COL_CE}
+						, #{COL_CF}, #{COL_CG}, #{COL_CH}, #{COL_CI}, #{COL_CJ}
+						, #{COL_CK}, #{COL_CL}, #{COL_CM}, #{COL_CN}, #{COL_CO}
+						, #{COL_CP}, #{COL_CQ}, #{COL_CR}, #{COL_CS}, #{COL_CT}
+						, #{COL_CU}, #{COL_CV}, #{COL_CW}, #{COL_CX}, #{COL_CY}, #{COL_CZ}
+						, CASE WHEN ISNULL(K.MSG,'') != '' THEN SUBSTRING(K.MSG, 1, 10000000)
+						       ELSE NULL END
+						, #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+					FROM (
+				            SELECT MSG + ', ' 
+				            FROM (
+				            	SELECT NULL AS MSG
+				            <foreach collection="CHECKLIST" item="CHECK" index="i" open="" close="" separator="">
+					            <if test='CHECK.ISCHECK == "Y"'>
+					            UNION ALL
+								SELECT CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN N'${CHECK.VAL}' + N' 값이 없습니다' ELSE NULL END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CODE"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM S002 WITH (NOLOCK)
+											  WHERE COMPCD = #{COMPCD} 
+											    AND CODEKEY = #{CHECK.CODEKEY} 
+											    AND SNAME1 = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN SNAME1 
+											                      ELSE #{${CHECK.COL_ID}} END) 
+											WHEN 1 THEN NULL 
+											ELSE N'${CHECK.VAL}' + N'의 공통코드값을 확인하시기 바랍니다' END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "COMP"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P001 WITH (NOLOCK)
+											  WHERE COMPCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN COMPCD 
+											                      ELSE #{${CHECK.COL_ID}} END) 
+											 WHEN 1 THEN NULL 
+											 ELSE '존재하지 않는 회사코드입니다' END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ORG"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P002 WITH (NOLOCK)
+											  WHERE COMPCD = #{COMPCD} 
+											    AND ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN ORGCD 
+											                     ELSE #{${CHECK.COL_ID}} END) 
+										 	WHEN 1 THEN NULL
+										 	ELSE '존재하지 않는 셀러코드입니다' END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "WH"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P004 WITH (NOLOCK)
+											  WHERE COMPCD = #{COMPCD} 
+											    AND WHCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN WHCD 
+											                   ELSE #{${CHECK.COL_ID}} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 창고코드입니다' END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUST"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P003 WITH (NOLOCK)
+											  WHERE COMPCD = #{COMPCD} 
+											    AND CUSTCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN CUSTCD 
+											                      ELSE #{${CHECK.COL_ID}} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 거래처코드입니다' END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "USER"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM S010 WITH (NOLOCK)
+											  WHERE COMPCD = #{COMPCD} 
+											    AND USERCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN USERCD 
+											                      ELSE #{${CHECK.COL_ID}} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 사용자ID입니다' END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEM"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P006 WITH (NOLOCK)
+											  WHERE COMPCD = #{COMPCD} 
+												AND ITEMCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN ITEMCD 
+												                  ELSE #{${CHECK.COL_ID}} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 품목코드입니다' END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "DATE"'>
+					            UNION ALL
+								SELECT CASE ISDATE(ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'')) WHEN 0 THEN '${CHECK.VAL}' + ' 값은 날짜 형식입니다.' 
+								       ELSE NULL END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "NUM"'>
+					            UNION ALL
+								SELECT CASE ISNUMERIC(ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'')) WHEN 0 THEN '${CHECK.VAL}' + ' 값은 숫자 형식입니다.' 
+								       ELSE NULL END AS MSG
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT1"'>
+					            UNION ALL
+								SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 대분류입니다' ELSE NULL END AS MSG
+								FROM P018 WITH (NOLOCK)
+								WHERE COMPCD = #{COMPCD} 
+								  AND NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN NAME ELSE #{${CHECK.COL_ID}} END
+								  AND LVL = 1
+								  AND ISUSING = 'Y'
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT2"'>
+					            UNION ALL
+								SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 중분류입니다' ELSE NULL END AS MSG
+								FROM P018 A WITH (NOLOCK)
+								JOIN P018 B WITH (NOLOCK)
+								  ON A.COMPCD = B.COMPCD
+								 AND A.CATEGORYCD = B.PCATEGORYCD
+								WHERE A.COMPCD = #{COMPCD} 
+								  AND A.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.REF1}}),'') = '' THEN A.NAME ELSE #{${CHECK.REF1}} END
+								  AND A.LVL = 1
+								  AND A.ISUSING = 'Y'
+								  AND B.ISUSING = 'Y'
+								  AND B.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN B.NAME ELSE #{${CHECK.COL_ID}} END
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT3"'>
+					            UNION ALL
+								SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 소분류입니다' ELSE NULL END AS MSG
+								FROM P018 A WITH (NOLOCK)
+								JOIN P018 B WITH (NOLOCK)
+								  ON A.COMPCD = B.COMPCD
+								 AND A.CATEGORYCD = B.PCATEGORYCD
+								JOIN P018 C WITH (NOLOCK)
+								  ON B.COMPCD = C.COMPCD
+								 AND B.CATEGORYCD = C.PCATEGORYCD
+								WHERE A.COMPCD = #{COMPCD} 
+								  AND A.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.REF1}}),'') = '' THEN A.NAME ELSE #{${CHECK.REF1}} END
+								  AND B.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.REF2}}),'') = '' THEN B.NAME ELSE #{${CHECK.REF2}} END
+								  AND A.LVL = 1
+								  AND A.ISUSING = 'Y'
+								  AND B.ISUSING = 'Y'
+								  AND C.ISUSING = 'Y'
+								  AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,#{${CHECK.COL_ID}}),'') = '' THEN C.NAME ELSE #{${CHECK.COL_ID}} END
+					            </if>
+				            </foreach>
+							) AS T FOR XML PATH('')
+				        ) K (MSG) 
+	</insert>
+	
+	<!-- 업로드 체크 내역 조회 -->
+	<select id="getCheckList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper."getCheckList" */
+		 SELECT A.PGMID, 
+		        A.COL_ID, 
+		        B.VAL, 
+		        A.ISCHECK, 
+		        CASE WHEN B.VAL = 'LOT1' AND K.LOT1_TYPE = 2 THEN 'DATE'
+				     WHEN B.VAL = 'LOT2' AND K.LOT2_TYPE = 2 THEN 'DATE'
+					 WHEN B.VAL = 'LOT3' AND K.LOT3_TYPE = 2 THEN 'DATE'
+				     ELSE A.CHECKTYPE END AS CHECKTYPE, 
+		        A.CODEKEY,
+		        A.MAXLEN, 
+		        A.REF1, 
+		        A.REF2, 
+		        A.REF3, 
+		        A.REF4, 
+		        A.REF5,
+		        K.LOT1_LABEL,
+				K.LOT2_LABEL,
+				K.LOT3_LABEL,
+				K.LOT4_LABEL,
+				K.LOT5_LABEL,
+				K.F_USER01_LABEL,
+				K.F_USER02_LABEL,
+				K.F_USER03_LABEL,
+				K.F_USER04_LABEL,
+				K.F_USER05_LABEL,
+				K.F_USER11_LABEL,
+				K.F_USER12_LABEL,
+				K.F_USER13_LABEL,
+				K.F_USER14_LABEL,
+				K.F_USER15_LABEL 
+		   FROM E002 A WITH (NOLOCK)
+		   LEFT OUTER JOIN P020 K WITH (NOLOCK)
+		     ON K.COMPCD = #{COMPCD}
+		   JOIN (
+		   SELECT PGMID, PGMNM, COL_NM, VAL
+				  FROM (SELECT PGMID, PGMNM
+				                , COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+								, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+								, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+								, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+								, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+								, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+								, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+								, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+								, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+								, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+								, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+								, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+								, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+								, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+								, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+								, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+								, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+								, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+								, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+								, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+				          FROM E001 WITH (NOLOCK)
+						 WHERE PGMID = #{PGMID}) AS T UNPIVOT(VAL FOR COL_NM IN(
+						          COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+								, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+								, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+								, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+								, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+								, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+								, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+								, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+								, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+								, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+								, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+								, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+								, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+								, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+								, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+								, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+								, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+								, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+								, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+								, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ)) AS UNPVT ) B
+		  ON A.PGMID = B.PGMID
+		  AND A.COL_ID = B.COL_NM
+  </select>
+	
+	<!-- 업로드 체크 결과 조회(현재 미사용 2108 06 01) -->
+	<select id="getUploadList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.getUploadList */
+		SELECT PGMID, USERCD, SEQ, COMPCD, WHCD, ORGCD, DEPTCD
+			, COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+			, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+			, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+			, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+			, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+			, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+			, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+			, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+			, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+			, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+			, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+			, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+			, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+			, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+			, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+			, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+			, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+			, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+			, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+			, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+			, CHKMSG
+			, ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+	     FROM E003 WITH (NOLOCK)
+	    WHERE PGMID = #{PGMID}
+	      AND USERCD = #{LOGIN_USERCD}
+	</select>
+	
+	<!-- 프로그램별 프로시저 -->
+	<select id="upload" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call ${PROCNAME}(#{PGMID, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+	
+	<!-- 임시저장 프로시저 -->
+	<select id="uploadXml" parameterType="LDataMap" statementType="CALLABLE">
+	{
+		call USX_UploadXML(#{XML, jdbcType = VARCHAR, mode = IN}
+		                  , #{PGMID, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_USERCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{COMPCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{WHCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{ORGCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{DEPTCD, jdbcType = VARCHAR, mode = IN}
+		                  , #{LOGIN_IP, jdbcType = VARCHAR, mode = IN}
+		                  , #{MSGID, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  , #{MSG, jdbcType = VARCHAR, mode = OUT, javaType=String}
+		                  )
+	}
+	</select>
+	
+	
+	<!-- 업로드 체크 결과 조회 -->
+	<select id="getXmlUploadList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.getXmlUploadList */
+		SELECT PGMID, USERCD, SEQ, COMPCD, WHCD, ORGCD, DEPTCD
+			, COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+			, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+			, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+			, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+			, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+			, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+			, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+			, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+			, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+			, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+			, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+			, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+			, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+			, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+			, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+			, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+			, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+			, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+			, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+			, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+			, CHKMSG + T.MSG AS CHKMSG
+			, ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+	     FROM E003 WITH (NOLOCK)
+	     LEFT OUTER JOIN (SELECT CASE WHEN ISNULL(K.MSG,'') != '' THEN SUBSTRING(K.MSG, 1, 10000000)
+						              ELSE NULL END AS MSG
+						       , A.PGMID AS PPP
+						       , A.SEQ   AS SSS
+						       , A.USERCD AS UUU
+					FROM 
+					    (
+					    	SELECT PGMID, SEQ, USERCD
+					    	  FROM E003 WITH (NOLOCK)
+					    	 WHERE PGMID = #{PGMID}
+							   AND USERCD = #{LOGIN_USERCD}
+					    ) A
+					    CROSS APPLY
+					    (
+				            SELECT MSG + ', ' 
+				            FROM (
+				            	SELECT NULL AS MSG
+				            <foreach collection="CHECKLIST" item="CHECK" index="i" open="" close="" separator="">
+					            <if test='CHECK.ISCHECK == "Y"'>
+					            UNION ALL
+								SELECT CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN N'${CHECK.VAL}' + N' 값이 없습니다' ELSE NULL END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CODE"'>
+					            UNION ALL
+								SELECT CASE WHEN (SELECT COUNT(1) 
+								                    FROM S002 D WITH (NOLOCK)
+								                   WHERE D.COMPCD = B.COMPCD
+								                     AND D.CODEKEY = #{CHECK.CODEKEY}) = 0
+								                 OR  
+									            (SELECT TOP 1 1
+												   FROM S002 C WITH (NOLOCK)
+												  WHERE C.COMPCD = B.COMPCD 
+												    AND C.CODEKEY = #{CHECK.CODEKEY} 
+												    AND C.SNAME1 = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.SNAME1 
+												                      ELSE B.${CHECK.COL_ID} END) = 1
+											THEN NULL 
+											ELSE
+											<choose>
+												<when test='CHECK.VAL == "LOT1"'>N'${CHECK.LOT1_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT2"'>N'${CHECK.LOT2_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT3"'>N'${CHECK.LOT3_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT4"'>N'${CHECK.LOT4_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT5"'>N'${CHECK.LOT5_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER01"'>N'${CHECK.F_USER01_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER02"'>N'${CHECK.F_USER02_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER03"'>N'${CHECK.F_USER03_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER04"'>N'${CHECK.F_USER04_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER05"'>N'${CHECK.F_USER05_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER11"'>N'${CHECK.F_USER11_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER12"'>N'${CHECK.F_USER12_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER13"'>N'${CHECK.F_USER13_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER14"'>N'${CHECK.F_USER14_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER15"'>N'${CHECK.F_USER15_LABEL}' + </when>
+											    <otherwise>N'${CHECK.VAL}' + </otherwise>
+											</choose>
+											    	N'의 공통코드값을 확인하시기 바랍니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "COMP"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P001 C WITH (NOLOCK)
+											  WHERE C.COMPCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.COMPCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											 WHEN 1 THEN NULL 
+											 ELSE '존재하지 않는 회사코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ORG"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P002 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD 
+											                       ELSE B.${CHECK.COL_ID} END) 
+										 	WHEN 1 THEN NULL
+										 	ELSE '존재하지 않는 셀러코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "WH"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P004 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.WHCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.WHCD 
+											                      ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 창고코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "DELI"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM DELIDEF C WITH (NOLOCK)
+											  WHERE C.DELI_CD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.DELI_CD 
+											                      ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 택배사코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "LOC"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P005 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.WHCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.WHCD ELSE B.WHCD END
+											    AND C.LOCCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.LOCCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 로케이션 코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "WHMV_BEFORE_LOC"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P005 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.WHCD = B.COL_0B
+											    AND C.LOCCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.LOCCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 로케이션(이동전창고) 코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "WHMV_AFTER_LOC"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P005 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.WHCD = B.COL_0E
+											    AND C.LOCCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.LOCCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 로케이션(이동후창고) 코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "WHMV_LOT"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P007 C WITH (NOLOCK)
+											   JOIN P810 D WITH (NOLOCK) 
+											      ON D.COMPCD = C.COMPCD
+											     AND D.ORGCD = C.ORGCD
+											     AND D.LOTKEY = C.LOTKEY
+											     AND D.WHCD = B.COL_0B
+											  WHERE C.COMPCD = B.COMPCD 
+												AND C.ITEMCD = B.COL_0H
+											    AND C.LOTKEY = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.LOTKEY 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '이동 전 로케이션 - 품목 - 로트키를 확인해주세요' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUST"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P003 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD ELSE B.ORGCD END
+											    AND C.CUSTCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.CUSTCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 거래처코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "USER"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM S010 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.USERCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.USERCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 사용자ID입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEM"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P006 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD ELSE B.ORGCD END
+												AND C.ITEMCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ITEMCD 
+												                    ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 품목코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "DATE"'>
+					            UNION ALL
+								SELECT CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') != '' THEN 
+								                 CASE WHEN ISDATE(ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'')) = 0 THEN '${CHECK.VAL}' + ' 값은 날짜 형식입니다'
+											          ELSE 
+											               CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'') != '' AND CONVERT(NVARCHAR,GETDATE() + CONVERT(INT,#{CHECK.REF1}),112) <![CDATA[ > ]]> ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') THEN '${CHECK.VAL}' + ' 값은 오늘+' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'')+ '이상으로 입력해야 합니다'
+											                 	ELSE 
+											                 	  	 CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'') != '' AND CONVERT(NVARCHAR,GETDATE() + CONVERT(INT,#{CHECK.REF2}),112) <![CDATA[ < ]]> ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') THEN '${CHECK.VAL}' + ' 값은 오늘+' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'')+ '이하로 입력해야 합니다'
+											                 	  	      ELSE 
+											                 	  	      <if test="CHECK.REF3 != null and CHECK.REF3 != ''">
+											                 	  	          CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF3}),'') != '' AND CONVERT(NVARCHAR,B.${CHECK.COL_ID}) <![CDATA[ > ]]> CONVERT(NVARCHAR,B.${CHECK.REF3}) THEN '${CHECK.VAL}' + ' 값은 '+'${CHECK.REF4}'+'보다 클수 없습니다'
+											                 	  	               ELSE NULL END
+											                 	  	      </if>
+											                 	  	      <if test="CHECK.REF3 == null or CHECK.REF3 == ''">
+											                 	  	      	NULL
+											                 	  	      </if>
+											                 	  	      END
+											                 	  END
+											          END
+											ELSE NULL 
+											END AS MSG  
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "NUM"'>
+					            UNION ALL
+								SELECT CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') != '' THEN 
+								                 CASE WHEN ISNUMERIC(ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'')) = 0 THEN '${CHECK.VAL}' + ' 값은 숫자 형식입니다' 
+								                      ELSE 
+								                           CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'') != '' AND CONVERT(DECIMAL,#{CHECK.REF1}) <![CDATA[ > ]]> ISNULL(CONVERT(DECIMAL,REPLACE(B.${CHECK.COL_ID},',','')),0) THEN '${CHECK.VAL}' + ' 값은 ' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'')+ '이상으로 입력해야 합니다'
+											                 	ELSE 
+											                 	  	 CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'') != '' AND CONVERT(DECIMAL,#{CHECK.REF2}) <![CDATA[ < ]]> ISNULL(CONVERT(DECIMAL,REPLACE(B.${CHECK.COL_ID},',','')),0) THEN '${CHECK.VAL}' + ' 값은 ' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'')+ '이하로 입력해야 합니다'
+											                 	  	      ELSE NULL
+											                 	  	      END
+											                 	END
+											          END
+											ELSE NULL
+								            END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT1"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P018 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 1
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 대분류입니다' ELSE NULL END AS MSG
+												    FROM P018 C WITH (NOLOCK)
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.NAME ELSE B.${CHECK.COL_ID} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y')
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 대분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT2"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P018 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 2
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 중분류입니다' ELSE NULL END AS MSG
+												    FROM P018 C WITH (NOLOCK)
+												    JOIN P018 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN D.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 중분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT3"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P018 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 3
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 소분류입니다' ELSE NULL END AS MSG
+												    FROM P018 C WITH (NOLOCK)
+												    JOIN P018 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												    JOIN P018 E WITH (NOLOCK)
+												      ON D.COMPCD = E.COMPCD
+												     AND D.CATEGORYCD = E.PCATEGORYCD
+											  	   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF2}),'') = '' THEN D.NAME ELSE B.${CHECK.REF2} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND E.ISUSING = 'Y'
+												     AND E.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN E.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 소분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEMCAT1"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P017 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 1
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 대분류입니다' ELSE NULL END AS MSG
+												    FROM P017 C WITH (NOLOCK)
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.NAME ELSE B.${CHECK.COL_ID} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y')
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 대분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEMCAT2"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P017 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 2
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 중분류입니다' ELSE NULL END AS MSG
+												    FROM P017 C WITH (NOLOCK)
+												    JOIN P017 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN D.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 중분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEMCAT3"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P017 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 3
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 소분류입니다' ELSE NULL END AS MSG
+												    FROM P017 C WITH (NOLOCK)
+												    JOIN P017 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												    JOIN P017 E WITH (NOLOCK)
+												      ON D.COMPCD = E.COMPCD
+												     AND D.CATEGORYCD = E.PCATEGORYCD
+											  	   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF2}),'') = '' THEN D.NAME ELSE B.${CHECK.REF2} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND E.ISUSING = 'Y'
+												     AND E.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN E.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 소분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "PROD_CD"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM PRODUCT C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD ELSE B.ORGCD END
+												AND C.PROD_CD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.PROD_CD 
+												                    ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 품목코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "RESNDSNO"'>
+					            UNION ALL
+					            SELECT CASE(
+					            		SELECT TOP 1 1
+					            		  FROM ORDERFILERESND C WITH (NOLOCK)
+					            		 WHERE C.COMP_CD   = B.COMPCD
+					            		   AND C.ORG_CD     = B.ORGCD
+					            		   AND C.RESND_STATUS = '00001'
+					            		   AND C.RESND_SNO =  CASE WHEN ISNUMERIC(ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'')) = 0 THEN ''
+					            		                      ELSE B.${CHECK.COL_ID} END)
+					            	    WHEN 1 THEN NULL
+					            	    ELSE '존재하지 않는 반품번호이거나 반품접수 상태가 아닌 건 입니다' END AS MSG
+					              FROM E003 B WITH (NOLOCK)
+					             WHERE A.PGMID  = B.PGMID
+								   AND A.SEQ    = B.SEQ
+								   AND A.USERCD = B.USERCD
+					              
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "EXCHSNO"'>
+					            UNION ALL
+					            SELECT CASE(
+					            		SELECT TOP 1 1 
+									      FROM ORDERFILEDTL C
+									     WHERE C.COMPCD    = B.COMPCD
+					            		   AND C.ORGCD     = B.ORGCD					            		  
+					            		   AND C.C02       =  CASE WHEN ISNULL(CONVERT(NVARCHAR,B.COL_0B),'') = NULL THEN '' ELSE B.COL_0B END
+					            		   AND C.REG_SEQ IN ( 
+													SELECT REG_SEQ
+													  FROM ORDERFILE
+													 WHERE FILE_YMD BETWEEN CONVERT(VARCHAR(10), GETDATE()-5, 112) AND CONVERT(VARCHAR(10), GETDATE(), 112)
+													   AND FILE_NM LIKE '%교환%'					            		   
+						            		   )
+					            		   )
+					            		  WHEN 1 THEN '이미 교환 출고 등록된 건 입니다. 확인 후 재등록 해주시기 바랍니다.'
+					            	    ELSE NULL END AS MSG
+					              FROM E003 B WITH (NOLOCK)
+					             WHERE A.PGMID  = B.PGMID
+								   AND A.SEQ    = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+				            </foreach>
+							) AS T FOR XML PATH('')
+				        ) K (MSG) ) T ON T.PPP = PGMID AND T.SSS = SEQ AND T.UUU = USERCD
+	    WHERE PGMID = #{PGMID}
+	      AND USERCD = #{LOGIN_USERCD}
+	</select>
+	
+	<!-- 업로드(정산관리) 초기화 -->
+	<select id="getAuditInit" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.getAuditInit */
+		SELECT PGM AS PGMID
+		     , PGMNM
+		     , COL_NM
+		     , VAL
+		     , (SELECT CHECKTYPE FROM E002 A WITH (NOLOCK) WHERE PGM = A.PGMID AND A.COL_ID = COL_NM) AS CHECKTYPE
+		     , (SELECT ISCHECK FROM E002 A WITH (NOLOCK) WHERE PGM = A.PGMID AND A.COL_ID = COL_NM) AS ISREQ
+		     , (SELECT MAXLEN FROM E002 A WITH (NOLOCK) WHERE PGM = A.PGMID AND A.COL_ID = COL_NM) AS MAXLEN
+		  FROM (SELECT PGMID AS PGM, PGMNM
+	  			    , COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+					, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+					, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+					, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+					, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+					, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+					, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+					, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+					, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+					, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+					, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+					, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+					, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+					, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+					, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+					, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+					, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+					, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+					, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+					, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+		          FROM E001 WITH (NOLOCK)
+				 WHERE PGMID = #{S_PGMID}) AS T UNPIVOT(VAL FOR COL_NM IN(
+				      COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+					, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+					, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+					, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+					, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+					, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+					, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+					, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+					, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+					, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+					, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+					, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+					, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+					, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+					, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+					, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+					, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+					, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+					, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+					, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ)) AS UNPVT 
+		ORDER BY COL_NM
+	</select>
+	
+	<!-- 업로드(정산관리) 체크 결과 조회 -->
+	<select id="getXmlAuditUploadList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.getXmlUploadList */
+		SELECT PGMID, USERCD, SEQ, COMPCD, WHCD, ORGCD, DEPTCD
+			, COL_0A, COL_0B, COL_0C, COL_0D, COL_0E
+			, COL_0F, COL_0G, COL_0H, COL_0I, COL_0J
+			, COL_0K, COL_0L, COL_0M, COL_0N, COL_0O
+			, COL_0P, COL_0Q, COL_0R, COL_0S, COL_0T
+			, COL_0U, COL_0V, COL_0W, COL_0X, COL_0Y, COL_0Z
+			, COL_AA, COL_AB, COL_AC, COL_AD, COL_AE
+			, COL_AF, COL_AG, COL_AH, COL_AI, COL_AJ
+			, COL_AK, COL_AL, COL_AM, COL_AN, COL_AO
+			, COL_AP, COL_AQ, COL_AR, COL_AS, COL_AT
+			, COL_AU, COL_AV, COL_AW, COL_AX, COL_AY, COL_AZ
+			, COL_BA, COL_BB, COL_BC, COL_BD, COL_BE
+			, COL_BF, COL_BG, COL_BH, COL_BI, COL_BJ
+			, COL_BK, COL_BL, COL_BM, COL_BN, COL_BO
+			, COL_BP, COL_BQ, COL_BR, COL_BS, COL_BT
+			, COL_BU, COL_BV, COL_BW, COL_BX, COL_BY, COL_BZ
+			, COL_CA, COL_CB, COL_CC, COL_CD, COL_CE
+			, COL_CF, COL_CG, COL_CH, COL_CI, COL_CJ
+			, COL_CK, COL_CL, COL_CM, COL_CN, COL_CO
+			, COL_CP, COL_CQ, COL_CR, COL_CS, COL_CT
+			, COL_CU, COL_CV, COL_CW, COL_CX, COL_CY, COL_CZ
+			, CHKMSG + T.MSG AS CHKMSG
+			, ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+	     FROM E003 WITH (NOLOCK)
+	     LEFT OUTER JOIN (SELECT CASE WHEN ISNULL(K.MSG,'') != '' THEN SUBSTRING(K.MSG, 1, 10000000)
+						              ELSE NULL END AS MSG
+						       , A.PGMID AS PPP
+						       , A.SEQ   AS SSS
+						       , A.USERCD AS UUU
+					FROM 
+					    (
+					    	SELECT PGMID, SEQ, USERCD
+					    	  FROM E003 WITH (NOLOCK)
+					    	 WHERE PGMID = #{PGMID}
+							   AND USERCD = #{LOGIN_USERCD}
+					    ) A
+					    CROSS APPLY
+					    (
+				            SELECT MSG + ', ' 
+				            FROM (
+				            	SELECT NULL AS MSG
+				            <foreach collection="CHECKLIST" item="CHECK" index="i" open="" close="" separator="">
+					            <if test='CHECK.ISCHECK == "Y"'>
+					            UNION ALL
+								SELECT CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN N'${CHECK.VAL}' + N' 값이 없습니다' ELSE NULL END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CODE"'>
+					            UNION ALL
+								SELECT CASE WHEN (SELECT COUNT(1) 
+								                    FROM S002 D WITH (NOLOCK)
+								                   WHERE D.COMPCD = B.COMPCD
+								                     AND D.CODEKEY = #{CHECK.CODEKEY}) = 0
+								                 OR  
+									            (SELECT TOP 1 1
+												   FROM S002 C WITH (NOLOCK)
+												  WHERE C.COMPCD = B.COMPCD 
+												    AND C.CODEKEY = #{CHECK.CODEKEY} 
+												    AND C.SNAME1 = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.SNAME1 
+												                      ELSE B.${CHECK.COL_ID} END) = 1
+											THEN NULL 
+											ELSE
+											<choose>
+												<when test='CHECK.VAL == "LOT1"'>N'${CHECK.LOT1_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT2"'>N'${CHECK.LOT2_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT3"'>N'${CHECK.LOT3_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT4"'>N'${CHECK.LOT4_LABEL}' + </when>
+											    <when test='CHECK.VAL == "LOT5"'>N'${CHECK.LOT5_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER01"'>N'${CHECK.F_USER01_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER02"'>N'${CHECK.F_USER02_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER03"'>N'${CHECK.F_USER03_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER04"'>N'${CHECK.F_USER04_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER05"'>N'${CHECK.F_USER05_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER11"'>N'${CHECK.F_USER11_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER12"'>N'${CHECK.F_USER12_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER13"'>N'${CHECK.F_USER13_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER14"'>N'${CHECK.F_USER14_LABEL}' + </when>
+											    <when test='CHECK.VAL == "F_USER15"'>N'${CHECK.F_USER15_LABEL}' + </when>
+											    <otherwise>N'${CHECK.VAL}' + </otherwise>
+											</choose>
+											    	N'의 공통코드값을 확인하시기 바랍니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "COMP"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P001 C WITH (NOLOCK)
+											  WHERE C.COMPCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.COMPCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											 WHEN 1 THEN NULL 
+											 ELSE '존재하지 않는 회사코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ORG"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P002 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD 
+											                       ELSE B.${CHECK.COL_ID} END) 
+										 	WHEN 1 THEN NULL
+										 	ELSE '존재하지 않는 셀러코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "WH"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P004 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.WHCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.WHCD 
+											                      ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 창고코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "LOC"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P005 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.WHCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.WHCD ELSE B.WHCD END
+											    AND C.LOCCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.LOCCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 로케이션 코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUST"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P003 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD ELSE B.ORGCD END
+											    AND C.CUSTCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.CUSTCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 거래처코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "USER"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM S010 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.USERCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.USERCD 
+											                        ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 사용자ID입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEM"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM P006 C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD ELSE B.ORGCD END
+												AND C.ITEMCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ITEMCD 
+												                    ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 품목코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "DATE"'>
+					            UNION ALL
+								SELECT CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') != '' THEN 
+								                 CASE WHEN ISDATE(ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'')) = 0 THEN '${CHECK.VAL}' + ' 값은 날짜 형식입니다'
+											          ELSE 
+											               CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'') != '' AND CONVERT(NVARCHAR,GETDATE() + CONVERT(INT,#{CHECK.REF1}),112) <![CDATA[ > ]]> ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') THEN '${CHECK.VAL}' + ' 값은 오늘+' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF1}),'')+ '이상으로 입력해야 합니다'
+											                 	ELSE 
+											                 	  	 CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'') != '' AND CONVERT(NVARCHAR,GETDATE() + CONVERT(INT,#{CHECK.REF2}),112) <![CDATA[ < ]]> ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') THEN '${CHECK.VAL}' + ' 값은 오늘+' + ISNULL(CONVERT(NVARCHAR,#{CHECK.REF2}),'')+ '이하로 입력해야 합니다'
+											                 	  	      ELSE 
+											                 	  	      <if test="CHECK.REF3 != null and CHECK.REF3 != ''">
+											                 	  	          CASE WHEN ISNULL(CONVERT(NVARCHAR,#{CHECK.REF3}),'') != '' AND CONVERT(NVARCHAR,B.${CHECK.COL_ID}) <![CDATA[ > ]]> CONVERT(NVARCHAR,B.${CHECK.REF3}) THEN '${CHECK.VAL}' + ' 값은 '+'${CHECK.REF4}'+'보다 클수 없습니다'
+											                 	  	               ELSE NULL END
+											                 	  	      </if>
+											                 	  	      <if test="CHECK.REF3 == null or CHECK.REF3 == ''">
+											                 	  	      	NULL
+											                 	  	      </if>
+											                 	  	      END
+											                 	  END
+											          END
+											ELSE NULL 
+											END AS MSG  
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "NUM"'>
+					            UNION ALL
+								SELECT CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') != '' THEN 
+								                 CASE WHEN ISNUMERIC(ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'')) = 0 OR (B.${CHECK.COL_ID} LIKE '%-%' AND LEN(REPLACE(B.${CHECK.COL_ID},' ','')) = 1 ) THEN '${CHECK.VAL}' + ' 값은 숫자 형식입니다' 
+											          END
+											ELSE NULL
+								            END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT1"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P018 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 1
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 대분류입니다' ELSE NULL END AS MSG
+												    FROM P018 C WITH (NOLOCK)
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.NAME ELSE B.${CHECK.COL_ID} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y')
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 대분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT2"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P018 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 2
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 중분류입니다' ELSE NULL END AS MSG
+												    FROM P018 C WITH (NOLOCK)
+												    JOIN P018 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN D.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 중분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "CUSTCAT3"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P018 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 3
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 소분류입니다' ELSE NULL END AS MSG
+												    FROM P018 C WITH (NOLOCK)
+												    JOIN P018 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												    JOIN P018 E WITH (NOLOCK)
+												      ON D.COMPCD = E.COMPCD
+												     AND D.CATEGORYCD = E.PCATEGORYCD
+											  	   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF2}),'') = '' THEN D.NAME ELSE B.${CHECK.REF2} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND E.ISUSING = 'Y'
+												     AND E.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN E.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 소분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEMCAT1"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P017 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 1
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 대분류입니다' ELSE NULL END AS MSG
+												    FROM P017 C WITH (NOLOCK)
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.NAME ELSE B.${CHECK.COL_ID} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y')
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 대분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEMCAT2"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P017 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 2
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 중분류입니다' ELSE NULL END AS MSG
+												    FROM P017 C WITH (NOLOCK)
+												    JOIN P017 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN D.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 중분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "ITEMCAT3"'>
+					            UNION ALL
+					            SELECT CASE WHEN (SELECT TOP 1 1
+					                                FROM P017 C WITH (NOLOCK)
+					                               WHERE C.COMPCD = B.COMPCD
+					                                 AND C.LVL = 3
+					                                 AND C.ISUSING = 'Y') = 1
+					                        THEN (SELECT CASE COUNT(1) WHEN 0 THEN '존재하지 않는 소분류입니다' ELSE NULL END AS MSG
+												    FROM P017 C WITH (NOLOCK)
+												    JOIN P017 D WITH (NOLOCK)
+												      ON C.COMPCD = D.COMPCD
+												     AND C.CATEGORYCD = D.PCATEGORYCD
+												    JOIN P017 E WITH (NOLOCK)
+												      ON D.COMPCD = E.COMPCD
+												     AND D.CATEGORYCD = E.PCATEGORYCD
+											  	   WHERE C.COMPCD = B.COMPCD
+												     AND C.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF1}),'') = '' THEN C.NAME ELSE B.${CHECK.REF1} END
+												     AND D.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.REF2}),'') = '' THEN D.NAME ELSE B.${CHECK.REF2} END
+												     AND C.LVL = 1
+												     AND C.ISUSING = 'Y'
+												     AND D.ISUSING = 'Y'
+												     AND E.ISUSING = 'Y'
+												     AND E.NAME = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN E.NAME ELSE B.${CHECK.COL_ID} END)
+									        ELSE CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN NULL ELSE '등록된 소분류가 없습니다' END 
+									   END
+								   FROM E003 B WITH (NOLOCK)
+					              WHERE A.PGMID = B.PGMID
+									AND A.SEQ = B.SEQ
+									AND A.USERCD = B.USERCD
+					            </if>
+					            <if test='CHECK.CHECKTYPE == "PROD_CD"'>
+					            UNION ALL
+								SELECT CASE (SELECT TOP 1 1
+											   FROM PRODUCT C WITH (NOLOCK)
+											  WHERE C.COMPCD = B.COMPCD 
+											    AND C.ORGCD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.ORGCD ELSE B.ORGCD END
+												AND C.PROD_CD = CASE WHEN ISNULL(CONVERT(NVARCHAR,B.${CHECK.COL_ID}),'') = '' THEN C.PROD_CD 
+												                    ELSE B.${CHECK.COL_ID} END) 
+											WHEN 1 THEN NULL
+											ELSE '존재하지 않는 품목코드입니다' END AS MSG
+								  FROM E003 B WITH (NOLOCK)
+								 WHERE A.PGMID = B.PGMID
+								   AND A.SEQ = B.SEQ
+								   AND A.USERCD = B.USERCD
+					            </if>
+				            </foreach>
+							) AS T FOR XML PATH('')
+				        ) K (MSG) ) T ON T.PPP = PGMID AND T.SSS = SEQ AND T.UUU = USERCD
+	    WHERE PGMID = #{PGMID}
+	      AND USERCD = #{LOGIN_USERCD}
+	</select>
+	
+	<select id="getAuditMstData" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.popup.PopE000Mapper.getAuditMstData */
+		SELECT PGMID ,URL, PGMNM, REMARK, USEORGCD, USEWHCD
+		  FROM E001 WITH (NOLOCK)
+		 WHERE PGMID = #{S_PGMID}
+	</select>
+</mapper>

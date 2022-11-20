@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="stockInsertMapper">
+	<!-- 송장출력을 위한 송장정보 -->
+	<select id="getPrint" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getPrint */
+		SELECT
+			XRT_INVC_SNO
+			, WGT
+			, BOX_WIDTH
+			, BOX_LENGTH
+			, BOX_HEIGHT
+			, BOX_VOLUME
+			, TRIM(E_NATION) AS E_NATION
+			, INVC_PRINT_CNT
+			, dbo.UFX_TRIM(UPPER(SHIP_METHOD_CD)) AS SHIP_METHOD_CD 
+		FROM TORDER
+		WHERE XRT_INVC_SNO = #{INVC_SNO}
+	</select>
+
+	<!-- 송장출력횟수CNT와 최초 송장출력 시간 업데이트 -->
+	<update id="setPrintCnt" parameterType="LDataMap">
+		/* stockInsertMapper.setPrintCnt */
+		UPDATE TORDER
+		SET	
+			INVC_PRINT_CNT = B.INVC_PRINT_CNT
+			, INVC_PRINT_DATE = CONVERT(CHAR(19), GETDATE(), 20)
+		FROM TORDER AS A,
+			(SELECT
+				XRT_INVC_SNO
+				, CASE
+					WHEN INVC_PRINT_CNT IS NULL THEN '1'
+					WHEN INVC_PRINT_CNT IS NOT NULL THEN INVC_PRINT_CNT + 1
+					ELSE '0'
+					END AS INVC_PRINT_CNT
+			 FROM TORDER
+			 WHERE  XRT_INVC_SNO = #{INVC_SNO}) AS B
+		WHERE A.XRT_INVC_SNO = B.XRT_INVC_SNO
+	</update>
+
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getSearch */
+		SELECT
+			A.ORD_CD
+			, A.ORGCD
+			, A.ORD_CNT
+			, A.UPLOAD_DATE
+			, TRIM(A.E_NATION) AS E_NATION
+			, A.XRT_INVC_SNO
+			, A.INVC_SNO1
+			, dbo.UFX_TRIM(UPPER(A.SHIP_METHOD_CD)) AS SHIP_METHOD_CD
+			, A.WGT
+			, A.BOX_WIDTH
+			, A.BOX_LENGTH
+			, A.BOX_HEIGHT
+			, A.BOX_VOLUME
+			, A.STOCK_DATE
+			, A.STATUS_CD
+			, A.XRT_SHIPPING_PRICE
+			, CASE
+                WHEN A.STATUS_CD = '10' THEN '주문등록'
+                WHEN A.STATUS_CD = '11' THEN '발송대기'
+                WHEN A.STATUS_CD = '12' THEN '발송완료'
+                WHEN A.STATUS_CD = '20' THEN '입금대기'
+                WHEN A.STATUS_CD = '21' THEN '결제완료'
+                WHEN A.STATUS_CD = '22' THEN '결제대기'
+                WHEN A.STATUS_CD = '23' THEN '결제실패'
+                WHEN A.STATUS_CD = '30' THEN '입고완료'
+                WHEN A.STATUS_CD = '31' THEN '창고보관'
+                WHEN A.STATUS_CD = '32' THEN '출고대기'
+                WHEN A.STATUS_CD = '33' THEN '검수완료'
+                WHEN A.STATUS_CD = '34' THEN '검수취소'
+                WHEN A.STATUS_CD = '35' THEN '선적대기'
+                WHEN A.STATUS_CD = '40' THEN '출고완료'
+                WHEN A.STATUS_CD = '50' THEN '공항출발(예정)'
+                WHEN A.STATUS_CD = '51' THEN '공항출발(완료)'
+                WHEN A.STATUS_CD = '52' THEN '해외공항도착(예정)'
+                WHEN A.STATUS_CD = '53' THEN '해외공항도착(완료)'
+                WHEN A.STATUS_CD = '54' THEN '통관대기'
+                WHEN A.STATUS_CD = '55' THEN '통관완료'
+                WHEN A.STATUS_CD = '56' THEN '배송시작'
+                WHEN A.STATUS_CD = '57' THEN '배송중'
+                WHEN A.STATUS_CD = '60' THEN '배송완료'
+                WHEN A.STATUS_CD = '80' THEN 'API오류'
+                WHEN A.STATUS_CD = '98' THEN '입금취소'
+                WHEN A.STATUS_CD = '99' THEN '주문취소'
+				ELSE '오류'
+			 END AS KR_STATUS_CD
+			, CASE
+				WHEN A.PAYMENT_TYPE = '1' THEN '건당결제'
+				WHEN A.PAYMENT_TYPE = '2' THEN '월말결제'
+				WHEN A.PAYMENT_TYPE = '3' THEN '정기결제'
+				WHEN A.PAYMENT_TYPE = '4' THEN '신용결제'
+			    ELSE '-'
+			 END AS KR_PAYMENT_TYPE
+			, A.PAYMENT_TYPE AS PAYMENT_TYPE
+		FROM TORDER A
+		WHERE A.XRT_INVC_SNO = RTRIM(LTRIM(#{XRT_INVC_NO}))
+		AND A.DEL_FLG = 'N'
+	</select>
+
+	<select id="getWarehousing" resultType="LDataMap">
+		/* stockInsertMapper.getWarehousing */
+		SELECT
+			CASE 
+				WHEN a.STATUS_CD = '30' THEN a.INVC_SNO + ' 입고 완료 (' +  ADDUSERCD +')'
+				ELSE a.INVC_SNO + ' 입고 취소 (' +  ADDUSERCD +')'
+			END AS INVC_SNO_HISTORY
+		FROM (
+			SELECT
+				INVC_SNO
+				, STATUS_CD
+				, ADDDATETIME
+				, ADDUSERCD
+			FROM TSTOCK_HISTORY
+			WHERE 1 = 1 
+			AND CONVERT(VARCHAR(10),ADDDATETIME,112) = CONVERT(VARCHAR(10),GETDATE(),112)
+			AND STATUS_CD IN ('30', '99')
+            AND ADDUSERCD != 'YICENTER1'
+		) a
+		WHERE 1 = 1 
+		ORDER BY a.ADDDATETIME DESC 
+	</select>
+
+	<select id="getOrderDtl" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getOrderDtl */
+		SELECT
+			GOODS_NM
+			, GOODS_OPTION
+			, GOODS_CNT
+		FROM
+		TORDERDTL
+		WHERE ORD_CD = #{ORD_CD}
+		ORDER BY ORD_SEQ
+	</select>
+	
+	<select id="getWgtSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getWgtSearch */
+		SELECT
+			TOP 1 WGT
+		FROM
+		TWGT_DATA
+		WHERE SCALE_CD = #{SCALE_CD}
+		AND WHNM = #{WHNM}
+		AND INVC_SNO IS NULL
+		ORDER BY IDX DESC
+	</select>
+	
+	<!-- 무게값 삭제  -->
+	<update id="updWgt" parameterType="LDataMap">
+		/* stockInsertMapper.updWgt */
+		UPDATE TWGT_DATA  WITH (ROWLOCK)
+		SET INVC_SNO = #{INVC_SNO}
+		WHERE SCALE_CD = #{SCALE_CD}
+		AND WHNM = #{WHNM}
+		AND INVC_SNO IS NULL
+	</update>
+	
+	<select id="getShipmentData" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getShipmentData */
+		SELECT
+			RECV_NAME		AS "recvName"
+			, RECV_TEL		AS "recvTel"
+			, RECV_MOBILE	AS "recvMobile"
+			, RECV_ADDR1	AS "recvAddr1"
+			, RECV_CITY		AS "recvCity"
+			, dbo.UFX_TRIM(RECV_STATE)	AS "recvState"
+			, RECV_POST		AS "recvPost"
+			, dbo.UFX_TRIM(E_NATION)	AS "eNation"
+			, WGT			AS "wgt"
+			, dbo.UFX_TRIM(UPPER(SHIP_METHOD_CD))	AS "shipMethodCd"
+			, CONVERT(CHAR(10), UPDDATETIME, 112)	AS "upddatetime"
+		FROM TORDER
+		WHERE 1 = 1
+		<if test="xrtInvcSno != null and xrtInvcSno != ''">
+		AND XRT_INVC_SNO = #{xrtInvcSno}
+		</if>
+	</select>
+    
+    <select id="getPromotionCode" parameterType="LDataMap" resultType="java.lang.String">
+        /* stockInsertMapper.getPromotionCode */
+        SELECT
+            ISNULL(PROMOTION_CODE, '') AS "promotionCode"
+        FROM P002
+        WHERE 1 = 1
+        AND ORGCD = (
+            SELECT
+                ORGCD
+            FROM TORDER
+            WHERE 1 = 1
+            AND XRT_INVC_SNO = #{XRT_INVC_NO}
+        )
+    </select>
+    
+    <select id="getDiscount" parameterType="LDataMap" resultType="xrt.sys.promotionCode.PromotionCodeVO">
+        /* stockInsertMapper.getDiscount */
+        SELECT
+            A.DHL       AS dhl,
+            A.PREMIUM   AS premium
+        FROM (
+            SELECT
+                PROMOTION_CODE,
+                DHL,
+                PREMIUM,
+                CONVERT(CHAR(8), DISCOUNT_START_DATE, 112) AS startDate,
+                CONVERT(CHAR(8), DISCOUNT_END_DATE, 112)   AS endDate
+            FROM PROMOTION_CODE
+            WHERE 1 = 1
+        ) A
+        WHERE 1 = 1
+        AND (A.startDate  <![CDATA[<=]]> #{toDay} AND A.endDate <![CDATA[>=]]> #{toDay}) 
+        <if test='promotionCode != null and promotionCode != ""'>
+            AND A.PROMOTION_CODE = #{promotionCode}
+        </if>
+    </select>
+    
+    <!-- 입고(무게,부피) : 저장(마스터수정) -->
+	<update id="updateTorderMst" parameterType="LDataMap">
+		/* stockInsertMapper.updateTorderMst */
+		UPDATE TORDER WITH (ROWLOCK)
+		SET
+			WGT = #{WGT}
+			, BOX_WIDTH = #{BOX_WIDTH}
+			, BOX_LENGTH = #{BOX_LENGTH}
+			, BOX_HEIGHT = #{BOX_HEIGHT}
+			, BOX_VOLUME = #{BOX_VOLUME}
+			<if test="STATUS_CD == 30">
+			, STOCK_USERCD = #{LOGIN_USERCD}
+			, STOCK_DATE = GETDATE()
+			</if>
+			, STATUS_CD = #{STATUS_CD}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+			<if test="INVC_SNO1 != null and INVC_SNO1 != ''">
+			, INVC_SNO1 = #{INVC_SNO1}
+			</if>
+			<if test="LOCAL_SHIPPER != null and LOCAL_SHIPPER != ''">
+			, LOCAL_SHIPPER = #{LOCAL_SHIPPER}
+			</if>
+			<if test="AMOUNT != null and AMOUNT != ''">
+			, AMOUNT = #{AMOUNT}
+			, C_SHIPPING_PRICE = #{AMOUNT}
+			, C_SHIPPING_PRICE_UNIT = 'USD'
+			, SHIPPING_COMPANY = 'SHIPPO'
+			</if>
+			<if test="SHIPPO_ID != null and SHIPPO_ID != ''">
+			, SHIPPO_ID = #{SHIPPO_ID}
+			</if>
+			<if test="XRT_SHIPPING_PRICE != null and XRT_SHIPPING_PRICE != '0'">
+			, XRT_SHIPPING_PRICE = #{XRT_SHIPPING_PRICE}
+			</if>
+		WHERE 1 = 1
+		AND XRT_INVC_SNO = #{XRT_INVC_NO}
+	</update>
+
+<!-- 입고취소 -->
+	<update id="updateTorderMstStockCancle" parameterType="LDataMap">
+		/* stockInsertMapper.updateTorderMst */
+		UPDATE TORDER WITH (ROWLOCK)
+		SET 
+			WGT = NULL
+			, BOX_WIDTH = NULL
+			, BOX_LENGTH = NULL
+			, BOX_HEIGHT = NULL
+			, BOX_VOLUME = NULL
+			, STOCK_USERCD = NULL
+			, STOCK_DATE = NULL
+			, STATUS_CD = #{STATUS_CD}
+			, UPDUSERCD = #{LOGIN_USERCD}
+			, UPDDATETIME = GETDATE()
+			, TERMINALCD = #{LOGIN_IP}
+			, SHIPPO_ID = NULL
+			, AMOUNT = NULL
+			, XRT_SHIPPING_PRICE = NULL
+			, INPUT_AMOUNT = NULL
+			, INVC_PRINT_DATE = NULL
+			, INVC_PRINT_CNT = NULL
+			, C_SHIPPING_PRICE = NULL
+            , SHIPMENT_BL_NO = NULL
+			<if test='delInvcSnoYn == "Y"'>
+    			, INVC_SNO1 = NULL
+    			, SHIPPING_COMPANY = NULL
+    			, LOCAL_SHIPPER = NULL
+			</if>
+		WHERE ORD_CD = #{ORD_CD}
+		AND XRT_INVC_SNO = #{XRT_INVC_NO}
+	</update>
+
+	<!-- 입고 이력 INSERT -->
+	<insert id="insertStockHis" parameterType="LDataMap">
+		/* stockInsertMapper.insertStockHis */
+		INSERT INTO TSTOCK_HISTORY (
+			ORD_CD
+			, INVC_SNO
+			, EVENT_CD
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+            <choose> 
+                <when test="EVENT_CD != 'PRINT'">
+			     , STATUS_CD
+                </when>
+            </choose>
+			, API_INVC_SNO
+			, ETC1
+			, ETC2
+		) VALUES (
+			#{ORD_CD}
+			, #{INVC_SNO}
+			, #{EVENT_CD}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+            <choose> 
+                <when test="EVENT_CD != 'PRINT'">
+                    , #{STATUS_CD}
+                </when>
+            </choose>
+			, #{API_INVC_SNO}
+			, #{ETC1}
+			, #{ETC2}
+			
+		)
+	</insert>
+	
+	<select id="getShippoInfo" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getShippoInfo */
+		SELECT
+			INVC_SNO1			AS "invcSno1"
+			, SHIPPO_ID			AS "shippoId"
+			, RECV_STATE		AS "recvState"
+			, TRIM(E_NATION)	AS "eNation"
+			, AMOUNT			AS "amount"
+			, WGT				AS "wgt"
+			, STATUS_CD			AS "statusCd"
+			, dbo.UFX_TRIM(UPPER(SHIP_METHOD_CD))	AS "shipMethodCd"
+			, CONVERT(CHAR(10), UPDDATETIME, 112)	AS "upddatetime"
+		FROM TORDER
+		WHERE ORD_CD = #{ORD_CD}
+	</select>
+	
+	<!-- PAYMENT_MASTER INSERT -->
+	<insert id="insertPaymentMst" parameterType="LDataMap">
+		/* stockInsertMapper.insertPaymentMst */
+		INSERT INTO PAYMENT_MASTER (
+			PAYMENT_MASTER_SEQ
+			, XRT_INVC_SNO
+			, PAYMENT_YN
+			, XRT_SHIPPING_PRICE
+			, TOTAL_PRICE
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			NEXT VALUE FOR PAYMENT_MASTER_SEQ
+			, #{XRT_INVC_SNO}
+			, 'N'
+			, #{XRT_SHIPPING_PRICE}
+			, #{XRT_SHIPPING_PRICE}
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		)
+	</insert>
+	
+	<delete id="deletePaymentMst" parameterType="LDataMap">
+		/* stockInsertMapper.deletePaymentMst */
+		DELETE FROM PAYMENT_MASTER 
+		WHERE XRT_INVC_SNO = #{XRT_INVC_NO}
+	</delete>
+	<select id="getEmailData" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getEmailData */
+		SELECT 
+			O.XRT_INVC_SNO   AS "xrtInvcSno"
+			, (SELECT EMAIL FROM P002 WHERE  ORGCD = O.ORGCD) AS "email"
+			, (SELECT
+				TOP(1)
+				CASE
+					WHEN (SELECT COUNT(*) FROM TORDERDTL WHERE  ORD_CD = O.ORD_CD) > 1 THEN GOODS_NM + '외 '+ CONVERT(NVARCHAR(10), (SELECT COUNT(*) -1 FROM TORDERDTL WHERE ORD_CD = O.ORD_CD )) + '개'
+					ELSE GOODS_NM
+				END
+			 FROM   TORDERDTL
+			 WHERE  ORD_CD = O.ORD_CD
+			 GROUP  BY GOODS_NM ,ORD_CD) AS "goodsNm"
+		FROM   TORDER O
+		WHERE  XRT_INVC_SNO = #{XRT_INVC_NO}
+	</select>
+	
+	<select id="getRefundInfo" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getRefundInfo */
+		SELECT
+			O.XRT_INVC_SNO
+			, O.XRT_SHIPPING_PRICE
+			, O.ORGCD
+			, P2.RTN_BANK_NAME
+			, P2.RTN_BANK_ACCOUNT
+			, P2.RTN_BANK_ACCOUNT_NAME
+			, O.STATUS_CD
+			, O.PAYMENT_TYPE
+		FROM TORDER O
+		LEFT JOIN P002 P2 WITH(NOLOCK)
+		ON O.COMPCD = P2.COMPCD
+		AND O.ORGCD = P2.ORGCD
+		WHERE  O.XRT_INVC_SNO = #{XRT_INVC_NO}
+	</select>
+	
+	<insert id="insertRefundMaster" parameterType="LDataMap">
+		/* stockInsertMapper.insertRefundMaster */
+		INSERT INTO REFUND_MASTER (
+			REFUND_MASTER_SEQ
+			, XRT_INVC_SNO
+			, REFUND_YN
+			, REFUND_PRICE
+			, SELLER_ID
+			, BANK
+			, ACCOUNT_NUMBER
+			, ACCOUNT_NAME
+			, CANCEL_DATETIME
+			, ADDUSERCD
+			, ADDDATETIME
+			, UPDUSERCD
+			, UPDDATETIME
+			, TERMINALCD
+		) VALUES (
+			NEXT VALUE FOR REFUND_MASTER_SEQ
+			, #{XRT_INVC_SNO}
+			, 'N'
+			, #{XRT_SHIPPING_PRICE}
+			, #{ORGCD}
+			, #{RTN_BANK_NAME}
+			, #{RTN_BANK_ACCOUNT}
+			, #{RTN_BANK_ACCOUNT_NAME}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_USERCD}
+			, GETDATE()
+			, #{LOGIN_IP}
+		) 
+	</insert>
+	
+	<select id="getAmount" parameterType="LDataMap" resultType="LDataMap">
+		/* stockInsertMapper.getAmount */
+		SELECT 
+			XRT_SHIPPING_PRICE
+			, INVC_SNO1
+		FROM TORDER 
+		WHERE XRT_INVC_SNO = #{XRT_INVC_NO}
+	</select>
+</mapper>

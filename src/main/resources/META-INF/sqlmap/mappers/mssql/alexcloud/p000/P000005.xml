@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 로케이션 관리 -->
+<mapper namespace="P000005Mapper">
+	<!-- 검색 -->
+	<select id="getSearch" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000005.getSearch */
+		SELECT A.COMPCD
+			 , B.NAME AS COMPNM
+			 , A.WHCD
+			 , A.NAME
+			 , A.WHTYPE
+			 , A.POST
+			 , A.ADDR1
+			 , A.ADDR2
+			 , A.CUSTCD
+			 , C.NAME AS CUSTNM
+			 , A.WHINLOCCD
+			 , A.WHOUTLOCCD
+			 , A.DPSLOCCD
+			 , A.RETURNLOCCD
+			 , A.ASSYLOCCD
+			 , A.CANCELLOCCD
+		     , A.REMARK
+		     , A.ISUSING
+			 , A.ADDUSERCD
+		     , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.UPDUSERCD
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		FROM P004 A WITH (NOLOCK)
+		JOIN P001 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD
+		LEFT OUTER JOIN P003 C WITH (NOLOCK)
+		  ON A.COMPCD = C.COMPCD AND A.CUSTCD = C.CUSTCD
+		WHERE A.ISUSING = 'Y'
+		<if test="S_COMPCD != null and S_COMPCD != ''">
+			AND A.COMPCD = #{S_COMPCD}
+		</if>
+		<if test="S_WH != null and S_WH != ''">
+			AND (A.WHCD LIKE '%' + dbo.UFX_Trim(#{S_WH}) + '%'
+				OR A.NAME LIKE '%' + dbo.UFX_Trim(#{S_WH}) + '%')
+		</if>
+		ORDER BY A.COMPCD, A.WHCD
+	</select>
+	
+	<!-- 상세 검색 -->
+	<select id="getDetail" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000005.getDetail */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.LOCNAME
+			 , A.LOCGROUP
+			 , A.ISVIRTUAL
+			 , A.LOCTYPE
+			 , A.SLOTTYPE
+			 , A.PICKTYPE
+			 , A.ALLOCATETYPE
+			 , A.NOTALLOCFLG
+			 , A.WHINSEQ
+			 , A.WHOUTSEQ
+			 , A.BUIL
+			 , A.FLOOR
+			 , A.ZONE
+			 , A.LINE
+			 , A.RANGE
+			 , A.STEP
+			 , A.LANE
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.WEIGHTCAPACITY
+			 , A.CAPACITY
+			 , A.CUSTCD
+			 , A.ISUSING
+		FROM P005 A WITH (NOLOCK)
+		WHERE COMPCD = #{COMPCD}
+		  AND WHCD = #{WHCD}
+		  AND LOCCD = #{LOCCD}
+	</select>
+
+	<!-- 상세 리스트 검색 -->
+	<select id="getDetailList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000005.getDetailList */
+		SELECT A.COMPCD
+			 , A.WHCD
+			 , A.LOCCD
+			 , A.LOCNAME
+			 , A.LOCGROUP
+			 , A.ISVIRTUAL
+			 , A.LOCTYPE
+			 , A.SLOTTYPE
+			 , A.PICKTYPE
+			 , A.ALLOCATETYPE
+			 , A.NOTALLOCFLG
+			 , A.WHINSEQ
+			 , A.WHOUTSEQ
+			 , A.BUIL
+			 , A.FLOOR
+			 , A.ZONE
+			 , A.LINE
+			 , A.RANGE
+			 , A.STEP
+			 , A.LANE
+			 , A.LENGTH
+			 , A.WIDTH
+			 , A.HEIGHT
+			 , A.WEIGHTCAPACITY
+			 , A.CAPACITY
+			 , A.CUSTCD
+			 , B.NAME AS CUSTNM
+			 , A.ISUSING
+			 , A.ADDUSERCD
+			 , CONVERT(VARCHAR, A.ADDDATETIME, 20) AS ADDDATETIME
+			 , A.UPDUSERCD
+		     , CONVERT(VARCHAR, A.UPDDATETIME, 20) AS UPDDATETIME
+			 , A.TERMINALCD
+		FROM P005 A WITH (NOLOCK)
+		LEFT OUTER JOIN P003 B WITH (NOLOCK)
+		  ON A.COMPCD = B.COMPCD AND A.CUSTCD = B.CUSTCD
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.WHCD = #{WHCD}
+		<if test="S_LOC != null and S_LOC != ''">
+			AND (A.LOCCD LIKE '%' + dbo.UFX_Trim(#{S_LOC}) + '%' OR A.LOCNAME LIKE '%' + dbo.UFX_Trim(#{S_LOC}) + '%')
+		</if>
+		<if test="S_ISUSING != null and S_ISUSING != ''">
+			AND A.ISUSING = #{S_ISUSING}
+		</if>
+		<if test="S_LOCTYPE != null and S_LOCTYPE != ''">
+			AND A.LOCTYPE = #{S_LOCTYPE}
+		</if>
+		<if test="S_LOCGROUP != null and S_LOCGROUP != ''">
+			AND A.LOCGROUP = #{S_LOCGROUP}
+		</if>
+		<if test="S_FLOOR != null and S_FLOOR != ''">
+			AND A.FLOOR = dbo.UFX_Trim(#{S_FLOOR})
+		</if>
+		<if test="S_POSTION != null and S_POSTION != ''">
+			AND (A.BUIL = dbo.UFX_Trim(#{S_POSTION}) OR A.FLOOR = dbo.UFX_Trim(#{S_POSTION}) 
+				OR A.ZONE = dbo.UFX_Trim(#{S_POSTION}) OR A.LINE = dbo.UFX_Trim(#{S_POSTION}))
+		</if>
+		ORDER BY A.LOCCD
+	</select>
+	
+	<!-- 존행열단 검색 -->
+	<select id="getCodeList" parameterType="LDataMap" resultType="LDataMap">
+		/* alexcloud.p000.P000005.getCodeList */
+		SELECT A.COMPCD
+			 , A.CODE
+			 , A.SNAME1 AS NAME
+		FROM S002 A WITH (NOLOCK)
+		WHERE A.COMPCD = #{COMPCD}
+		  AND A.CODEKEY = #{CODEKEY}
+		ORDER BY A.SORTNO, A.CODE
+	</select>
+
+	<!-- 추가 -->
+	<insert id="insertMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000005.insertMst */
+		INSERT INTO P005 WITH (ROWLOCK)(
+			COMPCD, WHCD, LOCCD, LOCNAME, LOCGROUP
+		  , ISVIRTUAL, LOCTYPE, SLOTTYPE, PICKTYPE, ALLOCATETYPE
+		  , NOTALLOCFLG, WHINSEQ, WHOUTSEQ, BUIL, FLOOR
+		  , ZONE, LINE, RANGE, STEP, LANE
+		  , LENGTH, WIDTH, HEIGHT, WEIGHTCAPACITY, CAPACITY
+		  , CUSTCD, ISUSING
+		  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD
+		) VALUES (
+			#{COMPCD}, #{WHCD}, dbo.UFX_Trim(#{LOCCD}), #{LOCNAME}, #{LOCGROUP}
+		  , #{ISVIRTUAL}, #{LOCTYPE}, #{SLOTTYPE}, #{PICKTYPE}, #{ALLOCATETYPE}
+		  , #{NOTALLOCFLG}, #{WHINSEQ}, #{WHOUTSEQ}, #{BUIL}, #{FLOOR}
+		  , #{ZONE}, #{LINE}, #{RANGE}, #{STEP}, #{LANE}
+		  , #{LENGTH}, #{WIDTH}, #{HEIGHT}, #{WEIGHTCAPACITY}, #{CAPACITY}
+		  , #{CUSTCD}, ISNULL(CONVERT(NVARCHAR, #{ISUSING}), 'Y')
+		  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateMst" parameterType="LDataMap">
+		/* alexcloud.p000.P000005.updateMst */
+		UPDATE P005 WITH (ROWLOCK)
+		   SET LOCNAME = #{LOCNAME}
+			 , LOCGROUP = #{LOCGROUP}
+			 , ISVIRTUAL = #{ISVIRTUAL}
+			 , LOCTYPE = #{LOCTYPE}
+			 , SLOTTYPE = #{SLOTTYPE}
+			 , PICKTYPE = #{PICKTYPE}
+			 , ALLOCATETYPE = #{ALLOCATETYPE}
+			 , NOTALLOCFLG = #{NOTALLOCFLG}
+			 , WHINSEQ = #{WHINSEQ}
+			 , WHOUTSEQ = #{WHOUTSEQ}
+			 , BUIL = #{BUIL}
+			 , FLOOR = #{FLOOR}
+			 , ZONE = #{ZONE}
+			 , LINE = #{LINE}
+			 , RANGE = #{RANGE}
+			 , STEP = #{STEP}
+			 , LANE = #{LANE}
+			 , LENGTH = #{LENGTH}
+			 , WIDTH = #{WIDTH}
+			 , HEIGHT = #{HEIGHT}
+			 , WEIGHTCAPACITY = #{WEIGHTCAPACITY}
+			 , CAPACITY = #{CAPACITY}
+			 , CUSTCD = #{CUSTCD}
+			 , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+			 , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND WHCD = #{WHCD}
+		  AND LOCCD = #{LOCCD}
+	</update>
+
+	<!-- 삭제 (사용/미사용) -->
+	<update id="updateIsusing" parameterType="LDataMap">
+		/* alexcloud.p000.P000005.updateIsusing */
+		UPDATE P005 WITH (ROWLOCK)
+		   SET ISUSING = #{ISUSING}
+		     , UPDUSERCD = #{LOGIN_USERCD}
+		     , UPDDATETIME = GETDATE()
+		     , TERMINALCD = #{LOGIN_IP}
+		WHERE COMPCD = #{COMPCD}
+		  AND WHCD = #{WHCD}
+		  AND LOCCD = #{LOCCD}
+	</update>
+
+	<!-- 로케이션코드 일괄 생성 -->
+	<update id="insertLocCreate" parameterType="LDataMap">
+		/* alexcloud.p000.P000005.insertLocCreate */
+		MERGE P005 WITH (ROWLOCK) AS A 
+			USING (SELECT #{COMPCD} AS COMPCD, #{WHCD} AS WHCD, #{LOCCD} AS LOCCD) AS B
+			ON A.COMPCD = B.COMPCD AND A.WHCD = B.WHCD AND A.LOCCD = B.LOCCD
+        WHEN MATCHED THEN
+			UPDATE SET LOCGROUP = #{LOCGROUP}
+					 , ZONE = #{LOCGROUP}
+					 , UPDUSERCD = #{LOGIN_USERCD}
+					 , UPDDATETIME = GETDATE()
+					 , TERMINALCD = #{LOGIN_IP}
+        WHEN NOT MATCHED THEN
+			INSERT (COMPCD, WHCD, LOCCD, LOCNAME, LOCGROUP
+				  , ISVIRTUAL, NOTALLOCFLG, WHINSEQ, WHOUTSEQ, ZONE
+				  , LINE, RANGE, STEP, ISUSING
+				  , ADDUSERCD, ADDDATETIME, UPDUSERCD, UPDDATETIME, TERMINALCD)
+			VALUES (#{COMPCD}, #{WHCD}, #{LOCCD}, #{LOCCD}, #{LOCGROUP}
+				  , 'N', 'N', #{SEQ}, #{SEQ}, #{LOCGROUP}
+				  , #{LINE}, #{RANGE}, #{STEP}, 'Y'
+				  , #{LOGIN_USERCD}, GETDATE(), #{LOGIN_USERCD}, GETDATE(), #{LOGIN_IP});
+	</update>
+	
+</mapper>
