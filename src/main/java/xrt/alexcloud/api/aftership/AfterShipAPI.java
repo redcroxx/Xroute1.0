@@ -75,7 +75,7 @@ public class AfterShipAPI {
         Object object = jsonParser.parse(sb.toString());
         JSONObject retJson = (JSONObject) object;
 
-        logger.debug(" retJson : " + retJson);
+        logger.debug(" retJson 11 : " + retJson);
 
         return retJson;
     }
