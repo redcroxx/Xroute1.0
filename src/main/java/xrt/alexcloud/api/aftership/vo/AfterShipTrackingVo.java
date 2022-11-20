@@ -21,7 +21,18 @@ public class AfterShipTrackingVo implements Serializable {
     private String pickupLocation;
     private String pickupNote;
 
-    public String getSlug() {
+    private String sVal;
+    
+    
+    public String getsVal() {
+		return sVal;
+	}
+
+	public void setsVal(String sVal) {
+		this.sVal = sVal;
+	}
+
+	public String getSlug() {
         return slug;
     }
 
